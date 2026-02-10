@@ -23,8 +23,8 @@
 <h3>Option B: Clone using Terminal</h3>
 
 <pre>
-git clone https://github.com/username/repository-name.git
-cd repository-name
+git clone https://github.com/sumanth965/smart-student-productivity-system.git
+cd smart-student-productivity-system
 code .
 </pre>
 
