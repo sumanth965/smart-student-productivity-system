@@ -46,12 +46,12 @@ const Login = () => {
                         </span>
                     </div>
                     <div className="flex gap-4">
-                        <button className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-blue-600 dark:border-blue-400">
+                        <a href="login" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
                             Login
-                        </button>
-                        <button className="px-6 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
+                        </a>
+                       <a href="register" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
                             Register
-                        </button>
+                        </a>
                     </div>
                 </div>
             </nav>

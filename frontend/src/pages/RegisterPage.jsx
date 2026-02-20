@@ -188,7 +188,7 @@ const Register = () => {
                         </span>
                     </div>
                     <div className="flex gap-4">
-                        <a href="#login" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
+                        <a href="login" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
                             Login
                         </a>
                         <button className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-blue-600 dark:border-blue-400">
@@ -630,7 +630,7 @@ const Register = () => {
                                         {/* Already have account link */}
                                         <motion.p className="text-center text-slate-600 dark:text-slate-400 text-sm" variants={itemVariants}>
                                             Already have an account?{' '}
-                                            <a href="#login" className="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 hover:underline">
+                                            <a href="login" className="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 hover:underline">
                                                 Login
                                             </a>
                                         </motion.p>
