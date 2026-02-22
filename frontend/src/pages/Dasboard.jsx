@@ -1,39 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, } from 'recharts';
 import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
-import {
-  Plus,
-  Trash2,
-  CheckCircle,
-  AlertCircle,
-  TrendingUp,
-  Clock,
-  BookOpen,
-  Menu,
-  X,
-  Moon,
-  Sun,
-  LogOut,
-  Settings,
-  Filter,
-  Search,
-  ChevronDown,
-  Calendar,
-  Zap,
-  Brain,
-  Award,
-  User,
+  Plus, Trash2, CheckCircle, AlertCircle, TrendingUp, Clock, BookOpen, Menu, X, Moon, Sun, LogOut, Settings, Filter, Search,  ChevronDown,  Calendar,  Zap,  Brain,  Award,  User,
   Bell,
   MoreVertical,
 } from 'lucide-react';
@@ -41,6 +9,7 @@ import {
 // ============================================================================
 // Mock Data & Utilities
 // ============================================================================
+
 
 const MOCK_TASKS = [
   {
@@ -162,11 +131,10 @@ const getDaysUntil = (deadline) => {
 const StatCard = ({ icon: Icon, label, value, change, bgGradient, isDark }) => {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 transition-all duration-300 hover:scale-105 hover:shadow-blue-500/20 ${
-        isDark
-          ? 'bg-slate-800/80 ring-slate-700/50 hover:bg-slate-800/90'
-          : 'bg-white/80 ring-slate-200/50 hover:bg-white/90'
-      }`}
+      className={`relative overflow-hidden rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 transition-all duration-300 hover:scale-105 hover:shadow-blue-500/20 ${isDark
+        ? 'bg-slate-800/80 ring-slate-700/50 hover:bg-slate-800/90'
+        : 'bg-white/80 ring-slate-200/50 hover:bg-white/90'
+        }`}
     >
       {/* Gradient Background */}
       <div
@@ -180,9 +148,8 @@ const StatCard = ({ icon: Icon, label, value, change, bgGradient, isDark }) => {
             {label}
           </p>
           <p
-            className={`mt-2 text-3xl font-bold ${
-              isDark ? 'text-white' : 'text-slate-900'
-            }`}
+            className={`mt-2 text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'
+              }`}
           >
             {value}
           </p>
@@ -199,7 +166,7 @@ const StatCard = ({ icon: Icon, label, value, change, bgGradient, isDark }) => {
           className={`rounded-xl p-3 ${bgGradient}`}
           style={{ opacity: 0.2 }}
         >
-          <Icon className="h-6 w-6 text-blue-600" />
+          <Icon className="h-6 w-6 text-red-900" />
         </div>
       </div>
     </div>
@@ -234,11 +201,10 @@ const TaskItem = ({ task, onToggle, onDelete, isDark }) => {
 
   return (
     <div
-      className={`group rounded-xl backdrop-blur-md p-4 shadow-lg ring-1 transition-all duration-300 hover:shadow-blue-500/15 ${
-        isDark
-          ? 'bg-slate-800/60 ring-slate-700/50 hover:bg-slate-800/80'
-          : 'bg-white/60 ring-slate-200/40 hover:bg-white/80'
-      } ${isOverdueTask ? (isDark ? 'border-l-4 border-red-500' : 'border-l-4 border-red-500') : ''}`}
+      className={`group rounded-xl backdrop-blur-md p-4 shadow-lg ring-1 transition-all duration-300 hover:shadow-blue-500/15 ${isDark
+        ? 'bg-slate-800/60 ring-slate-700/50 hover:bg-slate-800/80'
+        : 'bg-white/60 ring-slate-200/40 hover:bg-white/80'
+        } ${isOverdueTask ? (isDark ? 'border-l-4 border-red-500' : 'border-l-4 border-red-500') : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-1 items-start gap-3">
@@ -249,13 +215,12 @@ const TaskItem = ({ task, onToggle, onDelete, isDark }) => {
             aria-label={`Toggle completion for ${task.title}`}
           >
             <div
-              className={`h-5 w-5 rounded-md border-2 transition-all duration-200 ${
-                task.completed
-                  ? 'border-emerald-500 bg-emerald-500/20'
-                  : isDark
-                    ? 'border-slate-600 hover:border-blue-500'
-                    : 'border-slate-300 hover:border-blue-500'
-              }`}
+              className={`h-5 w-5 rounded-md border-2 transition-all duration-200 ${task.completed
+                ? 'border-emerald-500 bg-emerald-500/20'
+                : isDark
+                  ? 'border-slate-600 hover:border-blue-500'
+                  : 'border-slate-300 hover:border-blue-500'
+                }`}
             >
               {task.completed && (
                 <CheckCircle className="h-5 w-5 text-emerald-400" />
@@ -266,42 +231,38 @@ const TaskItem = ({ task, onToggle, onDelete, isDark }) => {
           {/* Task Info */}
           <div className="flex-1 min-w-0">
             <h4
-              className={`font-semibold line-clamp-1 ${
-                task.completed
-                  ? isDark
-                    ? 'line-through text-slate-500'
-                    : 'line-through text-slate-400'
-                  : isDark
-                    ? 'text-white'
-                    : 'text-slate-900'
-              }`}
+              className={`font-semibold line-clamp-1 ${task.completed
+                ? isDark
+                  ? 'line-through text-slate-500'
+                  : 'line-through text-slate-400'
+                : isDark
+                  ? 'text-white'
+                  : 'text-slate-900'
+                }`}
             >
               {task.title}
             </h4>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span
-                className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-                  subjectColor[task.subject] ||
+                className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${subjectColor[task.subject] ||
                   (isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700')
-                }`}
+                  }`}
               >
                 {task.subject}
               </span>
               <span
-                className={`inline-block rounded-full border px-2 py-1 text-xs font-semibold ${
-                  priorityColor[actualPriority]
-                }`}
+                className={`inline-block rounded-full border px-2 py-1 text-xs font-semibold ${priorityColor[actualPriority]
+                  }`}
               >
                 {actualPriority}
               </span>
               <span
-                className={`text-xs ${
-                  isOverdueTask
-                    ? 'font-bold text-red-500'
-                    : isDark
-                      ? 'text-slate-400'
-                      : 'text-slate-500'
-                }`}
+                className={`text-xs ${isOverdueTask
+                  ? 'font-bold text-red-500'
+                  : isDark
+                    ? 'text-slate-400'
+                    : 'text-slate-500'
+                  }`}
               >
                 {isOverdueTask ? '⚠️ Overdue' : `${daysUntil}d left`}
               </span>
@@ -312,11 +273,10 @@ const TaskItem = ({ task, onToggle, onDelete, isDark }) => {
         {/* Actions */}
         <button
           onClick={() => onDelete(task.id)}
-          className={`flex-shrink-0 rounded-lg p-2 transition-all duration-200 hover:scale-110 ${
-            isDark
-              ? 'hover:bg-red-900/30 text-slate-400 hover:text-red-400'
-              : 'hover:bg-red-50 text-slate-400 hover:text-red-600'
-          }`}
+          className={`flex-shrink-0 rounded-lg p-2 transition-all duration-200 hover:scale-110 ${isDark
+            ? 'hover:bg-red-900/30 text-slate-400 hover:text-red-400'
+            : 'hover:bg-red-50 text-slate-400 hover:text-red-600'
+            }`}
           aria-label={`Delete ${task.title}`}
         >
           <Trash2 className="h-4 w-4" />
@@ -344,11 +304,10 @@ const AIInsightsPanel = ({ tasks, isDark }) => {
 
   return (
     <div
-      className={`rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 ${
-        isDark
-          ? 'bg-gradient-to-br from-slate-800/80 to-blue-900/40 ring-blue-700/30'
-          : 'bg-gradient-to-br from-white/80 to-blue-50/80 ring-blue-200/30'
-      }`}
+      className={`rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 ${isDark
+        ? 'bg-gradient-to-br from-slate-800/80 to-blue-900/40 ring-blue-700/30'
+        : 'bg-gradient-to-br from-white/80 to-blue-50/80 ring-blue-200/30'
+        }`}
     >
       <div className="flex items-center gap-2 mb-4">
         <Brain className="h-5 w-5 text-blue-500" />
@@ -360,9 +319,8 @@ const AIInsightsPanel = ({ tasks, isDark }) => {
       <div className="space-y-3">
         {highPriorityTodayCount > 0 && (
           <div
-            className={`rounded-lg border-l-4 border-red-500 p-3 ${
-              isDark ? 'bg-red-900/20' : 'bg-red-50'
-            }`}
+            className={`rounded-lg border-l-4 border-red-500 p-3 ${isDark ? 'bg-red-900/20' : 'bg-red-50'
+              }`}
           >
             <p className={`text-sm font-semibold ${isDark ? 'text-red-300' : 'text-red-700'}`}>
               ⚡ {highPriorityTodayCount} high-priority task{highPriorityTodayCount > 1 ? 's' : ''} due TODAY
@@ -372,9 +330,8 @@ const AIInsightsPanel = ({ tasks, isDark }) => {
 
         {overdueTasks.length > 0 && (
           <div
-            className={`rounded-lg border-l-4 border-orange-500 p-3 ${
-              isDark ? 'bg-orange-900/20' : 'bg-orange-50'
-            }`}
+            className={`rounded-lg border-l-4 border-orange-500 p-3 ${isDark ? 'bg-orange-900/20' : 'bg-orange-50'
+              }`}
           >
             <p className={`text-sm font-semibold ${isDark ? 'text-orange-300' : 'text-orange-700'}`}>
               ⚠️ {overdueTasks.length} overdue task{overdueTasks.length > 1 ? 's' : ''} - Complete ASAP!
@@ -383,9 +340,8 @@ const AIInsightsPanel = ({ tasks, isDark }) => {
         )}
 
         <div
-          className={`rounded-lg border-l-4 border-emerald-500 p-3 ${
-            isDark ? 'bg-emerald-900/20' : 'bg-emerald-50'
-          }`}
+          className={`rounded-lg border-l-4 border-emerald-500 p-3 ${isDark ? 'bg-emerald-900/20' : 'bg-emerald-50'
+            }`}
         >
           <p className={`text-sm font-semibold ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>
             ✨ Productivity: {productivity}% - Keep the momentum!
@@ -393,9 +349,8 @@ const AIInsightsPanel = ({ tasks, isDark }) => {
         </div>
 
         <div
-          className={`rounded-lg border-l-4 border-blue-500 p-3 ${
-            isDark ? 'bg-blue-900/20' : 'bg-blue-50'
-          }`}
+          className={`rounded-lg border-l-4 border-blue-500 p-3 ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'
+            }`}
         >
           <p className={`text-sm font-semibold ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>
             💡 Tip: Focus on high-priority tasks first for maximum impact
@@ -448,11 +403,10 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div
-        className={`w-full max-w-md rounded-2xl shadow-2xl ${
-          isDark
-            ? 'bg-gradient-to-br from-slate-900 to-blue-900'
-            : 'bg-gradient-to-br from-white to-blue-50'
-        }`}
+        className={`w-full max-w-md rounded-2xl shadow-2xl ${isDark
+          ? 'bg-gradient-to-br from-slate-900 to-blue-900'
+          : 'bg-gradient-to-br from-white to-blue-50'
+          }`}
       >
         <div className="relative p-6">
           <button
@@ -474,9 +428,8 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
             <div>
               <label
                 htmlFor="title"
-                className={`mb-2 block text-sm font-semibold ${
-                  isDark ? 'text-slate-300' : 'text-slate-700'
-                }`}
+                className={`mb-2 block text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'
+                  }`}
               >
                 Task Title
               </label>
@@ -486,11 +439,10 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="e.g., Complete Math Assignment"
-                className={`w-full rounded-lg border px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isDark
-                    ? 'border-slate-700 bg-slate-800/50 text-white placeholder-slate-500'
-                    : 'border-slate-200 bg-white/50 text-slate-900 placeholder-slate-400'
-                }`}
+                className={`w-full rounded-lg border px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDark
+                  ? 'border-slate-700 bg-slate-800/50 text-white placeholder-slate-500'
+                  : 'border-slate-200 bg-white/50 text-slate-900 placeholder-slate-400'
+                  }`}
               />
             </div>
 
@@ -498,9 +450,8 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
             <div>
               <label
                 htmlFor="subject"
-                className={`mb-2 block text-sm font-semibold ${
-                  isDark ? 'text-slate-300' : 'text-slate-700'
-                }`}
+                className={`mb-2 block text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'
+                  }`}
               >
                 Subject
               </label>
@@ -508,11 +459,10 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
                 id="subject"
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                className={`w-full rounded-lg border px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isDark
-                    ? 'border-slate-700 bg-slate-800/50 text-white'
-                    : 'border-slate-200 bg-white/50 text-slate-900'
-                }`}
+                className={`w-full rounded-lg border px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDark
+                  ? 'border-slate-700 bg-slate-800/50 text-white'
+                  : 'border-slate-200 bg-white/50 text-slate-900'
+                  }`}
               >
                 <option>Mathematics</option>
                 <option>Physics</option>
@@ -529,9 +479,8 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
             <div>
               <label
                 htmlFor="deadline"
-                className={`mb-2 block text-sm font-semibold ${
-                  isDark ? 'text-slate-300' : 'text-slate-700'
-                }`}
+                className={`mb-2 block text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'
+                  }`}
               >
                 Deadline
               </label>
@@ -540,11 +489,10 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
                 type="datetime-local"
                 value={formData.deadline}
                 onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                className={`w-full rounded-lg border px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isDark
-                    ? 'border-slate-700 bg-slate-800/50 text-white'
-                    : 'border-slate-200 bg-white/50 text-slate-900'
-                }`}
+                className={`w-full rounded-lg border px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDark
+                  ? 'border-slate-700 bg-slate-800/50 text-white'
+                  : 'border-slate-200 bg-white/50 text-slate-900'
+                  }`}
               />
             </div>
 
@@ -552,9 +500,8 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
             <div>
               <label
                 htmlFor="description"
-                className={`mb-2 block text-sm font-semibold ${
-                  isDark ? 'text-slate-300' : 'text-slate-700'
-                }`}
+                className={`mb-2 block text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'
+                  }`}
               >
                 Description (optional)
               </label>
@@ -564,11 +511,10 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Add task details..."
                 rows="3"
-                className={`w-full rounded-lg border px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isDark
-                    ? 'border-slate-700 bg-slate-800/50 text-white placeholder-slate-500'
-                    : 'border-slate-200 bg-white/50 text-slate-900 placeholder-slate-400'
-                }`}
+                className={`w-full rounded-lg border px-4 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDark
+                  ? 'border-slate-700 bg-slate-800/50 text-white placeholder-slate-500'
+                  : 'border-slate-200 bg-white/50 text-slate-900 placeholder-slate-400'
+                  }`}
               />
             </div>
 
@@ -577,11 +523,10 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
               <button
                 type="button"
                 onClick={onClose}
-                className={`flex-1 rounded-lg px-4 py-2 font-semibold transition-all ${
-                  isDark
-                    ? 'hover:bg-slate-700/50 text-slate-300'
-                    : 'hover:bg-slate-100 text-slate-700'
-                }`}
+                className={`flex-1 rounded-lg px-4 py-2 font-semibold transition-all ${isDark
+                  ? 'hover:bg-slate-700/50 text-slate-300'
+                  : 'hover:bg-slate-100 text-slate-700'
+                  }`}
               >
                 Cancel
               </button>
@@ -604,6 +549,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, isDark }) => {
 // ============================================================================
 
 export default function Dashboard() {
+  const [open, setOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [tasks, setTasks] = useState(MOCK_TASKS);
   const [filter, setFilter] = useState('all');
@@ -733,19 +679,17 @@ export default function Dashboard() {
 
   return (
     <div
-      className={`min-h-screen ${
-        isDark
-          ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900'
-          : 'bg-gradient-to-br from-slate-50 to-blue-50'
-      }`}
+      className={`min-h-screen ${isDark
+        ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900'
+        : 'bg-gradient-to-br from-slate-50 to-blue-50'
+        }`}
     >
       {/* ========== NAVBAR ========== */}
       <nav
-        className={`sticky top-0 z-40 backdrop-blur-md shadow-lg ring-1 ${
-          isDark
-            ? 'bg-slate-900/80 ring-slate-700/50'
-            : 'bg-white/80 ring-slate-200/50'
-        }`}
+        className={`sticky top-0 z-40 backdrop-blur-md shadow-lg ring-1 ${isDark
+          ? 'bg-slate-900/80 ring-slate-700/50'
+          : 'bg-white/80 ring-slate-200/50'
+          }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
@@ -755,9 +699,8 @@ export default function Dashboard() {
                 <Zap className="h-6 w-6 text-white" />
               </div>
               <h1
-                className={`text-xl font-bold ${
-                  isDark ? 'text-white' : 'text-slate-900'
-                } hidden sm:block`}
+                className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'
+                  } hidden sm:block`}
               >
                 StudyFlow
               </h1>
@@ -765,9 +708,8 @@ export default function Dashboard() {
 
             {/* Date - Hidden on mobile */}
             <div
-              className={`hidden sm:block text-sm font-medium ${
-                isDark ? 'text-slate-400' : 'text-slate-600'
-              }`}
+              className={`hidden sm:block text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'
+                }`}
             >
               {new Date().toLocaleDateString('en-US', {
                 weekday: 'long',
@@ -792,11 +734,10 @@ export default function Dashboard() {
 
               {/* Notifications */}
               <button
-                className={`relative rounded-lg p-2 transition-all hover:scale-110 ${
-                  isDark
-                    ? 'hover:bg-slate-800 text-slate-400'
-                    : 'hover:bg-slate-100 text-slate-600'
-                }`}
+                className={`relative rounded-lg p-2 transition-all hover:scale-110 ${isDark
+                  ? 'hover:bg-slate-800 text-slate-400'
+                  : 'hover:bg-slate-100 text-slate-600'
+                  }`}
                 aria-label="Notifications"
               >
                 <Bell className="h-5 w-5" />
@@ -806,11 +747,10 @@ export default function Dashboard() {
               {/* Theme Toggle */}
               <button
                 onClick={() => setIsDark(!isDark)}
-                className={`rounded-lg p-2 transition-all hover:scale-110 ${
-                  isDark
-                    ? 'hover:bg-slate-800 text-slate-400'
-                    : 'hover:bg-slate-100 text-slate-600'
-                }`}
+                className={`rounded-lg p-2 transition-all hover:scale-110 ${isDark
+                  ? 'hover:bg-slate-800 text-slate-400'
+                  : 'hover:bg-slate-100 text-slate-600'
+                  }`}
                 aria-label="Toggle dark mode"
               >
                 {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -829,11 +769,10 @@ export default function Dashboard() {
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className={`md:hidden rounded-lg p-2 ${
-                  isDark
-                    ? 'hover:bg-slate-800 text-slate-400'
-                    : 'hover:bg-slate-100 text-slate-600'
-                }`}
+                className={`md:hidden rounded-lg p-2 ${isDark
+                  ? 'hover:bg-slate-800 text-slate-400'
+                  : 'hover:bg-slate-100 text-slate-600'
+                  }`}
                 aria-label="Toggle menu"
               >
                 {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -848,9 +787,8 @@ export default function Dashboard() {
         {/* Header Section */}
         <div className="mb-8">
           <h1
-            className={`text-3xl font-bold ${
-              isDark ? 'text-white' : 'text-slate-900'
-            }`}
+            className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'
+              }`}
           >
             Welcome back! 👋
           </h1>
@@ -902,16 +840,14 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-6">
             {/* Priority Distribution Chart */}
             <div
-              className={`rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 ${
-                isDark
-                  ? 'bg-slate-800/80 ring-slate-700/50'
-                  : 'bg-white/80 ring-slate-200/50'
-              }`}
+              className={`rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 ${isDark
+                ? 'bg-slate-800/80 ring-slate-700/50'
+                : 'bg-white/80 ring-slate-200/50'
+                }`}
             >
               <h3
-                className={`mb-4 font-bold text-lg ${
-                  isDark ? 'text-white' : 'text-slate-900'
-                }`}
+                className={`mb-4 font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'
+                  }`}
               >
                 📊 Task Priority Distribution
               </h3>
@@ -944,16 +880,14 @@ export default function Dashboard() {
 
             {/* Deadline Status Chart */}
             <div
-              className={`rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 ${
-                isDark
-                  ? 'bg-slate-800/80 ring-slate-700/50'
-                  : 'bg-white/80 ring-slate-200/50'
-              }`}
+              className={`rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 ${isDark
+                ? 'bg-slate-800/80 ring-slate-700/50'
+                : 'bg-white/80 ring-slate-200/50'
+                }`}
             >
               <h3
-                className={`mb-4 font-bold text-lg ${
-                  isDark ? 'text-white' : 'text-slate-900'
-                }`}
+                className={`mb-4 font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'
+                  }`}
               >
                 ⏰ Deadline Status
               </h3>
@@ -988,18 +922,16 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
           <div className="lg:col-span-3">
             <div
-              className={`rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 ${
-                isDark
-                  ? 'bg-slate-800/80 ring-slate-700/50'
-                  : 'bg-white/80 ring-slate-200/50'
-              }`}
+              className={`rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 ${isDark
+                ? 'bg-slate-800/80 ring-slate-700/50'
+                : 'bg-white/80 ring-slate-200/50'
+                }`}
             >
               {/* Header with Actions */}
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h3
-                  className={`font-bold text-lg ${
-                    isDark ? 'text-white' : 'text-slate-900'
-                  }`}
+                  className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'
+                    }`}
                 >
                   📋 Recent Tasks
                 </h3>
@@ -1012,29 +944,35 @@ export default function Dashboard() {
                     <Plus className="h-4 w-4" />
                     <span>Add Task</span>
                   </button>
-
                   {/* Filter Dropdown */}
-                  <div className="relative group">
+                  <div className="relative">
                     <button
-                      className={`flex items-center gap-2 rounded-lg px-4 py-2 font-semibold transition-all ${
-                        isDark
-                          ? 'hover:bg-slate-700/50 text-slate-300'
-                          : 'hover:bg-slate-100 text-slate-700'
-                      }`}
+                      onClick={() => setOpen(!open)}
+                      className={`flex items-center gap-2 rounded-lg px-4 py-2 font-semibold transition-all ${isDark
+                        ? 'hover:bg-slate-700/50 text-slate-300'
+                        : 'hover:bg-slate-100 text-slate-700'
+                        }`}
                       aria-label="Filter tasks"
                     >
                       <Filter className="h-4 w-4" />
                       <span>Filter</span>
-                      <ChevronDown className="h-4 w-4" />
+
+                      {/* Arrow Rotate */}
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform duration-300 ${open ? 'rotate-180' : ''
+                          }`}
+                      />
                     </button>
 
                     {/* Dropdown Menu */}
                     <div
-                      className={`absolute right-0 mt-0 hidden w-48 rounded-lg shadow-xl ring-1 group-hover:block ${
-                        isDark
+                      className={`absolute right-0 top-full mt-2 w-48 rounded-lg shadow-xl ring-1 z-50 transform transition-all duration-200 origin-top ${open
+                        ? 'scale-100 opacity-100'
+                        : 'scale-95 opacity-0 pointer-events-none'
+                        } ${isDark
                           ? 'bg-slate-800 ring-slate-700'
                           : 'bg-white ring-slate-200'
-                      }`}
+                        }`}
                     >
                       {[
                         { label: 'All Tasks', value: 'all' },
@@ -1045,18 +983,18 @@ export default function Dashboard() {
                       ].map((option) => (
                         <button
                           key={option.value}
-                          onClick={() => setFilter(option.value)}
-                          className={`block w-full px-4 py-2 text-left text-sm transition-all ${
-                            filter === option.value
-                              ? isDark
-                                ? 'bg-blue-900/50 text-blue-300'
-                                : 'bg-blue-50 text-blue-700'
-                              : isDark
-                                ? 'text-slate-300 hover:bg-slate-700/50'
-                                : 'text-slate-700 hover:bg-slate-100'
-                          } ${option.value === 'all' ? 'rounded-t-lg' : ''} ${
-                            option.value === 'high-priority' ? 'rounded-b-lg' : ''
-                          }`}
+                          onClick={() => {
+                            setFilter(option.value);
+                            setOpen(false); // Close after click
+                          }}
+                          className={`block w-full px-4 py-2 text-left text-sm transition-all ${filter === option.value
+                            ? isDark
+                              ? 'bg-blue-900/50 text-blue-300'
+                              : 'bg-blue-50 text-blue-700'
+                            : isDark
+                              ? 'text-slate-300 hover:bg-slate-700/50'
+                              : 'text-slate-700 hover:bg-slate-100'
+                            }`}
                         >
                           {option.label}
                         </button>
@@ -1097,9 +1035,8 @@ export default function Dashboard() {
                 <div className="flex flex-col items-center justify-center py-12">
                   <CheckCircle className={`h-12 w-12 mb-4 ${isDark ? 'text-slate-600' : 'text-slate-300'}`} />
                   <p
-                    className={`text-sm font-medium ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}
+                    className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'
+                      }`}
                   >
                     {searchQuery
                       ? 'No tasks matching your search'
@@ -1122,17 +1059,15 @@ export default function Dashboard() {
 
       {/* ========== Footer ========== */}
       <footer
-        className={`border-t py-8 ${
-          isDark
-            ? 'border-slate-700/50 bg-slate-900/50'
-            : 'border-slate-200/50 bg-white/30'
-        }`}
+        className={`border-t py-8 ${isDark
+          ? 'border-slate-700/50 bg-slate-900/50'
+          : 'border-slate-200/50 bg-white/30'
+          }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <p
-            className={`text-center text-sm ${
-              isDark ? 'text-slate-400' : 'text-slate-600'
-            }`}
+            className={`text-center text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'
+              }`}
           >
             Smart Student Productivity System © 2024. Build with ❤️ for academic success.
           </p>

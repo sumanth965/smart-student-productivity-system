@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, Chrome, Facebook } from 'lucide-react';
 
 const Login = () => {
@@ -14,11 +15,16 @@ const Login = () => {
         setPageLoaded(true);
     }, []);
 
+    const navigate = useNavigate();
+
     const handleSubmit = (e) => {
         e.preventDefault();
         setIsLoading(true);
         console.log('Login submitted:', { email, password, rememberMe });
-        setTimeout(() => setIsLoading(false), 1000);
+        setTimeout(() => {
+            setIsLoading(false);
+            navigate('/dashboard');
+        }, 1000);
     };
 
     const handleSocialLogin = (provider) => {
