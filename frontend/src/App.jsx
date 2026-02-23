@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage'
 import Dashboard from './pages/Dasboard'
 import DeadlineReminder from './pages/Deadlinereminder'
 import AIModule from './pages/Aimodule '
+import AdminTeacher from './pages/AdminTeacher'
 
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/deadline" element={<DeadlineReminder />} />
         <Route path="/ai" element={<AIModule />} />
+        <Route path="/admin" element={<AdminTeacher />} />
       </Routes>
     </BrowserRouter>
   )
