@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Lock, Mail, Eye, EyeOff, Chrome, Facebook } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -10,6 +13,7 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [focusedInput, setFocusedInput] = useState(null);
     const [pageLoaded, setPageLoaded] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         setPageLoaded(true);
@@ -17,14 +21,31 @@ const Login = () => {
 
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        console.log('Login submitted:', { email, password, rememberMe });
-        setTimeout(() => {
-            setIsLoading(false);
+        setErrorMessage('');
+
+        try {
+            const { data } = await axios.post(`${API_BASE_URL}/api/users/login`, {
+                email,
+                password,
+            });
+
+            if (rememberMe) {
+                localStorage.setItem('student_user', JSON.stringify(data.user));
+            } else {
+                sessionStorage.setItem('student_user', JSON.stringify(data.user));
+            }
+
             navigate('/dashboard');
-        }, 1000);
+        } catch (error) {
+            setErrorMessage(
+                error.response?.data?.message || 'Login failed. Please check your credentials and try again.'
+            );
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleSocialLogin = (provider) => {
@@ -215,6 +236,12 @@ const Login = () => {
 
                                     {/* Form */}
                                     <form onSubmit={handleSubmit} className="relative z-10 space-y-5">
+                                        {errorMessage && (
+                                            <p className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2">
+                                                {errorMessage}
+                                            </p>
+                                        )}
+
                                         {/* Email Input */}
                                         <div className="group/email">
                                             <label htmlFor="email" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
