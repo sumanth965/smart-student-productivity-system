@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { User, Mail, Lock, Shield, Eye, EyeOff, Chrome, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -19,6 +23,9 @@ const Register = () => {
     const [pageLoaded, setPageLoaded] = useState(false);
     const [errors, setErrors] = useState({});
     const [passwordStrength, setPasswordStrength] = useState(0);
+    const [apiError, setApiError] = useState('');
+    const [apiSuccess, setApiSuccess] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         setPageLoaded(true);
@@ -100,26 +107,25 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setApiError('');
+        setApiSuccess('');
 
         if (!validateForm()) {
-            console.log('Form validation failed:', errors);
             return;
         }
 
         setIsLoading(true);
-        console.log('Register submitted:', {
-            fullName: formData.fullName,
-            email: formData.email,
-            password: '***',
-            studentId: formData.studentId || 'Not provided',
-            rememberMe: formData.rememberMe,
-        });
 
-        // Simulate API call
-        setTimeout(() => {
-            setIsLoading(false);
-            alert(`Welcome ${formData.fullName}! Account creation simulated.`);
-            // Reset form
+        try {
+            await axios.post(`${API_BASE_URL}/api/users/register`, {
+                name: formData.fullName,
+                email: formData.email,
+                password: formData.password,
+                phone: formData.studentId,
+            });
+
+            setApiSuccess('Account created successfully. Redirecting to login...');
+
             setFormData({
                 fullName: '',
                 email: '',
@@ -128,7 +134,15 @@ const Register = () => {
                 studentId: '',
                 rememberMe: false,
             });
-        }, 1500);
+
+            setTimeout(() => navigate('/login'), 1000);
+        } catch (error) {
+            setApiError(
+                error.response?.data?.message || 'Registration failed. Please try again.'
+            );
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleSocialLogin = (provider) => {
@@ -340,6 +354,12 @@ const Register = () => {
                                         initial="hidden"
                                         animate={pageLoaded ? "visible" : "hidden"}
                                     >
+                                        {apiError && (
+                                            <p className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2">{apiError}</p>
+                                        )}
+                                        {apiSuccess && (
+                                            <p className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900 rounded-lg px-3 py-2">{apiSuccess}</p>
+                                        )}
                                         {/* Full Name */}
                                         <motion.div className="form-group" variants={itemVariants}>
                                             <label htmlFor="fullName" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
