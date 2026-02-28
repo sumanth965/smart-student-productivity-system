@@ -33,8 +33,10 @@ const Login = () => {
             });
 
             if (rememberMe) {
+                localStorage.setItem('student_token', data.token);
                 localStorage.setItem('student_user', JSON.stringify(data.user));
             } else {
+                sessionStorage.setItem('student_token', data.token);
                 sessionStorage.setItem('student_user', JSON.stringify(data.user));
             }
 
@@ -73,10 +75,10 @@ const Login = () => {
                         </span>
                     </div>
                     <div className="flex gap-4">
-                        <a href="login" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
+                        <a href="/login" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-blue-600 dark:border-blue-400">
                             Login
                         </a>
-                       <a href="register" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
+                        <a href="/register" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
                             Register
                         </a>
                     </div>
@@ -335,7 +337,7 @@ const Login = () => {
                                         {/* Register Link */}
                                         <p className="text-center text-slate-600 dark:text-slate-400 text-sm">
                                             Don't have an account?{' '}
-                                            <a href="register" className="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 hover:underline">
+                                            <a href="/register" className="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 hover:underline">
                                                 Register
                                             </a>
                                         </p>
@@ -364,7 +366,7 @@ const Login = () => {
                                             <span>Login with Google</span>
                                         </button>
 
-                                       {/*  Facebook Button */}
+                                        {/*  Facebook Button */}
                                         {/* <button
                                             type="button"
                                             onClick={() => handleSocialLogin('Facebook')}

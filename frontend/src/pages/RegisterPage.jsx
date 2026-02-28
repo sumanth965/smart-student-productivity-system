@@ -117,14 +117,23 @@ const Register = () => {
         setIsLoading(true);
 
         try {
-            await axios.post(`${API_BASE_URL}/api/users/register`, {
+            const { data } = await axios.post(`${API_BASE_URL}/api/users/register`, {
                 name: formData.fullName,
                 email: formData.email,
                 password: formData.password,
-                phone: formData.studentId,
+                usn: formData.studentId,
             });
 
-            setApiSuccess('Account created successfully. Redirecting to login...');
+            // Store token and user data
+            if (formData.rememberMe) {
+                localStorage.setItem('student_token', data.token);
+                localStorage.setItem('student_user', JSON.stringify(data.user));
+            } else {
+                sessionStorage.setItem('student_token', data.token);
+                sessionStorage.setItem('student_user', JSON.stringify(data.user));
+            }
+
+            setApiSuccess('Account created successfully! Redirecting to login...');
 
             setFormData({
                 fullName: '',
@@ -135,7 +144,7 @@ const Register = () => {
                 rememberMe: false,
             });
 
-            setTimeout(() => navigate('/login'), 1000);
+            setTimeout(() => navigate('/login'), 1500);
         } catch (error) {
             setApiError(
                 error.response?.data?.message || 'Registration failed. Please try again.'
@@ -202,7 +211,7 @@ const Register = () => {
                         </span>
                     </div>
                     <div className="flex gap-4">
-                        <a href="login" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
+                        <a href="/login" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
                             Login
                         </a>
                         <button className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-blue-600 dark:border-blue-400">
@@ -487,12 +496,12 @@ const Register = () => {
                                                             <div
                                                                 key={i}
                                                                 className={`h-2 flex-1 rounded-full transition-all duration-300 ${i < passwordStrength
-                                                                        ? passwordStrength <= 2
-                                                                            ? 'bg-red-500'
-                                                                            : passwordStrength <= 3
-                                                                                ? 'bg-orange-500'
-                                                                                : 'bg-green-500'
-                                                                        : 'bg-slate-300 dark:bg-slate-600'
+                                                                    ? passwordStrength <= 2
+                                                                        ? 'bg-red-500'
+                                                                        : passwordStrength <= 3
+                                                                            ? 'bg-orange-500'
+                                                                            : 'bg-green-500'
+                                                                    : 'bg-slate-300 dark:bg-slate-600'
                                                                     }`}
                                                             ></div>
                                                         ))}
@@ -650,7 +659,7 @@ const Register = () => {
                                         {/* Already have account link */}
                                         <motion.p className="text-center text-slate-600 dark:text-slate-400 text-sm" variants={itemVariants}>
                                             Already have an account?{' '}
-                                            <a href="login" className="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 hover:underline">
+                                            <a href="/login" className="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 hover:underline">
                                                 Login
                                             </a>
                                         </motion.p>
