@@ -4,6 +4,7 @@ import DashboardNavbar from '../components/dashboard/DashboardNavbar';
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import RecentTasksSection from '../components/dashboard/RecentTasksSection';
 import { calculatePriority, getDaysUntil, isOverdue, MOCK_TASKS } from '../components/dashboard/dashboardUtils';
+import LandingPage from './LandingPage';
 
 export default function Dashboard() {
   const [open, setOpen] = useState(false);
@@ -68,40 +69,44 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
-      <DashboardNavbar
-        isDark={isDark}
-        setIsDark={setIsDark}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        showMobileMenu={showMobileMenu}
-        setShowMobileMenu={setShowMobileMenu}
-      />
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <DashboardOverview
+    <>
+      {/* <LandingPage /> */}
+      <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
+        <DashboardNavbar
           isDark={isDark}
-          tasks={tasks}
-          stats={{ totalTasks, completedTasks, pendingTasks, productivity, productivityChange: '+12%' }}
-          deadlineData={deadlineData}
-        />
-
-        <RecentTasksSection
-          isDark={isDark}
-          open={open}
-          setOpen={setOpen}
-          filter={filter}
-          setFilter={setFilter}
+          setIsDark={setIsDark}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          recentTasks={recentTasks}
-          handleToggleTask={handleToggleTask}
-          handleDeleteTask={handleDeleteTask}
-          setShowAddModal={setShowAddModal}
+          showMobileMenu={showMobileMenu}
+          setShowMobileMenu={setShowMobileMenu}
         />
-      </main>
 
-      <AddTaskModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onAdd={handleAddTask} isDark={isDark} />
-    </div>
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <DashboardOverview
+            isDark={isDark}
+            tasks={tasks}
+            stats={{ totalTasks, completedTasks, pendingTasks, productivity, productivityChange: '+12%' }}
+            deadlineData={deadlineData}
+          />
+
+          <RecentTasksSection
+            isDark={isDark}
+            open={open}
+            setOpen={setOpen}
+            filter={filter}
+            setFilter={setFilter}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            recentTasks={recentTasks}
+            handleToggleTask={handleToggleTask}
+            handleDeleteTask={handleDeleteTask}
+            setShowAddModal={setShowAddModal}
+          />
+        </main>
+
+        <AddTaskModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onAdd={handleAddTask} isDark={isDark} />
+      </div>
+    </>
+
   );
 }
