@@ -4,7 +4,6 @@ import DashboardNavbar from '../components/dashboard/DashboardNavbar';
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import RecentTasksSection from '../components/dashboard/RecentTasksSection';
 import { calculatePriority, getDaysUntil, isOverdue, MOCK_TASKS } from '../components/dashboard/dashboardUtils';
-import LandingPage from './LandingPage';
 
 export default function Dashboard() {
   const [open, setOpen] = useState(false);
@@ -70,7 +69,6 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* <LandingPage /> */}
       <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
         <DashboardNavbar
           isDark={isDark}

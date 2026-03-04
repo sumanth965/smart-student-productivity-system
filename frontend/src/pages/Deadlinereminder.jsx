@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Clock, AlertCircle, CheckCircle2, ChevronLeft, Filter, Zap, Calendar, Flag, Bell, X, Check, Wind } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, Link } from 'react-router-dom';
 
 // ============================================================================
 // SAMPLE DATA - 20 realistic academic tasks for demo
@@ -378,7 +379,9 @@ const SkeletonLoader = () => (
 // ============================================================================
 // MAIN DEADLINE REMINDER COMPONENT
 // ============================================================================
-export default function DeadlineReminder({ isDark = false, onNavigateBack = () => { } }) {
+export default function DeadlineReminder({ isDark = false }) {
+    const navigate = useNavigate();
+    const onNavigateBack = () => navigate('/dashboard');
     const [tasks, setTasks] = useState(SAMPLE_TASKS);
     const [filter, setFilter] = useState('all');
     const [completedTasks, setCompletedTasks] = useState([]);

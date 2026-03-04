@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { useNavigate, Link } from 'react-router-dom';
 
 // ============================================================================
 // SAMPLE DATA - 25 academic tasks with importance & complexity
@@ -322,8 +323,8 @@ const AIChatBox = ({ tasks }) => {
                         >
                             <div
                                 className={`max-w-xs px-4 py-2 rounded-lg text-sm ${msg.role === 'user'
-                                        ? 'bg-blue-500 text-white rounded-br-none'
-                                        : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-none'
+                                    ? 'bg-blue-500 text-white rounded-br-none'
+                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-none'
                                     }`}
                             >
                                 {msg.text}
@@ -405,8 +406,8 @@ const RiskCard = ({ task, index }) => (
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{task.subject}</p>
             </div>
             <div className={`px-3 py-1 rounded-full text-xs font-bold text-white whitespace-nowrap ${task.aiPriority === 'HIGH' ? 'bg-red-500/90 shadow-lg shadow-red-500/40' :
-                    task.aiPriority === 'MEDIUM' ? 'bg-amber-500/90 shadow-lg shadow-amber-500/40' :
-                        'bg-green-500/90 shadow-lg shadow-green-500/40'
+                task.aiPriority === 'MEDIUM' ? 'bg-amber-500/90 shadow-lg shadow-amber-500/40' :
+                    'bg-green-500/90 shadow-lg shadow-green-500/40'
                 }`}>
                 {task.aiPriority}
             </div>
@@ -426,7 +427,9 @@ const RiskCard = ({ task, index }) => (
 // ============================================================================
 // MAIN AI MODULE COMPONENT
 // ============================================================================
-export default function AIModule({ isDark = false, onNavigateBack = () => { } }) {
+export default function AIModule({ isDark = false }) {
+    const navigate = useNavigate();
+    const onNavigateBack = () => navigate('/dashboard');
     const [tasks, setTasks] = useState(SAMPLE_TASKS);
     const [isAnalyzing, setIsAnalyzing] = useState(true);
     const [showExportModal, setShowExportModal] = useState(false);

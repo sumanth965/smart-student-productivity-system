@@ -22,7 +22,9 @@ import {
     Bell,
     Settings,
     Grid,
+    ChevronLeft,
 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 
 // Production mock data - 47 students across 5 classes
 const MOCK_STUDENTS = [
@@ -102,6 +104,7 @@ const OVERDUE_TASKS = [
 ];
 
 export default function AdminTeacher() {
+    const navigate = useNavigate();
     const [students, setStudents] = useState(MOCK_STUDENTS);
     const [selectedClass, setSelectedClass] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
@@ -237,6 +240,14 @@ export default function AdminTeacher() {
             <nav className={`sticky top-0 z-50 ${cardBg} border-b border-white/10 backdrop-blur-2xl`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
+                        <Link
+                            to="/dashboard"
+                            className="flex items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all text-slate-500 hover:text-slate-800"
+                            title="Back to Dashboard"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            <span className="hidden sm:inline text-sm font-medium">Dashboard</span>
+                        </Link>
                         <div className="text-3xl">👩‍🏫</div>
                         <h1 className={`text-2xl font-bold bg-gradient-to-r from-amber-600 via-orange-500 to-yellow-500 bg-clip-text text-transparent`}>
                             Teacher Dashboard
@@ -256,8 +267,8 @@ export default function AdminTeacher() {
                         <button
                             onClick={() => setDarkMode(!darkMode)}
                             className={`p-2 rounded-lg transition-all ${darkMode
-                                    ? 'bg-amber-500/20 text-amber-400'
-                                    : 'bg-slate-700/20 text-slate-600'
+                                ? 'bg-amber-500/20 text-amber-400'
+                                : 'bg-slate-700/20 text-slate-600'
                                 } hover:scale-110`}
                             title="Toggle dark mode"
                         >
@@ -272,7 +283,13 @@ export default function AdminTeacher() {
                             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                         </button>
                         <button
-                            onClick={() => alert('Logging out...')}
+                            onClick={() => {
+                                localStorage.removeItem('student_token');
+                                localStorage.removeItem('student_user');
+                                sessionStorage.removeItem('student_token');
+                                sessionStorage.removeItem('student_user');
+                                navigate('/login');
+                            }}
                             className="p-2 rounded-lg hover:bg-red-500/10 transition-all text-red-600"
                             title="Logout"
                         >
@@ -682,8 +699,8 @@ export default function AdminTeacher() {
                                     <div className="flex items-center justify-between">
                                         <span className={`${textSecondary} text-sm`}>Productivity</span>
                                         <span className={`font-bold text-sm ${student.productivity >= 85 ? 'text-emerald-600' :
-                                                student.productivity >= 70 ? 'text-blue-600' :
-                                                    student.productivity >= 60 ? 'text-amber-600' : 'text-red-600'
+                                            student.productivity >= 70 ? 'text-blue-600' :
+                                                student.productivity >= 60 ? 'text-amber-600' : 'text-red-600'
                                             }`}>
                                             {student.productivity}%
                                         </span>
