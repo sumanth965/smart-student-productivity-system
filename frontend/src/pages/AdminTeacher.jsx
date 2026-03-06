@@ -1,777 +1,1328 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
-    Users,
-    TrendingUp,
-    AlertCircle,
-    LogOut,
-    Search,
-    Download,
-    Mail,
-    ChevronDown,
-    BarChart3,
-    Calendar,
-    Clock,
-    Zap,
-    Eye,
-    Filter,
-    RefreshCw,
-    BookOpen,
-    Award,
-    Target,
-    Activity,
-    Bell,
-    Settings,
-    Grid,
-    ChevronLeft,
+    Users, Plus, Upload, Search, Filter, LogOut, Eye, Edit3, Trash2,
+    Mail, Copy, CheckCircle, XCircle, AlertCircle, RefreshCw, ChevronLeft,
+    ClipboardCopy, Download, X, User, Phone, BookOpen, Hash, Calendar,
+    Shield, FileText, Key, ChevronDown, Check, Loader2, Bell, MoreVertical,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from '../lib/axios';
 
-// Production mock data - 47 students across 5 classes
-const MOCK_STUDENTS = [
-    { id: 1, name: 'Anjali Sharma', class: '12A', productivity: 98, overdue: 0, subject: 'Physics', lastActive: '2 mins', tasksCompleted: 45, avatar: '👩‍🦰' },
-    { id: 2, name: 'Ravi Kumar', class: '12A', productivity: 92, overdue: 1, subject: 'Math', lastActive: '5 mins', tasksCompleted: 42, avatar: '👨‍💼' },
-    { id: 3, name: 'Priya Singh', class: '12A', productivity: 45, overdue: 4, subject: 'Chemistry', lastActive: '2 hours', tasksCompleted: 18, avatar: '👩‍🦱' },
-    { id: 4, name: 'Aditya Patel', class: '12A', productivity: 88, overdue: 0, subject: 'Physics', lastActive: '10 mins', tasksCompleted: 41, avatar: '👨‍🎓' },
-    { id: 5, name: 'Vikram Kumar', class: '12A', productivity: 42, overdue: 6, subject: 'English', lastActive: '1 day', tasksCompleted: 15, avatar: '👨‍🦲' },
-    { id: 6, name: 'Neha Desai', class: '12A', productivity: 85, overdue: 2, subject: 'Biology', lastActive: '3 mins', tasksCompleted: 39, avatar: '👩‍🎨' },
-    { id: 7, name: 'Karan Singh', class: '12A', productivity: 79, overdue: 3, subject: 'Math', lastActive: '20 mins', tasksCompleted: 36, avatar: '👨‍🚀' },
-    { id: 8, name: 'Divya Nair', class: '12A', productivity: 91, overdue: 0, subject: 'Physics', lastActive: '8 mins', tasksCompleted: 43, avatar: '👩‍⚕️' },
-    { id: 9, name: 'Rohan Verma', class: '12A', productivity: 38, overdue: 5, subject: 'Chemistry', lastActive: '3 days', tasksCompleted: 12, avatar: '👨‍💻' },
-    { id: 10, name: 'Sneha Gupta', class: '12A', productivity: 89, overdue: 1, subject: 'Biology', lastActive: '4 mins', tasksCompleted: 40, avatar: '👩‍🔬' },
-    { id: 11, name: 'Arjun Das', class: '12B', productivity: 84, overdue: 2, subject: 'Math', lastActive: '12 mins', tasksCompleted: 38, avatar: '👨‍⚖️' },
-    { id: 12, name: 'Pooja Sharma', class: '12B', productivity: 76, overdue: 4, subject: 'English', lastActive: '1 hour', tasksCompleted: 34, avatar: '👩‍💼' },
-    { id: 13, name: 'Sameer Khan', class: '12B', productivity: 52, overdue: 7, subject: 'Physics', lastActive: '6 hours', tasksCompleted: 20, avatar: '👨‍🏫' },
-    { id: 14, name: 'Shreya Menon', class: '12B', productivity: 93, overdue: 0, subject: 'Chemistry', lastActive: '1 min', tasksCompleted: 44, avatar: '👩‍🎓' },
-    { id: 15, name: 'Nikhil Joshi', class: '12B', productivity: 67, overdue: 5, subject: 'Biology', lastActive: '2 hours', tasksCompleted: 28, avatar: '👨‍🎨' },
-    { id: 16, name: 'Isha Reddy', class: '12B', productivity: 87, overdue: 1, subject: 'Math', lastActive: '7 mins', tasksCompleted: 39, avatar: '👩‍🚀' },
-    { id: 17, name: 'Deepak Singh', class: '12B', productivity: 55, overdue: 8, subject: 'English', lastActive: '1 day', tasksCompleted: 22, avatar: '👨‍🔬' },
-    { id: 18, name: 'Tanvi Kumar', class: '12B', productivity: 81, overdue: 2, subject: 'Physics', lastActive: '15 mins', tasksCompleted: 37, avatar: '👩‍⚕️' },
-    { id: 19, name: 'Arun Patel', class: '12B', productivity: 48, overdue: 6, subject: 'Chemistry', lastActive: '2 days', tasksCompleted: 16, avatar: '👨‍💻' },
-    { id: 20, name: 'Kavya Iyer', class: '12B', productivity: 86, overdue: 1, subject: 'Biology', lastActive: '5 mins', tasksCompleted: 40, avatar: '👩‍🏫' },
-    { id: 21, name: 'Manish Gupta', class: '11A', productivity: 79, overdue: 3, subject: 'Math', lastActive: '25 mins', tasksCompleted: 35, avatar: '👨‍🎓' },
-    { id: 22, name: 'Ritika Sinha', class: '11A', productivity: 88, overdue: 1, subject: 'Physics', lastActive: '6 mins', tasksCompleted: 40, avatar: '👩‍🎨' },
-    { id: 23, name: 'Prakash Rao', class: '11A', productivity: 61, overdue: 6, subject: 'Chemistry', lastActive: '4 hours', tasksCompleted: 24, avatar: '👨‍🚀' },
-    { id: 24, name: 'Nidhi Verma', class: '11A', productivity: 92, overdue: 0, subject: 'English', lastActive: '2 mins', tasksCompleted: 43, avatar: '👩‍⚕️' },
-    { id: 25, name: 'Bhavesh Kumar', class: '11A', productivity: 44, overdue: 7, subject: 'Biology', lastActive: '2 days', tasksCompleted: 14, avatar: '👨‍💼' },
-    { id: 26, name: 'Shreya Nair', class: '11A', productivity: 85, overdue: 2, subject: 'Math', lastActive: '9 mins', tasksCompleted: 38, avatar: '👩‍🔬' },
-    { id: 27, name: 'Harish Reddy', class: '11A', productivity: 73, overdue: 4, subject: 'Physics', lastActive: '30 mins', tasksCompleted: 32, avatar: '👨‍🏫' },
-    { id: 28, name: 'Ananya Singh', class: '11A', productivity: 90, overdue: 0, subject: 'Chemistry', lastActive: '3 mins', tasksCompleted: 42, avatar: '👩‍💻' },
-    { id: 29, name: 'Sanjay Verma', class: '11A', productivity: 56, overdue: 5, subject: 'English', lastActive: '5 hours', tasksCompleted: 21, avatar: '👨‍🎨' },
-    { id: 30, name: 'Pooja Desai', class: '11A', productivity: 84, overdue: 2, subject: 'Biology', lastActive: '11 mins', tasksCompleted: 38, avatar: '👩‍🚀' },
-    { id: 31, name: 'Vikram Singh', class: '11B', productivity: 77, overdue: 3, subject: 'Math', lastActive: '18 mins', tasksCompleted: 34, avatar: '👨‍⚖️' },
-    { id: 32, name: 'Anita Gupta', class: '11B', productivity: 87, overdue: 1, subject: 'Physics', lastActive: '4 mins', tasksCompleted: 39, avatar: '👩‍🎓' },
-    { id: 33, name: 'Rajesh Kumar', class: '11B', productivity: 58, overdue: 7, subject: 'Chemistry', lastActive: '1 day', tasksCompleted: 23, avatar: '👨‍💻' },
-    { id: 34, name: 'Divya Sharma', class: '11B', productivity: 91, overdue: 0, subject: 'English', lastActive: '1 min', tasksCompleted: 43, avatar: '👩‍🏫' },
-    { id: 35, name: 'Mohan Singh', class: '11B', productivity: 46, overdue: 8, subject: 'Biology', lastActive: '3 days', tasksCompleted: 13, avatar: '👨‍🔬' },
-    { id: 36, name: 'Neha Sharma', class: '11B', productivity: 83, overdue: 2, subject: 'Math', lastActive: '13 mins', tasksCompleted: 37, avatar: '👩‍⚕️' },
-    { id: 37, name: 'Arjun Nair', class: '11B', productivity: 71, overdue: 4, subject: 'Physics', lastActive: '35 mins', tasksCompleted: 31, avatar: '👨‍🎨' },
-    { id: 38, name: 'Swati Verma', class: '11B', productivity: 89, overdue: 0, subject: 'Chemistry', lastActive: '2 mins', tasksCompleted: 41, avatar: '👩‍💼' },
-    { id: 39, name: 'Ashok Kumar', class: '11B', productivity: 54, overdue: 6, subject: 'English', lastActive: '4 hours', tasksCompleted: 20, avatar: '👨‍🚀' },
-    { id: 40, name: 'Priya Nair', class: '11B', productivity: 82, overdue: 3, subject: 'Biology', lastActive: '8 mins', tasksCompleted: 36, avatar: '👩‍🔬' },
-    { id: 41, name: 'Rohan Patel', class: '11C', productivity: 75, overdue: 4, subject: 'Math', lastActive: '22 mins', tasksCompleted: 33, avatar: '👨‍⚖️' },
-    { id: 42, name: 'Sneha Kumar', class: '11C', productivity: 86, overdue: 2, subject: 'Physics', lastActive: '6 mins', tasksCompleted: 38, avatar: '👩‍🎓' },
-    { id: 43, name: 'Karan Desai', class: '11C', productivity: 59, overdue: 5, subject: 'Chemistry', lastActive: '2 hours', tasksCompleted: 22, avatar: '👨‍💻' },
-    { id: 44, name: 'Anjali Reddy', class: '11C', productivity: 94, overdue: 0, subject: 'English', lastActive: '30 seconds', tasksCompleted: 45, avatar: '👩‍🏫' },
-    { id: 45, name: 'Nitin Sharma', class: '11C', productivity: 41, overdue: 9, subject: 'Biology', lastActive: '1 day', tasksCompleted: 11, avatar: '👨‍🔬' },
-    { id: 46, name: 'Disha Verma', class: '11C', productivity: 81, overdue: 2, subject: 'Math', lastActive: '14 mins', tasksCompleted: 36, avatar: '👩‍⚕️' },
-    { id: 47, name: 'Sumit Singh', class: '11C', productivity: 68, overdue: 5, subject: 'Physics', lastActive: '40 mins', tasksCompleted: 29, avatar: '👨‍🎨' },
-];
+// ─── Constants ───────────────────────────────────────────────────────────────
+const CLASS_OPTIONS = ['11A', '11B', '12A', '12B'];
+const SECTION_OPTIONS = ['A', 'B', 'C'];
+const JOIN_YEARS = ['2023', '2024', '2025', '2026'];
+const PASSOUT_YEARS = ['2025', '2026', '2027', '2028'];
+const STATUS_OPTIONS = ['Active', 'Suspended'];
 
-const CLASSES = [
-    { name: '12A', students: 10, avgScore: 84, overdue: 2 },
-    { name: '12B', students: 10, avgScore: 76, overdue: 8 },
-    { name: '11A', students: 10, avgScore: 79, overdue: 4 },
-    { name: '11B', students: 10, avgScore: 80, overdue: 5 },
-    { name: '11C', students: 7, avgScore: 72, overdue: 4 },
-];
+const INITIAL_FORM = {
+    name: '', usn: '', phone: '', email: '', class: '12A', section: 'A',
+    rollNo: '', joinYear: '2026', passoutYear: '2027', parentPhone: '',
+    status: 'Active', notes: '',
+};
 
-const OVERDUE_TASKS = [
-    { studentId: 3, studentName: 'Priya Singh', task: 'Chemistry Lab Report', daysOverdue: 3, subject: 'Chemistry', priority: 'high' },
-    { studentId: 5, studentName: 'Vikram Kumar', task: 'English Essay', daysOverdue: 5, subject: 'English', priority: 'critical' },
-    { studentId: 9, studentName: 'Rohan Verma', task: 'Physics Project', daysOverdue: 4, subject: 'Physics', priority: 'critical' },
-    { studentId: 13, studentName: 'Sameer Khan', task: 'Math Assignment', daysOverdue: 6, subject: 'Math', priority: 'critical' },
-    { studentId: 15, studentName: 'Nikhil Joshi', task: 'Biology Worksheet', daysOverdue: 4, subject: 'Biology', priority: 'high' },
-    { studentId: 17, studentName: 'Deepak Singh', task: 'Chemistry Quiz', daysOverdue: 7, subject: 'Chemistry', priority: 'critical' },
-    { studentId: 19, studentName: 'Arun Patel', task: 'Physics Lab', daysOverdue: 5, subject: 'Physics', priority: 'critical' },
-    { studentId: 23, studentName: 'Prakash Rao', task: 'English Reading', daysOverdue: 3, subject: 'English', priority: 'high' },
-    { studentId: 25, studentName: 'Bhavesh Kumar', task: 'Math Project', daysOverdue: 6, subject: 'Math', priority: 'critical' },
-    { studentId: 29, studentName: 'Sanjay Verma', task: 'Biology Presentation', daysOverdue: 4, subject: 'Biology', priority: 'high' },
-    { studentId: 33, studentName: 'Rajesh Kumar', task: 'Chemistry Experiment', daysOverdue: 5, subject: 'Chemistry', priority: 'critical' },
-    { studentId: 35, studentName: 'Mohan Singh', task: 'Physics HW', daysOverdue: 7, subject: 'Physics', priority: 'critical' },
-    { studentId: 39, studentName: 'Ashok Kumar', task: 'English Homework', daysOverdue: 4, subject: 'English', priority: 'high' },
-    { studentId: 43, studentName: 'Karan Desai', task: 'Biology Report', daysOverdue: 3, subject: 'Biology', priority: 'high' },
-    { studentId: 45, studentName: 'Nitin Sharma', task: 'Math Homework', daysOverdue: 8, subject: 'Math', priority: 'critical' },
-];
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function generateLoginId(usn) { return usn ? usn.toUpperCase() : ''; }
+function generatePassword(usn) { return usn ? `${usn.toUpperCase()}@2026` : ''; }
 
+function validateStudent(data, existingStudents, editingId) {
+    const errors = {};
+    if (!data.name.trim()) errors.name = 'Full name is required';
+    if (!data.usn.trim()) {
+        errors.usn = 'USN is required';
+    } else {
+        const dup = existingStudents.find(
+            s => s.usn.toUpperCase() === data.usn.toUpperCase() && s.id !== editingId
+        );
+        if (dup) errors.usn = 'USN already exists';
+    }
+    if (!data.rollNo.trim()) errors.rollNo = 'Roll No is required';
+    if (data.phone && !/^\d{10}$/.test(data.phone.replace(/\D/g, '')))
+        errors.phone = 'Enter valid 10-digit phone';
+    if (data.parentPhone && !/^\d{10}$/.test(data.parentPhone.replace(/\D/g, '')))
+        errors.parentPhone = 'Enter valid 10-digit phone';
+    if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
+        errors.email = 'Enter valid email address';
+    return errors;
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+// Toast notification
+function Toast({ toasts, dismiss }) {
+    return (
+        <div className="fixed bottom-6 right-6 z-[100] space-y-3 pointer-events-none">
+            {toasts.map(t => (
+                <div
+                    key={t.id}
+                    className={`pointer-events-auto flex items-start gap-3 px-5 py-4 rounded-2xl shadow-2xl
+            border backdrop-blur-xl min-w-[300px] max-w-sm
+            ${t.type === 'success'
+                            ? 'bg-emerald-50/95 border-emerald-200 text-emerald-800'
+                            : t.type === 'error'
+                                ? 'bg-red-50/95 border-red-200 text-red-800'
+                                : 'bg-blue-50/95 border-blue-200 text-blue-800'}
+            animate-[slideIn_0.3s_ease]`}
+                >
+                    {t.type === 'success' ? <CheckCircle className="w-5 h-5 mt-0.5 shrink-0 text-emerald-500" />
+                        : t.type === 'error' ? <XCircle className="w-5 h-5 mt-0.5 shrink-0 text-red-500" />
+                            : <Bell className="w-5 h-5 mt-0.5 shrink-0 text-blue-500" />}
+                    <div className="flex-1">
+                        <p className="font-semibold text-sm">{t.title}</p>
+                        {t.message && <p className="text-xs opacity-80 mt-0.5">{t.message}</p>}
+                    </div>
+                    <button onClick={() => dismiss(t.id)} className="opacity-60 hover:opacity-100 transition-opacity">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// Status badge
+function StatusBadge({ status }) {
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border-2 whitespace-nowrap
+      ${status === 'Active'
+                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-700'
+                : 'bg-red-500/15 border-red-500/40 text-red-700'}`}
+        >
+            <span className={`w-1.5 h-1.5 rounded-full ${status === 'Active' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+            {status}
+        </span>
+    );
+}
+
+// Login credential badge with copy
+function LoginBadge({ usn, onCopy }) {
+    const [copied, setCopied] = useState(false);
+    const loginId = generateLoginId(usn);
+    const password = generatePassword(usn);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(`Login: ${loginId} | Pass: ${password}`).then(() => {
+            setCopied(true);
+            onCopy?.();
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            title={`Login: ${loginId} | Pass: ${password} (click to copy)`}
+            className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-bold
+        transition-all duration-200 hover:scale-105
+        ${copied
+                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-300 ring-2 ring-emerald-300/40'
+                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 hover:shadow-md'}`}
+        >
+            {copied ? <Check className="w-3 h-3" /> : <Key className="w-3 h-3" />}
+            {loginId || '—'}
+        </button>
+    );
+}
+
+// Field component
+function Field({ label, required, error, icon: Icon, children }) {
+    return (
+        <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase">
+                {Icon && <Icon className="inline w-3 h-3 mr-1 opacity-70" />}
+                {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+            </label>
+            {children}
+            {error && (
+                <p className="text-xs text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />{error}
+                </p>
+            )}
+        </div>
+    );
+}
+
+// Input wrapper
+function Input({ className = '', ...props }) {
+    return (
+        <input
+            className={`w-full px-3.5 py-2.5 rounded-xl border focus:outline-none transition-all text-sm
+        border-slate-200 bg-white/80 text-slate-900 placeholder-slate-400
+        focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400
+        hover:border-slate-300 ${className}`}
+            {...props}
+        />
+    );
+}
+
+// Select wrapper
+function Select({ className = '', children, ...props }) {
+    return (
+        <select
+            className={`w-full px-3.5 py-2.5 rounded-xl border focus:outline-none transition-all text-sm
+        border-slate-200 bg-white/80 text-slate-900
+        focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${className}`}
+            {...props}
+        >
+            {children}
+        </select>
+    );
+}
+
+// Confirm Delete Modal
+function DeleteModal({ student, onConfirm, onCancel }) {
+    if (!student) return null;
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4 border border-red-100">
+                <div className="text-center mb-6">
+                    <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                        <Trash2 className="w-7 h-7 text-red-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Delete Student?</h3>
+                    <p className="text-slate-600 text-sm">
+                        This will permanently remove <strong>{student.name}</strong> ({student.usn}) and their login credentials.
+                    </p>
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={onCancel}
+                        className="flex-1 py-2.5 rounded-xl border-2 border-slate-200 font-semibold text-slate-600 hover:bg-slate-50 transition-all"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={() => onConfirm(student.id)}
+                        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-pink-600 text-white font-semibold hover:shadow-lg hover:shadow-red-500/30 transition-all"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// View Tasks Modal
+function ViewTasksModal({ student, onClose }) {
+    if (!student) return null;
+    const mockTasks = [
+        { id: 1, title: 'Math Assignment #3', status: 'Pending', due: '2026-03-10' },
+        { id: 2, title: 'English Essay', status: 'Submitted', due: '2026-03-05' },
+        { id: 3, title: 'Physics Lab Report', status: 'Overdue', due: '2026-03-01' },
+    ];
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-md w-full mx-4 border border-blue-100">
+                <div className="flex items-center justify-between mb-5">
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-900">{student.name}'s Tasks</h3>
+                        <p className="text-sm text-slate-500">{student.class}-{student.section} · USN: {student.usn}</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                        <X className="w-5 h-5 text-slate-500" />
+                    </button>
+                </div>
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                    {mockTasks.map(task => (
+                        <div key={task.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <div>
+                                <p className="font-semibold text-sm text-slate-800">{task.title}</p>
+                                <p className="text-xs text-slate-500">Due: {task.due}</p>
+                            </div>
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-full
+                ${task.status === 'Submitted' ? 'bg-emerald-100 text-emerald-700'
+                                    : task.status === 'Overdue' ? 'bg-red-100 text-red-700'
+                                        : 'bg-amber-100 text-amber-700'}`}>
+                                {task.status}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+                <button
+                    onClick={onClose}
+                    className="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold hover:shadow-lg transition-all"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// CSV Import Modal
+function CSVImportModal({ onClose, onImport }) {
+    const [step, setStep] = useState('upload'); // upload | preview | success
+    const [preview, setPreview] = useState([]);
+    const [dragging, setDragging] = useState(false);
+    const fileRef = useRef(null);
+
+    const parseCSV = (text) => {
+        const lines = text.split('\n').filter(l => l.trim());
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z]/g, ''));
+        return lines.slice(1).map((line, idx) => {
+            const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+            const obj = {};
+            headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+            return {
+                id: `csv-${Date.now()}-${idx}`,
+                name: obj.name || obj.fullname || '',
+                usn: obj.usn || '',
+                phone: obj.phone || '',
+                email: obj.email || '',
+                class: obj.class || '12A',
+                section: obj.section || 'A',
+                rollNo: obj.rollno || obj.roll || '',
+                joinYear: obj.joinyear || '2026',
+                passoutYear: obj.passoutyear || '2027',
+                parentPhone: obj.parentphone || '',
+                status: obj.status || 'Active',
+                notes: obj.notes || '',
+                loginId: (obj.usn || '').toUpperCase(),
+                password: `${(obj.usn || '').toUpperCase()}@2026`,
+                createdAt: new Date().toISOString(),
+            };
+        }).filter(s => s.name && s.usn);
+    };
+
+    const handleFile = (file) => {
+        if (!file || !file.name.endsWith('.csv')) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            setPreview(parseCSV(e.target.result));
+            setStep('preview');
+        };
+        reader.readAsText(file);
+    };
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl p-7 max-w-2xl w-full mx-4 border border-indigo-100">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-slate-900">
+                        {step === 'upload' ? '📋 Import Students via CSV'
+                            : step === 'preview' ? `👀 Preview — ${preview.length} students found`
+                                : '🎉 Import Successful!'}
+                    </h3>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {step === 'upload' && (
+                    <>
+                        <div
+                            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+                            onDragLeave={() => setDragging(false)}
+                            onDrop={e => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
+                            onClick={() => fileRef.current?.click()}
+                            className={`border-3 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all
+                ${dragging
+                                    ? 'border-indigo-500 bg-indigo-50 scale-[1.02]'
+                                    : 'border-slate-200 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/50'}`}
+                        >
+                            <Upload className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                            <p className="font-semibold text-slate-700 mb-1">Drop CSV file here or click to browse</p>
+                            <p className="text-sm text-slate-400">Supports: name, usn, phone, email, class, section, rollNo, joinYear, passoutYear, status</p>
+                            <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={e => handleFile(e.target.files[0])} />
+                        </div>
+                        <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-700 font-mono">
+                            <p className="font-bold mb-1">CSV Format (headers):</p>
+                            name, usn, phone, email, class, section, rollNo, joinYear, passoutYear, parentPhone, status, notes
+                        </div>
+                    </>
+                )}
+
+                {step === 'preview' && (
+                    <>
+                        <div className="overflow-auto max-h-[40vh] rounded-xl border border-slate-100 mb-4">
+                            <table className="w-full text-sm">
+                                <thead className="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        {['Name', 'USN', 'Class', 'Section', 'Phone', 'Login ID', 'Password'].map(h => (
+                                            <th key={h} className="px-3 py-2.5 text-left font-semibold text-slate-600 text-xs whitespace-nowrap">{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {preview.map(s => (
+                                        <tr key={s.id} className="border-t border-slate-100 hover:bg-blue-50/30 transition-colors">
+                                            <td className="px-3 py-2 font-medium text-slate-800">{s.name}</td>
+                                            <td className="px-3 py-2 font-mono text-indigo-700">{s.usn}</td>
+                                            <td className="px-3 py-2">{s.class}</td>
+                                            <td className="px-3 py-2">{s.section}</td>
+                                            <td className="px-3 py-2 text-slate-500">{s.phone || '—'}</td>
+                                            <td className="px-3 py-2 font-mono text-xs bg-indigo-50 rounded">{s.loginId}</td>
+                                            <td className="px-3 py-2 font-mono text-xs bg-emerald-50 rounded">{s.password}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="flex gap-3">
+                            <button onClick={() => setStep('upload')} className="flex-1 py-2.5 rounded-xl border-2 border-slate-200 font-semibold text-slate-600 hover:bg-slate-50 transition-all">Back</button>
+                            <button
+                                onClick={() => { onImport(preview); setStep('success'); }}
+                                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold hover:shadow-lg transition-all"
+                            >
+                                ✅ Confirm Import ({preview.length} students)
+                            </button>
+                        </div>
+                    </>
+                )}
+
+                {step === 'success' && (
+                    <div className="text-center py-8">
+                        <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4 animate-bounce">
+                            <CheckCircle className="w-10 h-10 text-emerald-500" />
+                        </div>
+                        <h4 className="text-2xl font-bold text-slate-900 mb-2">{preview.length} Students Imported!</h4>
+                        <p className="text-slate-500 mb-6">All login credentials have been auto-generated.</p>
+                        <button onClick={onClose} className="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold hover:shadow-lg transition-all">
+                            Done 🎉
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ─── Task Assignment Modal ────────────────────────────────────────────────────
+function TaskAssignmentModal({ onClose, onAssign, taskForm, setTaskForm, errors, assigning }) {
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setTaskForm(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) {
+            // Clear error when user starts typing
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-2xl w-full mx-4 border border-blue-100 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-900">Assign New Task 📝</h3>
+                        <p className="text-sm text-slate-500">Create and assign tasks to students by class/section</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                        <X className="w-5 h-5 text-slate-500" />
+                    </button>
+                </div>
+
+                <div className="space-y-5">
+                    {/* Task Title */}
+                    <Field label="Task Title" required error={errors.title}>
+                        <Input
+                            name="title"
+                            value={taskForm.title}
+                            onChange={handleChange}
+                            placeholder="e.g., Complete Math Assignment #5"
+                            className={errors.title ? 'border-red-400 focus:ring-red-200' : ''}
+                        />
+                    </Field>
+
+                    {/* Subject */}
+                    <Field label="Subject" required error={errors.subject}>
+                        <Input
+                            name="subject"
+                            value={taskForm.subject}
+                            onChange={handleChange}
+                            placeholder="e.g., Mathematics, Physics, Chemistry"
+                            className={errors.subject ? 'border-red-400 focus:ring-red-200' : ''}
+                        />
+                    </Field>
+
+                    {/* Description */}
+                    <Field label="Description" required error={errors.description}>
+                        <textarea
+                            name="description"
+                            value={taskForm.description}
+                            onChange={handleChange}
+                            placeholder="Detailed task description and instructions..."
+                            rows={3}
+                            className={`w-full px-3.5 py-2.5 rounded-xl border focus:outline-none transition-all text-sm resize-none
+                                ${errors.description
+                                    ? 'border-red-400 focus:ring-red-200 bg-red-50/50'
+                                    : 'border-slate-200 bg-white/80 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400'
+                                }`}
+                        />
+                    </Field>
+
+                    {/* Class and Section Selection */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="Target Class" required error={errors.assignment}>
+                            <select
+                                name="class"
+                                value={taskForm.class}
+                                onChange={handleChange}
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                            >
+                                <option value="All">All Classes</option>
+                                {['11A', '11B', '12A', '12B'].map(cls => (
+                                    <option key={cls} value={cls}>{cls}</option>
+                                ))}
+                            </select>
+                        </Field>
+
+                        <Field label="Target Section" required>
+                            <select
+                                name="section"
+                                value={taskForm.section}
+                                onChange={handleChange}
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                            >
+                                <option value="All">All Sections</option>
+                                {['A', 'B', 'C'].map(sec => (
+                                    <option key={sec} value={sec}>Section {sec}</option>
+                                ))}
+                            </select>
+                        </Field>
+                    </div>
+
+                    {/* Due Date and Priority */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="Due Date" required error={errors.dueDate}>
+                            <Input
+                                name="dueDate"
+                                type="date"
+                                value={taskForm.dueDate}
+                                onChange={handleChange}
+                                min={new Date().toISOString().split('T')[0]}
+                                className={errors.dueDate ? 'border-red-400 focus:ring-red-200' : ''}
+                            />
+                        </Field>
+
+                        <Field label="Priority" required>
+                            <select
+                                name="priority"
+                                value={taskForm.priority}
+                                onChange={handleChange}
+                                className={`w-full px-3.5 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400
+                                    ${taskForm.priority === 'High' ? 'border-red-300 bg-red-50/50 text-red-700' :
+                                        taskForm.priority === 'Medium' ? 'border-amber-300 bg-amber-50/50 text-amber-700' :
+                                            'border-slate-200 bg-white/80 text-slate-700'}`}
+                            >
+                                <option value="Low">Low Priority</option>
+                                <option value="Medium">Medium Priority</option>
+                                <option value="High">High Priority</option>
+                            </select>
+                        </Field>
+                    </div>
+
+                    {/* Assignment Preview */}
+                    <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-200">
+                        <h4 className="font-semibold text-blue-900 mb-2">📊 Assignment Preview</h4>
+                        <div className="text-sm text-blue-800 space-y-1">
+                            <p><strong>Class:</strong> {taskForm.class === 'All' ? 'All Classes' : taskForm.class}</p>
+                            <p><strong>Section:</strong> {taskForm.section === 'All' ? 'All Sections' : `Section ${taskForm.section}`}</p>
+                            <p><strong>Target Students:</strong> {taskForm.class === 'All' && taskForm.section === 'All' ? 'All students' :
+                                `${taskForm.class === 'All' ? 'Multiple classes' : taskForm.class}${taskForm.section !== 'All' ? `-${taskForm.section}` : ''} students`}</p>
+                            <p><strong>Due:</strong> {taskForm.dueDate || 'Not set'}</p>
+                        </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={onAssign}
+                            disabled={assigning}
+                            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all flex items-center justify-center gap-2"
+                        >
+                            {assigning ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Assigning...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle className="w-4 h-4" />
+                                    Assign Task
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function AdminTeacher() {
     const navigate = useNavigate();
-    const [students, setStudents] = useState(MOCK_STUDENTS);
-    const [selectedClass, setSelectedClass] = useState('All');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [showNotifications, setShowNotifications] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
-    const [analyticsView, setAnalyticsView] = useState('overview');
 
-    // Calculate analytics
-    const totalStudents = students.length;
-    const avgProductivity = Math.round(
-        students.reduce((sum, s) => sum + s.productivity, 0) / students.length
-    );
-    const totalOverdue = students.reduce((sum, s) => sum + s.overdue, 0);
-    const classLeader = useMemo(() => {
-        const classAvgs = CLASSES.map(cls => ({
-            name: cls.name,
-            avg: Math.round(
-                students
-                    .filter(s => s.class === cls.name)
-                    .reduce((sum, s) => sum + s.productivity, 0) /
-                students.filter(s => s.class === cls.name).length
-            ),
-        })).sort((a, b) => b.avg - a.avg);
-        return classAvgs[0];
+    // ── State ──────────────────────────────────────────────────────────────────
+    const [students, setStudents] = useState([]);
+    const [formData, setFormData] = useState(INITIAL_FORM);
+    const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [toasts, setToasts] = useState([]);
+    const [deleteModal, setDeleteModal] = useState(null); // student object
+    const [viewTasksModal, setViewTasksModal] = useState(null);
+    const [showCSVModal, setShowCSVModal] = useState(false);
+    const [showTaskModal, setShowTaskModal] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterClass, setFilterClass] = useState('All');
+    const [filterSection, setFilterSection] = useState('All');
+    const [filterStatus, setFilterStatus] = useState('All');
+    const [submitting, setSubmitting] = useState(false);
+    const [newRowId, setNewRowId] = useState(null);  // for success animation
+    const formRef = useRef(null);
+
+    // ── Task Assignment State ──────────────────────────────────────────────────
+    const [taskForm, setTaskForm] = useState({
+        title: '',
+        description: '',
+        subject: '',
+        class: 'All',
+        section: 'All',
+        dueDate: '',
+        priority: 'Medium',
+        assignedStudents: [],
+    });
+    const [taskErrors, setTaskErrors] = useState({});
+    const [assigningTask, setAssigningTask] = useState(false);
+
+    // ── Toast helpers ──────────────────────────────────────────────────────────
+    const addToast = useCallback((type, title, message) => {
+        const id = Date.now();
+        setToasts(t => [...t, { id, type, title, message }]);
+        setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 4500);
     }, []);
 
-    // Filters
+    const dismissToast = useCallback((id) => {
+        setToasts(t => t.filter(x => x.id !== id));
+    }, []);
+
+    // ── Load students from backend ─────────────────────────────────────────────
+    useEffect(() => {
+        const fetchStudents = async () => {
+            setLoading(true);
+            try {
+                const resp = await axios.get('/api/students');
+                const data = Array.isArray(resp.data) ? resp.data
+                    : Array.isArray(resp.data?.data) ? resp.data.data
+                        : [];
+                // Map MongoDB _id to id for compatibility
+                const mappedData = data.map(student => ({
+                    ...student,
+                    id: student._id || student.id,
+                }));
+                setStudents(mappedData);
+                console.log('✅ GET /api/students ─ loaded', mappedData.length, 'students');
+            } catch (err) {
+                // Backend offline or endpoint missing — start with empty list
+                console.warn('⚠️ Could not fetch students from backend (offline?). Starting fresh.', err?.message || '');
+                setStudents([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStudents();
+    }, []);
+
+    // ── Derived state ──────────────────────────────────────────────────────────
     const filteredStudents = useMemo(() => {
         return students.filter(s => {
-            const matchesClass = selectedClass === 'All' || s.class === selectedClass;
-            const matchesSearch =
-                s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                s.subject.toLowerCase().includes(searchTerm.toLowerCase());
-            return matchesClass && matchesSearch;
+            const term = searchTerm.toLowerCase();
+            const matchSearch = !term ||
+                s.name.toLowerCase().includes(term) ||
+                s.usn.toLowerCase().includes(term) ||
+                (s.phone || '').includes(term) ||
+                (s.email || '').toLowerCase().includes(term);
+            const matchClass = filterClass === 'All' || s.class === filterClass;
+            const matchSection = filterSection === 'All' || s.section === filterSection;
+            const matchStatus = filterStatus === 'All' || s.status === filterStatus;
+            return matchSearch && matchClass && matchSection && matchStatus;
         });
-    }, [selectedClass, searchTerm]);
+    }, [students, searchTerm, filterClass, filterSection, filterStatus]);
 
-    // Risk detection
-    const highRiskStudents = useMemo(() => {
-        return students
-            .filter(s => s.overdue > 3 || s.productivity < 60)
-            .sort((a, b) => (b.overdue || 0) - (a.overdue || 0))
-            .slice(0, 5);
-    }, [students]);
-
-    // Top performers
-    const topPerformers = useMemo(() => {
-        return students
-            .filter(s => s.productivity >= 85)
-            .sort((a, b) => b.productivity - a.productivity)
-            .slice(0, 5);
-    }, [students]);
-
-    // Weekly heatmap data (days x classes)
-    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const heatmapData = useMemo(() => {
-        return weekDays.map((day, idx) => ({
-            day,
-            data: CLASSES.map(cls => {
-                const classStudents = students.filter(s => s.class === cls.name);
-                const baseAvg = classStudents.reduce((sum, s) => sum + s.productivity, 0) / classStudents.length;
-                const variation = Math.sin(idx * 0.5) * 10;
-                return Math.min(100, Math.max(0, baseAvg + variation));
-            }),
-        }));
-    }, []);
-
-    // Productivity trend (weekly)
-    const weeklyTrend = [
-        { week: 'Week 1', avg: 75 },
-        { week: 'Week 2', avg: 78 },
-        { week: 'Week 3', avg: 81 },
-        { week: 'Week 4', avg: 78 },
-        { week: 'Week 5', avg: 80 },
-    ];
-
-    const getProductivityColor = (score) => {
-        if (score >= 85) return 'from-emerald-500 to-teal-500';
-        if (score >= 70) return 'from-blue-500 to-cyan-500';
-        if (score >= 60) return 'from-amber-500 to-orange-500';
-        return 'from-red-500 to-pink-500';
+    // ── Form handlers ──────────────────────────────────────────────────────────
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
 
-    const getHeatmapColor = (value) => {
-        if (value >= 85) return 'bg-emerald-500';
-        if (value >= 75) return 'bg-blue-400';
-        if (value >= 65) return 'bg-amber-400';
-        if (value >= 50) return 'bg-orange-400';
-        return 'bg-red-500';
+    const resetForm = () => {
+        setFormData(INITIAL_FORM);
+        setErrors({});
+        setEditingId(null);
     };
 
-    const getPriorityBadge = (priority) => {
-        const styles = {
-            critical: 'bg-red-500/20 text-red-700 border-red-500/30',
-            high: 'bg-orange-500/20 text-orange-700 border-orange-500/30',
-            medium: 'bg-amber-500/20 text-amber-700 border-amber-500/30',
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const errs = validateStudent(formData, students, editingId);
+        if (Object.keys(errs).length) { setErrors(errs); return; }
+
+        setSubmitting(true);
+        const studentPayload = {
+            ...formData,
+            loginId: generateLoginId(formData.usn),
+            password: generatePassword(formData.usn),
+            createdBy: 'teacher',
         };
-        return styles[priority] || styles.medium;
+
+        try {
+            if (editingId) {
+                // ── UPDATE
+                const updatePayload = { ...studentPayload };
+                delete updatePayload.password; // Don't send password in UPDATE
+                console.log(`🔄 PUT /api/students/${editingId}`, updatePayload);
+                const resp = await axios.put(`/api/students/${editingId}`, updatePayload);
+                const updatedStudent = resp.data?.data || resp.data;
+                setStudents(prev => prev.map(s => s.id === editingId || s._id === editingId ? { ...s, ...updatedStudent, id: updatedStudent._id || updatedStudent.id } : s));
+                addToast('success', 'Student Updated ✏️', `${formData.name} has been updated.`);
+                setEditingId(null);
+            } else {
+                // ── CREATE
+                console.log('➕ POST /api/students', studentPayload);
+                const resp = await axios.post('/api/students', studentPayload);
+                const newStudent = resp.data?.data || resp.data;
+                const mappedStudent = { ...newStudent, id: newStudent._id || newStudent.id };
+                setStudents(prev => [mappedStudent, ...prev]);
+                setNewRowId(mappedStudent.id);
+                setTimeout(() => setNewRowId(null), 2000);
+                addToast('success', `Student Created! 🎉`, `${formData.name} → Login: ${mappedStudent.loginId} | Pass: ${studentPayload.password}`);
+            }
+            resetForm();
+        } catch (err) {
+            const errMsg = err.response?.data?.message || err.message || 'Could not save student';
+            addToast('error', 'Error ❌', errMsg);
+            console.error('Student save error:', err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleEdit = (student) => {
+        setFormData({
+            name: student.name, usn: student.usn, phone: student.phone || '',
+            email: student.email || '', class: student.class, section: student.section,
+            rollNo: student.rollNo || '', joinYear: student.joinYear || '2026',
+            passoutYear: student.passoutYear || '2027', parentPhone: student.parentPhone || '',
+            status: student.status, notes: student.notes || '',
+        });
+        setEditingId(student.id);
+        setErrors({});
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const handleDelete = async (id) => {
+        setSubmitting(true);
+        try {
+            console.log(`🗑️ DELETE /api/students/${id}`);
+            await axios.delete(`/api/students/${id}`);
+            setStudents(prev => prev.filter(s => s.id !== id && s._id !== id));
+            addToast('success', 'Student Removed ✓', 'The student account has been deleted.');
+            setDeleteModal(null);
+        } catch (err) {
+            const errMsg = err.response?.data?.message || err.message || 'Could not delete student';
+            addToast('error', 'Delete Error ❌', errMsg);
+            console.error('Delete error:', err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleResendLogin = (student) => {
+        const creds = `Login: ${generateLoginId(student.usn)} | Password: ${generatePassword(student.usn)}`;
+        navigator.clipboard.writeText(creds);
+        addToast('info', 'Credentials Copied!', `${creds}`);
+        console.log(`POST /api/admin/students/${student.id}/resend-login`);
+    };
+
+    const handleCSVImport = (csvStudents) => {
+        setStudents(prev => [...csvStudents, ...prev]);
+        console.log('POST /api/admin/students/csv-import', { count: csvStudents.length });
+        addToast('success', `${csvStudents.length} Students Imported! 🎉`, 'Login credentials auto-generated for all.');
+        setShowCSVModal(false);
+    };
+
+    // ── Task Assignment Handlers ───────────────────────────────────────────────
+    const handleTaskChange = (e) => {
+        const { name, value } = e.target;
+        setTaskForm(prev => ({ ...prev, [name]: value }));
+        if (taskErrors[name]) {
+            setTaskErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const validateTaskForm = () => {
+        const errors = {};
+        if (!taskForm.title.trim()) errors.title = 'Task title is required';
+        if (!taskForm.description.trim()) errors.description = 'Task description is required';
+        if (!taskForm.subject.trim()) errors.subject = 'Subject is required';
+        if (!taskForm.dueDate) errors.dueDate = 'Due date is required';
+        if (taskForm.class === 'All' && taskForm.section === 'All') {
+            errors.assignment = 'Please select at least one class or section';
+        }
+        return errors;
+    };
+
+    const handleAssignTask = async () => {
+        const errors = validateTaskForm();
+        if (Object.keys(errors).length > 0) {
+            setTaskErrors(errors);
+            return;
+        }
+
+        setAssigningTask(true);
+        try {
+            // Filter students based on class and section selection
+            let targetStudents = students;
+            if (taskForm.class !== 'All') {
+                targetStudents = targetStudents.filter(s => s.class === taskForm.class);
+            }
+            if (taskForm.section !== 'All') {
+                targetStudents = targetStudents.filter(s => s.section === taskForm.section);
+            }
+
+            const taskPayload = {
+                ...taskForm,
+                assignedTo: targetStudents.map(s => s._id || s.id),
+                assignedCount: targetStudents.length,
+            };
+
+            console.log('📌 POST /api/tasks', taskPayload);
+            const resp = await axios.post('/api/tasks', taskPayload);
+            const assignedTask = resp.data?.data || resp.data;
+
+            addToast('success', `Task Assigned! 📝`, `${taskForm.title} assigned to ${targetStudents.length} students in ${taskForm.class === 'All' ? 'all classes' : taskForm.class}${taskForm.section !== 'All' ? `-${taskForm.section}` : ''}`);
+
+            // Reset form
+            setTaskForm({
+                title: '',
+                description: '',
+                subject: '',
+                class: 'All',
+                section: 'All',
+                dueDate: '',
+                priority: 'Medium',
+                assignedStudents: [],
+            });
+            setTaskErrors({});
+            setShowTaskModal(false);
+
+        } catch (error) {
+            const errMsg = error.response?.data?.message || error.message || 'Could not assign task';
+            addToast('error', 'Assignment Error ❌', errMsg);
+            console.error('Task assignment error:', error);
+        } finally {
+            setAssigningTask(false);
+        }
     };
 
     const handleExportCSV = () => {
-        const csv = [
-            ['Student', 'Class', 'Productivity %', 'Overdue Count', 'Subject', 'Tasks Completed'],
+        const rows = [
+            ['Name', 'USN', 'Class', 'Section', 'Roll No', 'Phone', 'Email', 'Status', 'Login ID', 'Password', 'Join Year', 'Passout Year'],
             ...filteredStudents.map(s => [
-                s.name,
-                s.class,
-                s.productivity,
-                s.overdue,
-                s.subject,
-                s.tasksCompleted,
+                s.name, s.usn, s.class, s.section, s.rollNo || '',
+                s.phone || '', s.email || '', s.status,
+                generateLoginId(s.usn), generatePassword(s.usn),
+                s.joinYear || '', s.passoutYear || '',
             ]),
-        ]
-            .map(row => row.join(','))
-            .join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
+        ].map(r => r.join(',')).join('\n');
+
+        const blob = new Blob([rows], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `teacher_report_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `students_export_${Date.now()}.csv`;
         a.click();
+        URL.revokeObjectURL(url);
+        addToast('success', 'CSV Exported', `${filteredStudents.length} records downloaded.`);
     };
 
-    const bg = darkMode ? 'bg-slate-950' : 'bg-gradient-to-br from-slate-50 to-blue-50';
-    const cardBg = darkMode
-        ? 'bg-slate-900/40 backdrop-blur-md border border-slate-700/30'
-        : 'bg-white/40 backdrop-blur-xl border border-white/20';
-    const textPrimary = darkMode ? 'text-white' : 'text-slate-900';
-    const textSecondary = darkMode ? 'text-slate-400' : 'text-slate-600';
-
+    // ─── UI ──────────────────────────────────────────────────────────────────────
     return (
-        <div className={`min-h-screen ${bg} transition-colors duration-500`}>
-            {/* Navbar */}
-            <nav className={`sticky top-0 z-50 ${cardBg} border-b border-white/10 backdrop-blur-2xl`}>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Link
-                            to="/dashboard"
-                            className="flex items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all text-slate-500 hover:text-slate-800"
-                            title="Back to Dashboard"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                            <span className="hidden sm:inline text-sm font-medium">Dashboard</span>
-                        </Link>
-                        <div className="text-3xl">👩‍🏫</div>
-                        <h1 className={`text-2xl font-bold bg-gradient-to-r from-amber-600 via-orange-500 to-yellow-500 bg-clip-text text-transparent`}>
-                            Teacher Dashboard
-                        </h1>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="hidden sm:flex items-center gap-6 text-sm">
-                            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-blue-500/20">
-                                <Users className="w-4 h-4 text-blue-600" />
-                                <span className={`font-semibold ${textPrimary}`}>{totalStudents} Students</span>
-                            </div>
-                            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
-                                <Grid className="w-4 h-4 text-purple-600" />
-                                <span className={`font-semibold ${textPrimary}`}>{CLASSES.length} Classes</span>
-                            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+
+        {/* Modals */}
+        <DeleteModal student={deleteModal} onConfirm={handleDelete} onCancel={() => setDeleteModal(null)} />
+        {viewTasksModal && <ViewTasksModal student={viewTasksModal} onClose={() => setViewTasksModal(null)} />}
+        {showCSVModal && <CSVImportModal onClose={() => setShowCSVModal(false)} onImport={handleCSVImport} />}
+        <Toast toasts={toasts} dismiss={dismissToast} />
+
+        {/* ── Navbar ─────────────────────────────────────────────────────────── */}
+        <nav className="sticky top-0 z-50 backdrop-blur-2xl bg-white/80 border-b border-slate-200/60 shadow-sm">
+            <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+                {/* Left */}
+                <div className="flex items-center gap-3">
+                    <Link
+                        to="/dashboard"
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all text-sm font-medium"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span className="hidden sm:inline">Dashboard</span>
+                    </Link>
+                    <div className="h-6 w-px bg-slate-200" />
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/25">
+                            <span className="text-lg">👩‍🏫</span>
                         </div>
-                        <button
-                            onClick={() => setDarkMode(!darkMode)}
-                            className={`p-2 rounded-lg transition-all ${darkMode
-                                ? 'bg-amber-500/20 text-amber-400'
-                                : 'bg-slate-700/20 text-slate-600'
-                                } hover:scale-110`}
-                            title="Toggle dark mode"
-                        >
-                            {darkMode ? '🌙' : '☀️'}
-                        </button>
-                        <button
-                            onClick={() => setShowNotifications(!showNotifications)}
-                            className="relative p-2 rounded-lg hover:bg-white/10 transition-all"
-                            title="Notifications"
-                        >
-                            <Bell className="w-5 h-5 text-amber-500" />
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                        </button>
-                        <button
-                            onClick={() => {
-                                localStorage.removeItem('student_token');
-                                localStorage.removeItem('student_user');
-                                sessionStorage.removeItem('student_token');
-                                sessionStorage.removeItem('student_user');
-                                navigate('/login');
-                            }}
-                            className="p-2 rounded-lg hover:bg-red-500/10 transition-all text-red-600"
-                            title="Logout"
-                        >
-                            <LogOut className="w-5 h-5" />
-                        </button>
+                        <div>
+                            <h1 className="text-base font-bold text-slate-900 leading-none">Teacher Panel</h1>
+                            <p className="text-xs text-slate-400 leading-none mt-0.5">Student Management</p>
+                        </div>
                     </div>
                 </div>
-            </nav>
 
-            {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-                {/* Hero Stats - 4 KPI Cards */}
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Total Students */}
-                    <div className={`${cardBg} rounded-2xl p-6 group hover:shadow-2xl hover:shadow-blue-500/10 transition-all`}>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 group-hover:scale-110 transition-transform">
-                                <Users className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <span className="text-sm font-bold text-emerald-600 bg-emerald-500/20 px-2 py-1 rounded-lg">
-                                ↑ 12% this month
-                            </span>
-                        </div>
-                        <h3 className={`${textSecondary} text-sm font-medium mb-1`}>Total Students</h3>
-                        <p className={`text-3xl font-bold ${textPrimary}`}>{totalStudents}</p>
-                        <p className={`${textSecondary} text-xs mt-2`}>Across 5 classes</p>
+                {/* Center pills */}
+                <div className="hidden md:flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-sm font-semibold text-blue-700">
+                        <Users className="w-4 h-4" />
+                        <span>Students: {students.length}/100</span>
                     </div>
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-sm font-semibold text-emerald-700">
+                        <Shield className="w-4 h-4" />
+                        <span>Active: {students.filter(s => s.status === 'Active').length}</span>
+                    </div>
+                </div>
 
-                    {/* Average Productivity */}
-                    <div className={`${cardBg} rounded-2xl p-6 group hover:shadow-2xl hover:shadow-amber-500/10 transition-all`}>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 group-hover:scale-110 transition-transform">
-                                <TrendingUp className="w-6 h-6 text-amber-600" />
-                            </div>
-                            <span className="text-sm font-bold text-red-600 bg-red-500/20 px-2 py-1 rounded-lg">
-                                ↓ 3% week
-                            </span>
-                        </div>
-                        <h3 className={`${textSecondary} text-sm font-medium mb-1`}>Avg Productivity</h3>
-                        <p className={`text-3xl font-bold ${textPrimary}`}>{avgProductivity}%</p>
-                        <div className="w-full bg-slate-700/20 rounded-full h-1.5 mt-3 overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
-                                style={{ width: `${avgProductivity}%` }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Overdue Tasks */}
-                    <div className={`${cardBg} rounded-2xl p-6 group hover:shadow-2xl hover:shadow-red-500/10 transition-all`}>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-pink-500/20 group-hover:scale-110 transition-transform">
-                                <AlertCircle className="w-6 h-6 text-red-600" />
-                            </div>
-                            <span className="text-sm font-bold text-slate-600 bg-slate-500/20 px-2 py-1 rounded-lg">
-                                8% of total
-                            </span>
-                        </div>
-                        <h3 className={`${textSecondary} text-sm font-medium mb-1`}>Overdue Tasks</h3>
-                        <p className={`text-3xl font-bold ${textPrimary}`}>{totalOverdue}</p>
-                        <p className={`${textSecondary} text-xs mt-2`}>Requires immediate action</p>
-                    </div>
-
-                    {/* Class Leader */}
-                    <div className={`${cardBg} rounded-2xl p-6 group hover:shadow-2xl hover:shadow-emerald-500/10 transition-all`}>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 group-hover:scale-110 transition-transform">
-                                <Award className="w-6 h-6 text-emerald-600" />
-                            </div>
-                            <span className="text-sm font-bold text-emerald-600 bg-emerald-500/20 px-2 py-1 rounded-lg">
-                                Leading
-                            </span>
-                        </div>
-                        <h3 className={`${textSecondary} text-sm font-medium mb-1`}>Class Leader</h3>
-                        <p className={`text-3xl font-bold ${textPrimary}`}>{classLeader.avg}%</p>
-                        <p className={`${textSecondary} text-xs mt-2`}>{classLeader.name} - {classLeader.avg}% avg</p>
-                    </div>
-                </section>
-
-                {/* Filter Bar */}
-                <div className={`${cardBg} rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center`}>
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Search by student name, subject..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border border-white/20 ${darkMode ? 'bg-slate-800/50 text-white' : 'bg-white/50 text-slate-900'
-                                } placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50`}
-                        />
-                    </div>
-                    <div className="relative group">
-                        <button className={`${cardBg} rounded-xl px-4 py-2.5 flex items-center gap-2 hover:shadow-lg transition-all border border-white/20 font-medium`}>
-                            <Filter className="w-4 h-4" />
-                            {selectedClass === 'All' ? 'All Classes' : selectedClass}
-                            <ChevronDown className="w-4 h-4" />
-                        </button>
-                        <div className="absolute right-0 top-full mt-2 hidden group-hover:flex flex-col bg-slate-900 rounded-xl shadow-2xl z-50 border border-slate-700/50 overflow-hidden min-w-max">
-                            <button
-                                onClick={() => setSelectedClass('All')}
-                                className="px-4 py-2 text-left hover:bg-amber-500/20 transition-colors font-medium"
-                            >
-                                All Classes
-                            </button>
-                            {CLASSES.map(cls => (
-                                <button
-                                    key={cls.name}
-                                    onClick={() => setSelectedClass(cls.name)}
-                                    className="px-4 py-2 text-left hover:bg-amber-500/20 transition-colors"
-                                >
-                                    {cls.name} ({cls.students} students)
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                {/* Right actions */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowCSVModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-sm font-bold shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 transition-all"
+                    >
+                        <Upload className="w-4 h-4" />
+                        <span className="hidden sm:inline">Import CSV</span>
+                    </button>
                     <button
                         onClick={handleExportCSV}
-                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center gap-2 font-medium text-emerald-600"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-all"
                     >
                         <Download className="w-4 h-4" />
-                        Export CSV
+                        <span className="hidden sm:inline">Export</span>
                     </button>
                     <button
-                        onClick={() => setAnalyticsView(analyticsView === 'overview' ? 'detailed' : 'overview')}
-                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/20 transition-all flex items-center gap-2 font-medium text-blue-600"
+                        onClick={() => {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            navigate('/login');
+                        }}
+                        className="p-2 rounded-xl hover:bg-red-50 text-red-500 hover:text-red-700 transition-all"
+                        title="Logout"
                     >
-                        <BarChart3 className="w-4 h-4" />
-                        Analytics
+                        <LogOut className="w-5 h-5" />
                     </button>
                 </div>
+            </div>
+        </nav>
 
-                {/* Main Grid */}
-                <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Class Overview Cards */}
-                    <div className="lg:col-span-1 space-y-4">
-                        <h2 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
-                            <Grid className="w-5 h-5 text-amber-500" />
-                            Class Overview
-                        </h2>
-                        <div className="space-y-3">
-                            {CLASSES.map(cls => {
-                                const classStudents = students.filter(s => s.class === cls.name);
-                                const avgScore = Math.round(
-                                    classStudents.reduce((sum, s) => sum + s.productivity, 0) / classStudents.length
-                                );
-                                return (
-                                    <div
-                                        key={cls.name}
-                                        onClick={() => setSelectedClass(cls.name)}
-                                        className={`${cardBg} rounded-xl p-4 cursor-pointer hover:shadow-lg hover:shadow-indigo-500/20 transition-all transform hover:scale-105 border-2 ${selectedClass === cls.name ? 'border-amber-500/50' : 'border-white/10'
-                                            }`}
-                                    >
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <h3 className={`font-bold text-lg ${textPrimary}`}>{cls.name}</h3>
-                                                <p className={`${textSecondary} text-sm`}>{cls.students} students</p>
-                                            </div>
-                                            <span className="text-2xl font-bold bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
-                                                {avgScore}%
-                                            </span>
-                                        </div>
-                                        <div className="w-full bg-slate-700/20 rounded-full h-2 overflow-hidden mb-2">
-                                            <div
-                                                className={`h-full bg-gradient-to-r ${getProductivityColor(avgScore)} rounded-full transition-all`}
-                                                style={{ width: `${avgScore}%` }}
-                                            />
-                                        </div>
-                                        <div className="flex justify-between text-xs">
-                                            <span className={textSecondary}>Overdue: {cls.overdue}</span>
-                                            <span className="text-amber-600 font-bold">{cls.overdue > 5 ? '⚠️ High' : '✓ OK'}</span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+        {/* ── Main split layout ───────────────────────────────────────────────── */}
+        <main className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
+
+                {/* ── LEFT: Add / Edit Student Form ─────────────────────────────── */}
+                <aside
+                    ref={formRef}
+                    className="w-full lg:w-[400px] shrink-0 lg:sticky lg:top-24 backdrop-blur-xl bg-white/90 shadow-2xl shadow-slate-200/60 ring-1 ring-slate-200/50 rounded-3xl p-7 space-y-5"
+                >
+                    {/* Form header */}
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                {editingId ? <><Edit3 className="w-5 h-5 text-amber-500" />Edit Student</> : <><Plus className="w-5 h-5 text-blue-500" />Add Student</>}
+                            </h2>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                                {editingId ? 'Update student details below' : 'Teacher-created account — students cannot self-register'}
+                            </p>
                         </div>
+                        {editingId && (
+                            <button onClick={resetForm} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all" title="Cancel edit">
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
 
-                    {/* Top/Bottom Performers */}
-                    <div className="space-y-4">
-                        <h2 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
-                            <TrendingUp className="w-5 h-5 text-emerald-500" />
-                            Student Performance
-                        </h2>
-
-                        {/* Top Performers */}
-                        <div className={`${cardBg} rounded-xl p-4`}>
-                            <h3 className={`font-bold ${textPrimary} mb-3 flex items-center gap-2`}>
-                                <Award className="w-4 h-4 text-yellow-500" />
-                                Top 5 Performers
-                            </h3>
-                            <div className="space-y-2">
-                                {topPerformers.map((student, idx) => (
-                                    <div
-                                        key={student.id}
-                                        className={`p-2 rounded-lg flex items-center justify-between hover:bg-white/20 transition-all ${darkMode ? 'bg-slate-800/20' : 'bg-white/20'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-2 flex-1">
-                                            <span className="text-lg">{student.avatar}</span>
-                                            <div className="flex-1 min-w-0">
-                                                <p className={`font-semibold ${textPrimary} text-sm truncate`}>
-                                                    {idx + 1}. {student.name}
-                                                </p>
-                                                <p className={`${textSecondary} text-xs`}>{student.class}</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-emerald-600 font-bold text-sm">{student.productivity}%</p>
-                                            <p className={`${textSecondary} text-xs`}>📈</p>
-                                        </div>
-                                    </div>
-                                ))}
+                    {/* Auto-generate preview */}
+                    {formData.usn && (
+                        <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100">
+                            <Key className="w-4 h-4 text-indigo-500 shrink-0" />
+                            <div className="text-xs font-mono">
+                                <span className="text-slate-500">Login: </span>
+                                <span className="font-bold text-indigo-700">{generateLoginId(formData.usn)}</span>
+                                <span className="text-slate-400 mx-2">|</span>
+                                <span className="text-slate-500">Pass: </span>
+                                <span className="font-bold text-emerald-700">{generatePassword(formData.usn)}</span>
                             </div>
                         </div>
+                    )}
 
-                        {/* High Risk Students */}
-                        <div className={`${cardBg} rounded-xl p-4`}>
-                            <h3 className={`font-bold ${textPrimary} mb-3 flex items-center gap-2`}>
-                                <AlertCircle className="w-4 h-4 text-red-500" />
-                                At-Risk Students
-                            </h3>
-                            <div className="space-y-2">
-                                {highRiskStudents.slice(0, 5).map((student, idx) => (
-                                    <div
-                                        key={student.id}
-                                        className={`p-2 rounded-lg flex items-center justify-between hover:bg-red-500/10 transition-all ${darkMode ? 'bg-slate-800/20' : 'bg-white/20'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-2 flex-1">
-                                            <span className="text-lg">{student.avatar}</span>
-                                            <div className="flex-1 min-w-0">
-                                                <p className={`font-semibold ${textPrimary} text-sm truncate`}>
-                                                    {student.name}
-                                                </p>
-                                                <p className={`${textSecondary} text-xs`}>{student.productivity}% · {student.overdue} overdue</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-red-600 font-bold text-sm">⚠️ {student.productivity}%</p>
-                                            <p className={`${textSecondary} text-xs`}>{student.class}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                    <form onSubmit={handleSubmit} noValidate>
+                        <div className="space-y-4">
+                            {/* Row 1: Full Name */}
+                            <Field label="Full Name" required icon={User} error={errors.name}>
+                                <Input name="name" value={formData.name} onChange={handleChange} placeholder="e.g. Ravi Kumar" className={errors.name ? 'border-red-400 focus:ring-red-200' : ''} />
+                            </Field>
+
+                            {/* Row 2: USN + Roll No */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field label="USN" required icon={Hash} error={errors.usn}>
+                                    <Input name="usn" value={formData.usn} onChange={handleChange} placeholder="12A001" className={`font-mono ${errors.usn ? 'border-red-400 focus:ring-red-200' : ''}`} />
+                                </Field>
+                                <Field label="Roll No" required error={errors.rollNo}>
+                                    <Input name="rollNo" value={formData.rollNo} onChange={handleChange} placeholder="01" className={errors.rollNo ? 'border-red-400 focus:ring-red-200' : ''} />
+                                </Field>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Overdue Report Table */}
-                    <div className="space-y-4">
-                        <h2 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
-                            <AlertCircle className="w-5 h-5 text-red-500" />
-                            Overdue Tasks ({totalOverdue})
-                        </h2>
-                        <div className={`${cardBg} rounded-xl overflow-hidden`}>
-                            <div className="overflow-y-auto max-h-96">
-                                <table className="w-full text-sm">
-                                    <thead className={`sticky top-0 ${darkMode ? 'bg-slate-800/50' : 'bg-white/50'} border-b border-white/10`}>
-                                        <tr>
-                                            <th className={`px-4 py-3 text-left font-bold ${textPrimary}`}>Student</th>
-                                            <th className={`px-4 py-3 text-center font-bold ${textPrimary}`}>Days</th>
-                                            <th className={`px-4 py-3 text-left font-bold ${textPrimary}`}>Priority</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {OVERDUE_TASKS.map((task, idx) => (
-                                            <tr
-                                                key={idx}
-                                                className={`border-b border-white/10 hover:bg-white/30 transition-all ${darkMode ? 'hover:bg-slate-700/20' : ''
-                                                    }`}
-                                            >
-                                                <td className={`px-4 py-3 ${textPrimary}`}>
-                                                    <div className="flex flex-col">
-                                                        <p className="font-semibold text-xs">{task.studentName.split(' ')[0]}</p>
-                                                        <p className={`${textSecondary} text-xs`}>{task.subject}</p>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <span className="font-bold text-red-600">{task.daysOverdue}d</span>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <span
-                                                        className={`text-xs font-bold px-2 py-1 rounded-full border ${getPriorityBadge(
-                                                            task.priority
-                                                        )}`}
-                                                    >
-                                                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            {/* Row 3: Class + Section */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field label="Class" required>
+                                    <Select name="class" value={formData.class} onChange={handleChange}>
+                                        {CLASS_OPTIONS.map(c => <option key={c}>{c}</option>)}
+                                    </Select>
+                                </Field>
+                                <Field label="Section" required>
+                                    <Select name="section" value={formData.section} onChange={handleChange}>
+                                        {SECTION_OPTIONS.map(s => <option key={s}>{s}</option>)}
+                                    </Select>
+                                </Field>
                             </div>
-                        </div>
-                    </div>
-                </section>
 
-                {/* Analytics Section */}
-                {analyticsView === 'detailed' && (
-                    <section className="space-y-6">
-                        <h2 className={`text-2xl font-bold ${textPrimary} flex items-center gap-2`}>
-                            <BarChart3 className="w-6 h-6 text-indigo-500" />
-                            Detailed Analytics
-                        </h2>
-
-                        {/* Productivity Heatmap */}
-                        <div className={`${cardBg} rounded-2xl p-6`}>
-                            <h3 className={`text-lg font-bold ${textPrimary} mb-6 flex items-center gap-2`}>
-                                <Calendar className="w-5 h-5 text-blue-500" />
-                                Weekly Productivity Heatmap
-                            </h3>
-                            <div className="space-y-3">
-                                {heatmapData.map((dayData, dayIdx) => (
-                                    <div key={dayData.day}>
-                                        <p className={`${textSecondary} text-sm font-semibold mb-2`}>{dayData.day}</p>
-                                        <div className="flex gap-2 h-12">
-                                            {dayData.data.map((value, classIdx) => (
-                                                <div
-                                                    key={`${dayIdx}-${classIdx}`}
-                                                    className={`flex-1 rounded-lg ${getHeatmapColor(value)} hover:shadow-lg hover:shadow-amber-500/30 transition-all cursor-pointer flex items-center justify-center relative group`}
-                                                    title={`${CLASSES[classIdx].name}: ${Math.round(value)}%`}
-                                                >
-                                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded-lg bg-slate-900 text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                                        {CLASSES[classIdx].name}: {Math.round(value)}%
-                                                    </div>
-                                                    <span className="text-white font-bold text-sm">{Math.round(value)}%</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
+                            {/* Row 4: Join Year + Passout Year */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field label="Join Year" required icon={Calendar}>
+                                    <Select name="joinYear" value={formData.joinYear} onChange={handleChange}>
+                                        {JOIN_YEARS.map(y => <option key={y}>{y}</option>)}
+                                    </Select>
+                                </Field>
+                                <Field label="Passout Year" required>
+                                    <Select name="passoutYear" value={formData.passoutYear} onChange={handleChange}>
+                                        {PASSOUT_YEARS.map(y => <option key={y}>{y}</option>)}
+                                    </Select>
+                                </Field>
                             </div>
-                            <div className="mt-6 flex gap-3 justify-center flex-wrap text-sm">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded bg-emerald-500" />
-                                    <span className={textSecondary}>85%+</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded bg-blue-400" />
-                                    <span className={textSecondary}>75-84%</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded bg-amber-400" />
-                                    <span className={textSecondary}>65-74%</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded bg-orange-400" />
-                                    <span className={textSecondary}>50-64%</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded bg-red-500" />
-                                    <span className={textSecondary}>Below 50%</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        {/* Weekly Trend Chart */}
-                        <div className={`${cardBg} rounded-2xl p-6`}>
-                            <h3 className={`text-lg font-bold ${textPrimary} mb-6 flex items-center gap-2`}>
-                                <TrendingUp className="w-5 h-5 text-green-500" />
-                                Productivity Trend (Last 5 Weeks)
-                            </h3>
-                            <div className="h-48 flex items-end justify-around gap-2">
-                                {weeklyTrend.map((week, idx) => (
-                                    <div key={idx} className="flex flex-col items-center flex-1">
-                                        <div className="relative w-full h-32 mb-2">
-                                            <div
-                                                className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 rounded-t-lg bg-gradient-to-t from-blue-500 to-cyan-400 hover:shadow-lg hover:shadow-blue-500/50 transition-all`}
-                                                style={{ height: `${(week.avg / 100) * 100}%` }}
-                                                title={`${week.week}: ${week.avg}%`}
-                                            />
-                                        </div>
-                                        <p className={`${textSecondary} text-xs font-semibold`}>{week.week}</p>
-                                        <p className={`${textPrimary} text-sm font-bold`}>{week.avg}%</p>
-                                    </div>
-                                ))}
+                            {/* Row 5: Phone + Email */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field label="Phone" icon={Phone} error={errors.phone}>
+                                    <Input name="phone" value={formData.phone} onChange={handleChange} placeholder="9876543210" type="tel" className={errors.phone ? 'border-red-400 focus:ring-red-200' : ''} />
+                                </Field>
+                                <Field label="Email" error={errors.email}>
+                                    <Input name="email" value={formData.email} onChange={handleChange} placeholder="Optional" type="email" className={errors.email ? 'border-red-400 focus:ring-red-200' : ''} />
+                                </Field>
                             </div>
-                        </div>
-                    </section>
-                )}
 
-                {/* Student List View */}
-                <section className="space-y-4">
-                    <h2 className={`text-xl font-bold ${textPrimary} flex items-center gap-2`}>
-                        <Users className="w-5 h-5 text-indigo-500" />
-                        Student List ({filteredStudents.length} results)
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredStudents.map(student => (
-                            <div
-                                key={student.id}
-                                className={`${cardBg} rounded-xl p-4 hover:shadow-lg hover:shadow-indigo-500/20 transition-all transform hover:-translate-y-1`}
+                            {/* Row 6: Parent Phone + Status */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field label="Parent Phone" error={errors.parentPhone}>
+                                    <Input name="parentPhone" value={formData.parentPhone} onChange={handleChange} placeholder="Parent no." type="tel" className={errors.parentPhone ? 'border-red-400 focus:ring-red-200' : ''} />
+                                </Field>
+                                <Field label="Status" required>
+                                    <Select name="status" value={formData.status} onChange={handleChange}
+                                        className={formData.status === 'Active' ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50'}>
+                                        {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
+                                    </Select>
+                                </Field>
+                            </div>
+
+                            {/* Notes */}
+                            <Field label="Notes" icon={FileText}>
+                                <textarea
+                                    name="notes"
+                                    value={formData.notes}
+                                    onChange={handleChange}
+                                    rows={2}
+                                    placeholder="Optional notes about student..."
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 resize-none"
+                                />
+                            </Field>
+
+                            {/* Submit */}
+                            <button
+                                type="submit"
+                                disabled={submitting}
+                                className={`w-full py-3.5 rounded-2xl font-bold text-white text-sm tracking-wide
+                    transition-all duration-200 flex items-center justify-center gap-2
+                    ${submitting ? 'opacity-70 cursor-not-allowed bg-slate-400'
+                                        : editingId
+                                            ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:shadow-xl hover:shadow-amber-500/30 hover:scale-[1.02]'
+                                            : 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-[1.02]'}`}
                             >
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-3xl">{student.avatar}</span>
-                                        <div>
-                                            <h3 className={`font-bold ${textPrimary}`}>{student.name}</h3>
-                                            <p className={`${textSecondary} text-sm`}>{student.class} · {student.subject}</p>
-                                        </div>
-                                    </div>
-                                    {student.productivity >= 85 && <span className="text-xl">⭐</span>}
-                                </div>
+                                {submitting
+                                    ? <><Loader2 className="w-4 h-4 animate-spin" /> {editingId ? 'Updating...' : 'Creating...'}</>
+                                    : editingId
+                                        ? <><Check className="w-4 h-4" /> Update Student</>
+                                        : <><Plus className="w-4 h-4" /> Create Student & Generate Login</>
+                                }
+                            </button>
+                            {editingId && (
+                                <button type="button" onClick={resetForm}
+                                    className="w-full py-2.5 rounded-2xl border-2 border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all">
+                                    Cancel Edit
+                                </button>
+                            )}
+                        </div>
+                    </form>
+                </aside>
 
-                                <div className="space-y-2 mb-4">
-                                    <div className="flex items-center justify-between">
-                                        <span className={`${textSecondary} text-sm`}>Productivity</span>
-                                        <span className={`font-bold text-sm ${student.productivity >= 85 ? 'text-emerald-600' :
-                                            student.productivity >= 70 ? 'text-blue-600' :
-                                                student.productivity >= 60 ? 'text-amber-600' : 'text-red-600'
-                                            }`}>
-                                            {student.productivity}%
-                                        </span>
-                                    </div>
-                                    <div className="w-full bg-slate-700/20 rounded-full h-1.5 overflow-hidden">
-                                        <div
-                                            className={`h-full bg-gradient-to-r ${getProductivityColor(student.productivity)} rounded-full`}
-                                            style={{ width: `${student.productivity}%` }}
-                                        />
-                                    </div>
-                                </div>
+                {/* ── RIGHT: Students Table ──────────────────────────────────────── */}
+                <div className="flex-1 min-w-0 space-y-4">
 
-                                <div className="grid grid-cols-2 gap-3 mb-4">
-                                    <div className="p-3 rounded-lg bg-slate-700/10">
-                                        <p className={`${textSecondary} text-xs mb-1`}>Tasks Done</p>
-                                        <p className={`font-bold ${textPrimary}`}>{student.tasksCompleted}</p>
-                                    </div>
-                                    <div className="p-3 rounded-lg bg-red-500/10">
-                                        <p className={`${textSecondary} text-xs mb-1`}>Overdue</p>
-                                        <p className={`font-bold text-red-600`}>{student.overdue}</p>
-                                    </div>
-                                </div>
+                    {/* Search + Filter bar */}
+                    <div className="backdrop-blur-xl bg-white/80 rounded-2xl shadow-md ring-1 ring-slate-200/40 p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                        {/* Search */}
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by name, USN, phone..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                            />
+                            {searchTerm && (
+                                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
 
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className={`${textSecondary}`}>Active: {student.lastActive}</span>
-                                    <button className="p-1.5 rounded-lg hover:bg-white/20 transition-colors" title="Contact">
-                                        <Mail className="w-4 h-4 text-amber-500" />
-                                    </button>
+                        {/* Class filter */}
+                        <select
+                            value={filterClass}
+                            onChange={e => setFilterClass(e.target.value)}
+                            className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[100px]"
+                        >
+                            <option value="All">All Classes</option>
+                            {CLASS_OPTIONS.map(c => <option key={c}>{c}</option>)}
+                        </select>
+
+                        {/* Section filter */}
+                        <select
+                            value={filterSection}
+                            onChange={e => setFilterSection(e.target.value)}
+                            className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[110px]"
+                        >
+                            <option value="All">All Sections</option>
+                            {SECTION_OPTIONS.map(s => <option key={s}>Section {s}</option>)}
+                        </select>
+
+                        {/* Status filter */}
+                        <select
+                            value={filterStatus}
+                            onChange={e => setFilterStatus(e.target.value)}
+                            className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[110px]"
+                        >
+                            <option value="All">All Status</option>
+                            <option>Active</option>
+                            <option>Suspended</option>
+                        </select>
+
+                        {/* Assign Task Button */}
+                        <button
+                            onClick={() => setShowTaskModal(true)}
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 transition-all whitespace-nowrap"
+                            title="Assign new task to students"
+                        >
+                            <Bell className="w-4 h-4" />
+                            Assign Task
+                        </button>
+
+                        {/* Results count + clear */}
+                        <div className="flex items-center gap-2 text-sm text-slate-500 whitespace-nowrap">
+                            <span className="font-semibold text-slate-700">{filteredStudents.length}</span> results
+                            {(filterClass !== 'All' || filterSection !== 'All' || filterStatus !== 'All' || searchTerm) && (
+                                <button
+                                    onClick={() => { setFilterClass('All'); setFilterSection('All'); setFilterStatus('All'); setSearchTerm(''); }}
+                                    className="text-xs text-red-500 hover:text-red-700 underline"
+                                >
+                                    Clear
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="backdrop-blur-xl bg-white/80 shadow-xl ring-1 ring-slate-200/40 rounded-2xl overflow-hidden">
+                        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
+                            <table className="w-full text-sm min-w-[700px]">
+                                <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur border-b border-slate-100">
+                                    <tr>
+                                        {['#', 'Student', 'USN', 'Class-Sec', 'Phone', 'Status', 'Login Credentials', 'Actions'].map(h => (
+                                            <th key={h} className={`px-4 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap ${h === '#' ? 'w-10' : ''}`}>
+                                                {h}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan={8} className="px-4 py-16 text-center text-slate-400">
+                                                <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-blue-400" />
+                                                <p className="font-medium">Loading students...</p>
+                                            </td>
+                                        </tr>
+                                    ) : filteredStudents.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={8} className="px-4 py-20 text-center text-slate-400">
+                                                <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                                                <p className="text-lg font-semibold text-slate-500 mb-1">
+                                                    {students.length === 0 ? 'No students yet' : 'No matching students'}
+                                                </p>
+                                                <p className="text-sm">
+                                                    {students.length === 0
+                                                        ? 'Use the form on the left to create your first student account.'
+                                                        : 'Try adjusting your search or filters.'}
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    ) : filteredStudents.map((student, idx) => (
+                                        <tr
+                                            key={student.id}
+                                            className={`group transition-all duration-300
+                          ${student.id === newRowId
+                                                    ? 'bg-emerald-50 ring-2 ring-inset ring-emerald-400/40 scale-[1.005] shadow-md animate-pulse'
+                                                    : 'hover:bg-blue-50/40'}`}
+                                        >
+                                            {/* # */}
+                                            <td className="px-4 py-3.5 text-slate-400 font-mono text-xs">{idx + 1}</td>
+
+                                            {/* Student */}
+                                            <td className="px-4 py-3.5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0
+                              bg-gradient-to-br ${['from-blue-500 to-indigo-600', 'from-purple-500 to-pink-600', 'from-emerald-500 to-teal-600', 'from-amber-500 to-orange-600'][idx % 4]}`}>
+                                                        {student.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold text-slate-800 truncate max-w-[130px]">{student.name}</p>
+                                                        {student.email && <p className="text-xs text-slate-400 truncate max-w-[130px]">{student.email}</p>}
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            {/* USN */}
+                                            <td className="px-4 py-3.5">
+                                                <span className="font-mono text-sm font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg">{student.usn.toUpperCase()}</span>
+                                            </td>
+
+                                            {/* Class-Sec */}
+                                            <td className="px-4 py-3.5">
+                                                <span className="font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg text-xs">
+                                                    {student.class}-{student.section}
+                                                </span>
+                                            </td>
+
+                                            {/* Phone */}
+                                            <td className="px-4 py-3.5 text-slate-600 text-sm">{student.phone || <span className="text-slate-300">—</span>}</td>
+
+                                            {/* Status */}
+                                            <td className="px-4 py-3.5"><StatusBadge status={student.status} /></td>
+
+                                            {/* Login Credentials */}
+                                            <td className="px-4 py-3.5">
+                                                <LoginBadge
+                                                    usn={student.usn}
+                                                    onCopy={() => addToast('info', 'Copied!', `Login: ${generateLoginId(student.usn)} | Pass: ${generatePassword(student.usn)}`)}
+                                                />
+                                            </td>
+
+                                            {/* Actions */}
+                                            <td className="px-4 py-3.5">
+                                                <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                    {/* Resend Login */}
+                                                    <button
+                                                        onClick={() => handleResendLogin(student)}
+                                                        title="Copy login credentials"
+                                                        className="p-2 rounded-lg hover:bg-amber-50 hover:text-amber-600 text-slate-400 transition-all hover:scale-110 hover:shadow-md"
+                                                    >
+                                                        <ClipboardCopy className="w-4 h-4" />
+                                                    </button>
+                                                    {/* Edit */}
+                                                    <button
+                                                        onClick={() => handleEdit(student)}
+                                                        title="Edit student"
+                                                        className="p-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 text-slate-400 transition-all hover:scale-110 hover:shadow-md"
+                                                    >
+                                                        <Edit3 className="w-4 h-4" />
+                                                    </button>
+                                                    {/* View Tasks */}
+                                                    <button
+                                                        onClick={() => setViewTasksModal(student)}
+                                                        title="View tasks"
+                                                        className="p-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-slate-400 transition-all hover:scale-110 hover:shadow-md"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    {/* Delete */}
+                                                    <button
+                                                        onClick={() => setDeleteModal(student)}
+                                                        title="Delete student"
+                                                        className="p-2 rounded-lg hover:bg-red-50 hover:text-red-600 text-slate-400 transition-all hover:scale-110 hover:shadow-md"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Table footer */}
+                        {filteredStudents.length > 0 && (
+                            <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/80 flex items-center justify-between text-xs text-slate-500">
+                                <span>Showing {filteredStudents.length} of {students.length} students</span>
+                                <div className="flex items-center gap-4">
+                                    <span className="text-emerald-600 font-semibold">
+                                        ● Active: {students.filter(s => s.status === 'Active').length}
+                                    </span>
+                                    <span className="text-red-500 font-semibold">
+                                        ● Suspended: {students.filter(s => s.status === 'Suspended').length}
+                                    </span>
                                 </div>
                             </div>
-                        ))}
+                        )}
                     </div>
-                </section>
-            </main>
 
-            {/* Toast Notification */}
-            {showNotifications && (
-                <div className="fixed bottom-6 right-6 z-50 space-y-3 max-w-sm">
-                    <div className={`${cardBg} rounded-xl p-4 border-l-4 border-emerald-500 shadow-2xl animate-pulse`}>
-                        <p className={`${textPrimary} font-semibold`}>✅ Anjali Reddy completed Math Quiz</p>
-                        <p className={`${textSecondary} text-sm`}>Just now</p>
-                    </div>
-                    <div className={`${cardBg} rounded-xl p-4 border-l-4 border-blue-500 shadow-2xl animate-pulse`}>
-                        <p className={`${textPrimary} font-semibold`}>📝 New assignment posted in Class 12A</p>
-                        <p className={`${textSecondary} text-sm`}>2 minutes ago</p>
-                    </div>
+                    {/* Quick tip */}
+                    {students.length === 0 && !loading && (
+                        <div className="rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/50 p-6 text-center">
+                            <BookOpen className="w-10 h-10 text-blue-300 mx-auto mb-3" />
+                            <p className="font-semibold text-blue-800 mb-1">Start adding students</p>
+                            <p className="text-sm text-blue-600">
+                                Fill in the form on the left, or <button onClick={() => setShowCSVModal(true)} className="underline font-bold hover:text-blue-800">import via CSV</button> for bulk onboarding.
+                            </p>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
+        </main>
 
-            {/* API Endpoints Console Logs */}
-            {useEffect(() => {
-                console.log('📊 Admin API Endpoints:');
-                console.log('GET /api/admin/students - Fetch all 47 students');
-                console.log('GET /api/admin/classes - Fetch class analytics');
-                console.log('GET /api/admin/overdue - Fetch overdue tasks');
-                console.log('POST /api/admin/email-students - Send bulk emails');
-                console.log('POST /api/admin/reset-overdue - Reset overdue counts');
-                console.log('GET /api/admin/heatmap - Fetch productivity heatmap');
-                console.log('POST /api/admin/export - Export reports (PDF/CSV)');
-                console.log('GET /api/admin/audit-log - View admin actions');
-                console.log('🔐 Teacher-only routes - Role-based access active');
-            }, [])}
+        {/* Keyframe for toast slide-in */}
+        <style>{`
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to   { transform: translateX(0);    opacity: 1; }
+        }
+      `}</style>
 
-            {/* Floating Action Button */}
-            <button
-                className="fixed bottom-6 left-6 z-40 p-4 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:shadow-2xl hover:shadow-amber-500/40 transition-all transform hover:scale-110 text-white font-bold flex items-center gap-2 shadow-xl"
-                title="Refresh data"
-            >
-                <RefreshCw className="w-5 h-5" />
-                <span className="hidden sm:inline">Refresh</span>
-            </button>
-        </div>
-    );
+        {/* Task Assignment Modal */}
+        {showTaskModal && (
+            <TaskAssignmentModal
+                onClose={() => setShowTaskModal(false)}
+                onAssign={handleAssignTask}
+                taskForm={taskForm}
+                setTaskForm={setTaskForm}
+                errors={taskErrors}
+                assigning={assigningTask}
+            />
+        )}
+    </div>
+);
 }

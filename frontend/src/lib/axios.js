@@ -8,8 +8,12 @@ const parseResponse = async (response) => {
   return response.text();
 };
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const request = async (method, url, payload, config = {}) => {
-  const response = await fetch(url, {
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+
+  const response = await fetch(fullUrl, {
     method,
     headers: {
       'Content-Type': 'application/json',

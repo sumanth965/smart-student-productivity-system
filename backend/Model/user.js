@@ -28,8 +28,9 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
+      sparse: true,
       lowercase: true,
       trim: true,
     },
@@ -42,15 +43,71 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    loginId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ['student', 'teacher', 'admin'],
+      default: 'student',
     },
     isActive: {
       type: Boolean,
       default: true,
     },
+    // Student-specific fields
+    phone: {
+      type: String,
+      default: '',
+    },
+    rollNo: {
+      type: String,
+      default: '',
+    },
+    class: {
+      type: String,
+      enum: ['11A', '11B', '12A', '12B', ''],
+      default: '',
+    },
+    section: {
+      type: String,
+      enum: ['A', 'B', 'C', ''],
+      default: '',
+    },
+    joinYear: {
+      type: String,
+      default: '',
+    },
+    passoutYear: {
+      type: String,
+      default: '',
+    },
+    parentPhone: {
+      type: String,
+      default: '',
+    },
+    status: {
+      type: String,
+      enum: ['Active', 'Suspended'],
+      default: 'Active',
+    },
+    notes: {
+      type: String,
+      default: '',
+    },
+    createdBy: {
+      type: String,
+      default: 'system',
+    },
+    assignedTasks: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Task',
+      },
+    ],
   },
   { timestamps: true }
 );
