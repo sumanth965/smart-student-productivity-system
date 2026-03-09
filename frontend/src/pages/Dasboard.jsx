@@ -4,6 +4,7 @@ import DashboardNavbar from '../components/dashboard/DashboardNavbar';
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import RecentTasksSection from '../components/dashboard/RecentTasksSection';
 import { calculatePriority, getDaysUntil, isOverdue, MOCK_TASKS } from '../components/dashboard/dashboardUtils';
+import axios from '../lib/axios';
 
 export default function Dashboard() {
   const [open, setOpen] = useState(false);
@@ -13,6 +14,17 @@ export default function Dashboard() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const mapApiTaskToDashboardTask = useCallback((task) => ({
+    id: task._id,
+    title: task.title,
+    subject: task.subject,
+    deadline: new Date(task.dueDate),
+    priority: task.priority?.toLowerCase() || calculatePriority(new Date(task.dueDate)),
+    completed: task.status === 'Completed',
+    description: task.description,
+    createdAt: new Date(task.createdAt),
+  }), []);
 
   useEffect(() => {
     const savedMode = localStorage.getItem('darkMode');
@@ -24,6 +36,31 @@ export default function Dashboard() {
     localStorage.setItem('darkMode', JSON.stringify(isDark));
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
+
+  useEffect(() => {
+    const loadAssignedTasks = async () => {
+      try {
+        const persistedUser =
+          localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
+
+        if (!persistedUser) return;
+
+        const parsedUser = JSON.parse(persistedUser);
+        if (!parsedUser?._id) return;
+
+        const response = await axios.get(`/api/students/${parsedUser._id}/tasks`);
+        const assignedTasks = Array.isArray(response.data?.data)
+          ? response.data.data.map(mapApiTaskToDashboardTask)
+          : [];
+
+        setTasks(assignedTasks);
+      } catch (error) {
+        console.error('Failed to load assigned tasks for dashboard:', error);
+      }
+    };
+
+    loadAssignedTasks();
+  }, [mapApiTaskToDashboardTask]);
 
   const handleAddTask = useCallback((newTask) => {
     setTasks((prevTasks) => [newTask, ...prevTasks]);
