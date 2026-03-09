@@ -4,15 +4,18 @@ import { X } from 'lucide-react';
 export default function AddTaskModal({ isOpen, onClose, onAdd, isDark }) {
   const [formData, setFormData] = useState({ title: '', subject: 'Mathematics', deadline: '', priority: 'medium', description: '' });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.deadline) {
       alert('Please fill in title and deadline');
       return;
     }
 
-    onAdd({ id: Date.now(), ...formData, deadline: new Date(formData.deadline), completed: false, createdAt: new Date() });
-    setFormData({ title: '', subject: 'Mathematics', deadline: '', priority: 'medium', description: '' });
+    const isSaved = await onAdd({ id: Date.now(), ...formData, deadline: new Date(formData.deadline), completed: false, createdAt: new Date() });
+
+    if (isSaved) {
+      setFormData({ title: '', subject: 'Mathematics', deadline: '', priority: 'medium', description: '' });
+    }
   };
 
   if (!isOpen) return null;
