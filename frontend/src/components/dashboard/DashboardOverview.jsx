@@ -8,7 +8,7 @@ export default function DashboardOverview({ isDark, tasks, stats, deadlineData }
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
-      <div className="lg:col-span-2 space-y-6">
+      <div className="lg:col-span-2 space-y-6 min-w-0">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard icon={BookOpen} label="Total Tasks" value={totalTasks} bgGradient="bg-gradient-to-r from-blue-500 to-cyan-500" isDark={isDark} />
           <StatCard icon={CheckCircle} label="Completed" value={completedTasks} bgGradient="bg-gradient-to-r from-emerald-500 to-teal-500" isDark={isDark} />
@@ -18,8 +18,8 @@ export default function DashboardOverview({ isDark, tasks, stats, deadlineData }
 
         <div className={`rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 ${isDark ? 'bg-slate-800/80 ring-slate-700/50' : 'bg-white/80 ring-slate-200/50'}`}>
           <h3 className={`mb-4 font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>📊 Deadline Analytics</h3>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-72 min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={deadlineData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
