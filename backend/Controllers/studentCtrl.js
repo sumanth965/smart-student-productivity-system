@@ -318,7 +318,12 @@ exports.getStudentTasks = async (req, res) => {
     try {
         const { studentId } = req.params;
 
-        const tasks = await Task.find({ assignedTo: studentId })
+        const tasks = await Task.find({
+            $or: [
+                { assignedTo: studentId },
+                { createdBy: studentId },
+            ],
+        })
             .populate('createdBy', 'name email role')
             .sort({ createdAt: -1 });
 
@@ -342,7 +347,7 @@ exports.updateTask = async (req, res) => {
         const updates = {};
         if (status) updates.status = status;
         if (completedBy) {
-            updates.$push = { completedBy };
+            updates.$addToSet = { completedBy };
         }
 
         const updatedTask = await Task.findByIdAndUpdate(id, updates, {
