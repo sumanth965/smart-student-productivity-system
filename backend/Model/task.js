@@ -18,12 +18,12 @@ const taskSchema = new mongoose.Schema(
         },
         class: {
             type: String,
-            enum: ['All', '11A', '11B', '12A', '12B'],
+            enum: ['All', 'BCA', 'MCA'],
             default: 'All',
         },
         section: {
             type: String,
-            enum: ['All', 'A', 'B', 'C'],
+            enum: ['All', 'A', 'B', 'C', 'D'],
             default: 'All',
         },
         dueDate: {

@@ -1,33 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Clock, AlertCircle, CheckCircle2, ChevronLeft, Filter, Zap, Calendar, Flag, Bell, X, Check, Wind } from 'lucide-react';
+import { Clock, AlertCircle, CheckCircle2, ChevronLeft, Filter, Zap, Calendar, Flag, Bell, X, Check, Wind, Loader } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-
-// ============================================================================
-// SAMPLE DATA - 20 realistic academic tasks for demo
-// ============================================================================
-const SAMPLE_TASKS = [
-    { id: 1, title: 'Math Homework - Ch. 5-6', subject: 'Mathematics', dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), priority: 'high', status: 'pending', description: 'Complete problem sets 5.1-6.3' },
-    { id: 2, title: 'Physics Lab Report', subject: 'Physics', dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), priority: 'high', status: 'pending', description: 'Submit experiment results with analysis' },
-    { id: 3, title: 'Biology Essay - Evolution', subject: 'Biology', dueDate: new Date(Date.now() + 4 * 60 * 60 * 1000), priority: 'high', status: 'pending', description: '2000 words on natural selection' },
-    { id: 4, title: 'Chemistry Quiz Prep', subject: 'Chemistry', dueDate: new Date(Date.now() + 8 * 60 * 60 * 1000), priority: 'medium', status: 'pending', description: 'Study chapters 3-4 for midterm' },
-    { id: 5, title: 'History Research Paper', subject: 'History', dueDate: new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000), priority: 'high', status: 'pending', description: '5-page paper on World War II' },
-    { id: 6, title: 'English Literature Reading', subject: 'English', dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), priority: 'medium', status: 'pending', description: 'Read chapters 5-8 of "To Kill a Mockingbird"' },
-    { id: 7, title: 'Spanish Conversation Practice', subject: 'Languages', dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), priority: 'low', status: 'pending', description: 'Record 3-minute conversation' },
-    { id: 8, title: 'Calculus Problem Set', subject: 'Mathematics', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), priority: 'high', status: 'pending', description: 'Integrals and derivatives exercises' },
-    { id: 9, title: 'Computer Science Project', subject: 'Computer Science', dueDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), priority: 'high', status: 'pending', description: 'Build weather app with API' },
-    { id: 10, title: 'Art History Presentation', subject: 'Art', dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), priority: 'medium', status: 'pending', description: '10-slide presentation on Renaissance' },
-    { id: 11, title: 'Psychology Assignment', subject: 'Psychology', dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), priority: 'medium', status: 'pending', description: 'Case study analysis paper' },
-    { id: 12, title: 'Sociology Discussion Post', subject: 'Sociology', dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), priority: 'low', status: 'pending', description: 'Reply to classmate posts' },
-    { id: 13, title: 'Economics Project', subject: 'Economics', dueDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000), priority: 'high', status: 'pending', description: 'Market analysis presentation' },
-    { id: 14, title: 'Philosophy Essay', subject: 'Philosophy', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), priority: 'medium', status: 'pending', description: 'Critique of existentialism' },
-    { id: 15, title: 'Statistics Exam Review', subject: 'Mathematics', dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), priority: 'high', status: 'pending', description: 'Review all formulas and concepts' },
-    { id: 16, title: 'Literature Analysis', subject: 'English', dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), priority: 'medium', status: 'pending', description: 'Symbolism in "The Great Gatsby"' },
-    { id: 17, title: 'Environmental Science Project', subject: 'Science', dueDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), priority: 'medium', status: 'pending', description: 'Climate change impact report' },
-    { id: 18, title: 'Music Theory Assignment', subject: 'Music', dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), priority: 'low', status: 'pending', description: 'Compose 8-bar melody' },
-    { id: 19, title: 'Sociology Quiz', subject: 'Sociology', dueDate: new Date(Date.now() - 6 * 60 * 60 * 1000), priority: 'high', status: 'pending', description: 'Chapter 2-3 online quiz' },
-    { id: 20, title: 'German Vocabulary Test', subject: 'Languages', dueDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), priority: 'medium', status: 'pending', description: 'Units 1-4 vocabulary and grammar' },
-];
+import axios from '../lib/axios';
+import { calculatePriority, getDaysUntil, isOverdue } from '../components/dashboard/dashboardUtils';
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -94,7 +70,18 @@ const getPriorityBadgeColor = (priority) => {
 
 const getSubjectColor = (subject) => {
     const colors = {
-        Mathematics: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+        // College Subjects
+        EJAVA: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800',
+        AWT: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+        'FSDD/ADSA': 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+        PCS: 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
+        SET: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+        'DW&DM': 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+        'WDR&P': 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+        'DIP&PR': 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
+        Japanese: 'bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-800',
+        // Generic Subjects
+        Mathematics: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
         Physics: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
         Chemistry: 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
         Biology: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
@@ -103,12 +90,6 @@ const getSubjectColor = (subject) => {
         Languages: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
         'Computer Science': 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
         Art: 'bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-800',
-        Psychology: 'bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-200 dark:border-fuchsia-800',
-        Sociology: 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800',
-        Economics: 'bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800',
-        Philosophy: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800',
-        Music: 'bg-lime-500/10 text-lime-700 dark:text-lime-300 border-lime-200 dark:border-lime-800',
-        Science: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
     };
     return colors[subject] || 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800';
 };
@@ -382,16 +363,62 @@ const SkeletonLoader = () => (
 export default function DeadlineReminder({ isDark = false }) {
     const navigate = useNavigate();
     const onNavigateBack = () => navigate('/dashboard');
-    const [tasks, setTasks] = useState(SAMPLE_TASKS);
+    const [tasks, setTasks] = useState([]);
     const [filter, setFilter] = useState('all');
     const [completedTasks, setCompletedTasks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showToast, setShowToast] = useState(null);
+    const [error, setError] = useState(null);
 
-    // Simulate loading
+    // Fetch tasks from database
     useEffect(() => {
-        const timer = setTimeout(() => setIsLoading(false), 600);
-        return () => clearTimeout(timer);
+        const loadTasks = async () => {
+            try {
+                setIsLoading(true);
+                const persistedUser =
+                    localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
+
+                if (!persistedUser) {
+                    setError('User not found. Please log in again.');
+                    return;
+                }
+
+                const parsedUser = JSON.parse(persistedUser);
+                const userId = parsedUser._id || parsedUser.id;
+
+                if (!userId) {
+                    setError('Invalid user information');
+                    return;
+                }
+
+                // Fetch tasks from API
+                const response = await axios.get(`/api/students/${userId}/tasks`);
+                if (response.data.success && Array.isArray(response.data.data)) {
+                    // Map API tasks to component format
+                    const mappedTasks = response.data.data.map((task) => ({
+                        id: task._id,
+                        title: task.title,
+                        subject: task.subject,
+                        dueDate: new Date(task.dueDate),
+                        priority: task.priority?.toLowerCase() || 'medium',
+                        status: task.status?.toLowerCase() || 'pending',
+                        description: task.description,
+                        createdAt: new Date(task.createdAt),
+                    }));
+                    setTasks(mappedTasks);
+                    setError(null);
+                } else {
+                    setTasks([]);
+                }
+            } catch (err) {
+                console.error('Failed to load tasks:', err);
+                setError(err.response?.data?.message || 'Failed to load tasks');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadTasks();
     }, []);
 
     // Auto-sort tasks by urgency
@@ -531,6 +558,12 @@ export default function DeadlineReminder({ isDark = false }) {
                     {/* Loading State */}
                     {isLoading ? (
                         <SkeletonLoader />
+                    ) : error ? (
+                        <EmptyState
+                            icon={AlertCircle}
+                            title="⚠️ Error Loading Tasks"
+                            description={error}
+                        />
                     ) : (
                         <>
                             {/* OVERDUE SECTION */}

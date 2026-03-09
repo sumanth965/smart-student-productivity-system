@@ -69,12 +69,12 @@ const userSchema = new mongoose.Schema(
     },
     class: {
       type: String,
-      enum: ['11A', '11B', '12A', '12B', ''],
+      enum: ['BCA', 'MCA', ''],
       default: '',
     },
     section: {
       type: String,
-      enum: ['A', 'B', 'C', ''],
+      enum: ['A', 'B', 'C', 'D', ''],
       default: '',
     },
     joinYear: {

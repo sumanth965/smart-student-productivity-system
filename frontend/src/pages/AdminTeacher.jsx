@@ -10,14 +10,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from '../lib/axios';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-const CLASS_OPTIONS = ['11A', '11B', '12A', '12B'];
-const SECTION_OPTIONS = ['A', 'B', 'C'];
+const CLASS_OPTIONS = ['BCA', 'MCA'];
+const SECTION_OPTIONS = ['A', 'B', 'C', 'D'];
 const JOIN_YEARS = ['2023', '2024', '2025', '2026'];
 const PASSOUT_YEARS = ['2025', '2026', '2027', '2028'];
 const STATUS_OPTIONS = ['Active', 'Suspended'];
 
 const INITIAL_FORM = {
-    name: '', usn: '', phone: '', email: '', class: '12A', section: 'A',
+    name: '', usn: '', phone: '', email: '', class: 'BCA', section: 'A',
     rollNo: '', joinYear: '2026', passoutYear: '2027', parentPhone: '',
     status: 'Active', notes: '',
 };
@@ -46,6 +46,17 @@ function validateStudent(data, existingStudents, editingId) {
         errors.email = 'Enter valid email address';
     return errors;
 }
+const SUBJECT_OPTIONS = [
+    'EJAVA',
+    'AWT',
+    'FSDD/ADSA',
+    'PCS',
+    'SET',
+    'DW&DM',
+    'WDR&P',
+    'DIP&PR',
+    'Japanese',
+];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -272,7 +283,7 @@ function CSVImportModal({ onClose, onImport }) {
                 usn: obj.usn || '',
                 phone: obj.phone || '',
                 email: obj.email || '',
-                class: obj.class || '12A',
+                class: obj.class || 'BCA',
                 section: obj.section || 'A',
                 rollNo: obj.rollno || obj.roll || '',
                 joinYear: obj.joinyear || '2026',
@@ -421,13 +432,17 @@ function TaskAssignmentModal({ onClose, onAssign, taskForm, setTaskForm, errors,
                     </Field>
 
                     <Field label="Subject" required error={errors.subject}>
-                        <Input
+                        <Select
                             name="subject"
                             value={taskForm.subject}
                             onChange={handleChange}
-                            placeholder="e.g., Mathematics, Physics, Chemistry"
-                            className={errors.subject ? 'border-red-400 focus:ring-red-200' : ''}
-                        />
+                        >
+                            {SUBJECT_OPTIONS.map((subject) => (
+                                <option key={subject} value={subject}>
+                                    {subject}
+                                </option>
+                            ))}
+                        </Select>
                     </Field>
 
                     <Field label="Description" required error={errors.description}>
@@ -454,7 +469,7 @@ function TaskAssignmentModal({ onClose, onAssign, taskForm, setTaskForm, errors,
                                 className="w-full px-3 md:px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-sm"
                             >
                                 <option value="All">All Classes</option>
-                                {['11A', '11B', '12A', '12B'].map(cls => (
+                                {['BCA', 'MCA'].map(cls => (
                                     <option key={cls} value={cls}>{cls}</option>
                                 ))}
                             </select>
@@ -468,7 +483,7 @@ function TaskAssignmentModal({ onClose, onAssign, taskForm, setTaskForm, errors,
                                 className="w-full px-3 md:px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-sm"
                             >
                                 <option value="All">All Sections</option>
-                                {['A', 'B', 'C'].map(sec => (
+                                {['A', 'B', 'C', 'D'].map(sec => (
                                     <option key={sec} value={sec}>Section {sec}</option>
                                 ))}
                             </select>
