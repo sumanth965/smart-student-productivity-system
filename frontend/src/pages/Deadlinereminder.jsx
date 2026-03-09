@@ -444,6 +444,7 @@ export default function DeadlineReminder({ isDark = false }) {
             today: filteredTasks.filter(t => getDateCategory(t.dueDate) === 'today'),
             tomorrow: filteredTasks.filter(t => getDateCategory(t.dueDate) === 'tomorrow'),
             week: filteredTasks.filter(t => getDateCategory(t.dueDate) === 'week'),
+            future: filteredTasks.filter(t => getDateCategory(t.dueDate) === 'future'),
         };
     }, [tasks, completedTasks]);
 
@@ -517,6 +518,8 @@ export default function DeadlineReminder({ isDark = false }) {
                 return { today: urgencyCategories.today };
             case 'week':
                 return { today: urgencyCategories.today, tomorrow: urgencyCategories.tomorrow, week: urgencyCategories.week };
+            case 'future':
+                return { future: urgencyCategories.future };
             default:
                 return urgencyCategories;
         }
@@ -552,7 +555,7 @@ export default function DeadlineReminder({ isDark = false }) {
 
                             {/* Right Section - Filter Buttons */}
                             <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0">
-                                {['all', 'overdue', 'today', 'week'].map(filterOption => (
+                                {['all', 'overdue', 'today', 'week', 'future'].map(filterOption => (
                                     <button
                                         key={filterOption}
                                         onClick={() => setFilter(filterOption)}
@@ -731,6 +734,36 @@ export default function DeadlineReminder({ isDark = false }) {
                                         ))}
                                     </div>
                                     <div className="h-px bg-gradient-to-r from-transparent via-blue-200 dark:via-blue-800/30 to-transparent my-4" />
+                                </motion.div>
+                            )}
+
+                            {/* UPCOMING SECTION */}
+                            {displayData.future && displayData.future.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="space-y-4"
+                                >
+                                    <SectionHeader
+                                        icon={Calendar}
+                                        title="🟣 UPCOMING"
+                                        count={displayData.future.length}
+                                        color="bg-violet-500/20"
+                                        isOverdue={false}
+                                    />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {displayData.future.map(task => (
+                                            <TaskCard
+                                                key={task.id}
+                                                task={task}
+                                                onComplete={handleComplete}
+                                                onSnooze={handleSnooze}
+                                                isOverride={false}
+                                                isDark={isDark}
+                                            />
+                                        ))}
+                                    </div>
+                                    <div className="h-px bg-gradient-to-r from-transparent via-violet-200 dark:via-violet-800/30 to-transparent my-4" />
                                 </motion.div>
                             )}
 
