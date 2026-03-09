@@ -53,16 +53,19 @@ app.post('/api/chat', async (req, res) => {
     }
 
     // Check API Key
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === '') {
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey) {
       console.error('❌ GEMINI_API_KEY is missing or empty');
       return res.status(500).json({
         success: false,
         error: 'Gemini API Key not configured',
-        details: 'GEMINI_API_KEY is missing or empty in .env file'
+        details: 'GEMINI_API_KEY is missing or empty in .env file',
+        hint: 'Get a new key from https://ai.google.dev/'
       });
     }
 
-    console.log('✓ API Key found (length:', process.env.GEMINI_API_KEY.length, ')');
+    console.log('✓ API Key found (length:', apiKey.length, ')');
+    console.log('✓ API Key starts with:', apiKey.substring(0, 10) + '...');
 
     // Build prompt with task context
     const prompt = `
@@ -77,22 +80,22 @@ ${message}
 Provide helpful, concise, and actionable advice. If referring to specific tasks, use their actual names. Keep response under 300 words.
 `;
 
-    console.log('📤 Calling Gemini 1.5 Flash API...');
+    console.log('📤 Calling Gemini AI (gemini-1.5-flash)...');
 
     // Call Gemini AI with better error handling
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const result = await model.generateContent(prompt);
 
     // Check if response exists
     if (!result || !result.response) {
-      throw new Error('Invalid response from Gemini AI - no response object');
+      throw new Error('Invalid response from Gemini AI - no response object. Check if API key is valid.');
     }
 
     const reply = result.response.text();
 
     if (!reply || reply.trim().length === 0) {
-      throw new Error('Gemini returned empty response');
+      throw new Error('Gemini returned empty response - API may not be responding correctly');
     }
 
     console.log('✅ Response generated successfully');
