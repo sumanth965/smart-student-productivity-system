@@ -6,7 +6,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import axios from '../lib/axios';
+import { calculatePriority, getDaysUntil, isOverdue } from '../components/dashboard/dashboardUtils';
 
 // ============================================================================
 // SAMPLE DATA - 25 academic tasks with importance & complexity
@@ -158,6 +160,10 @@ const analyzeTasksAI = (tasks) => {
  * Generate 7-day risk trend data
  */
 const generateRiskTrend = (tasks) => {
+    if (!tasks.length) {
+        return [];
+    }
+
     const trendData = [];
     const baseDate = new Date();
 
@@ -430,19 +436,85 @@ const RiskCard = ({ task, index }) => (
 export default function AIModule({ isDark = false }) {
     const navigate = useNavigate();
     const onNavigateBack = () => navigate('/dashboard');
-    const [tasks, setTasks] = useState(SAMPLE_TASKS);
+    const [tasks, setTasks] = useState([]);
     const [isAnalyzing, setIsAnalyzing] = useState(true);
     const [showExportModal, setShowExportModal] = useState(false);
+    const [error, setError] = useState('');
 
-    // Analyze tasks on mount
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsAnalyzing(false);
-            console.log('[API] POST /api/ai/analyze', { taskCount: tasks.length });
-        }, 1200);
+    const resolveUserId = useCallback((user) => user?._id || user?.id || '', []);
 
-        return () => clearTimeout(timer);
+    const mapApiTaskToAiTask = useCallback((task) => {
+        const dueDate = new Date(task.dueDate);
+        const computedPriority = task.priority?.toLowerCase() || calculatePriority(dueDate);
+        const priorityWeight = {
+            high: 0.95,
+            medium: 0.7,
+            low: 0.5,
+        };
+
+        const urgencyDays = getDaysUntil(dueDate);
+        const urgencyWeight = urgencyDays <= 1 ? 0.95 : urgencyDays <= 3 ? 0.8 : urgencyDays <= 7 ? 0.65 : 0.45;
+
+        return {
+            id: task._id,
+            title: task.title,
+            subject: task.subject,
+            description: task.description,
+            dueDate,
+            status: task.status?.toLowerCase() || 'pending',
+            importance: Number((Math.max(priorityWeight[computedPriority] || 0.6, urgencyWeight)).toFixed(2)),
+            complexity: Number((task.description ? 0.75 : 0.55).toFixed(2)),
+            sourceType: task.createdBy ? 'teacher' : 'self',
+        };
     }, []);
+
+    const loadTasks = useCallback(async () => {
+        try {
+            setError('');
+            setIsAnalyzing(true);
+            const persistedUser = localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
+            if (!persistedUser) {
+                setTasks(SAMPLE_TASKS.slice(0, 8));
+                return;
+            }
+
+            const parsedUser = JSON.parse(persistedUser);
+            const userId = resolveUserId(parsedUser);
+            if (!userId) {
+                setTasks(SAMPLE_TASKS.slice(0, 8));
+                return;
+            }
+
+            const response = await axios.get(`/api/students/${userId}/tasks`);
+            const apiTasks = Array.isArray(response.data?.data)
+                ? response.data.data.map(mapApiTaskToAiTask)
+                : [];
+
+            const activeTasks = apiTasks.filter((task) => task.status !== 'completed');
+            setTasks(activeTasks.length ? activeTasks : SAMPLE_TASKS.slice(0, 8));
+        } catch (err) {
+            console.error('Failed to load AI insights tasks:', err);
+            setError(err.response?.data?.message || 'Could not load tasks from dashboard database. Showing fallback insights.');
+            setTasks(SAMPLE_TASKS.slice(0, 8));
+        } finally {
+            setTimeout(() => setIsAnalyzing(false), 600);
+        }
+    }, [mapApiTaskToAiTask, resolveUserId]);
+
+    useEffect(() => {
+        loadTasks();
+
+        const handleRefresh = () => loadTasks();
+        const handleFocus = () => loadTasks();
+
+        window.addEventListener('tasks:refresh', handleRefresh);
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            window.removeEventListener('tasks:refresh', handleRefresh);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [loadTasks]);
 
     // Memoized AI analysis
     const analyzedTasks = useMemo(() => analyzeTasksAI(tasks), [tasks]);
@@ -453,8 +525,13 @@ export default function AIModule({ isDark = false }) {
         highRisk: analyzedTasks.filter(t => t.aiPriority === 'HIGH').length,
         mediumRisk: analyzedTasks.filter(t => t.aiPriority === 'MEDIUM').length,
         lowRisk: analyzedTasks.filter(t => t.aiPriority === 'LOW').length,
-        avgRisk: Math.round(analyzedTasks.reduce((sum, t) => sum + t.riskScore, 0) / analyzedTasks.length),
+        overdue: analyzedTasks.filter((t) => isOverdue(t.dueDate, false)).length,
+        dueSoon: analyzedTasks.filter((t) => getDaysUntil(t.dueDate) <= 1).length,
+        avgRisk: analyzedTasks.length
+            ? Math.round(analyzedTasks.reduce((sum, t) => sum + t.riskScore, 0) / analyzedTasks.length)
+            : 0,
         overallRiskLevel: (() => {
+            if (!analyzedTasks.length) return 'LOW';
             const avg = analyzedTasks.reduce((sum, t) => sum + t.riskScore, 0) / analyzedTasks.length;
             if (avg >= 70) return 'HIGH';
             if (avg >= 40) return 'MEDIUM';
@@ -463,12 +540,8 @@ export default function AIModule({ isDark = false }) {
     }), [analyzedTasks]);
 
     const handleRefreshAnalysis = useCallback(() => {
-        setIsAnalyzing(true);
-        setTimeout(() => {
-            setIsAnalyzing(false);
-            console.log('[API] POST /api/ai/analyze', { taskCount: tasks.length, refresh: true });
-        }, 1000);
-    }, [tasks.length]);
+        loadTasks();
+    }, [loadTasks]);
 
     const handleApplyRecommendations = useCallback(() => {
         // Auto-update task priorities based on AI analysis
@@ -595,6 +668,12 @@ export default function AIModule({ isDark = false }) {
                         </div>
                     ) : (
                         <>
+                            {error && (
+                                <div className="rounded-xl border border-amber-400/40 bg-amber-100/60 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+                                    {error}
+                                </div>
+                            )}
+
                             {/* TOAST NOTIFICATION */}
                             <AnimatePresence>
                                 <motion.div
@@ -610,7 +689,7 @@ export default function AIModule({ isDark = false }) {
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                                className="grid grid-cols-2 md:grid-cols-5 gap-4"
                             >
                                 <div className="backdrop-blur-xl rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 p-4 text-center hover:shadow-lg transition-all">
                                     <p className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.highRisk}</p>
@@ -623,6 +702,10 @@ export default function AIModule({ isDark = false }) {
                                 <div className="backdrop-blur-xl rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 p-4 text-center hover:shadow-lg transition-all">
                                     <p className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.lowRisk}</p>
                                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Low Risk</p>
+                                </div>
+                                <div className="backdrop-blur-xl rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 p-4 text-center hover:shadow-lg transition-all">
+                                    <p className="text-3xl font-bold text-rose-600 dark:text-rose-400">{stats.overdue}</p>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Overdue</p>
                                 </div>
                                 <div className="backdrop-blur-xl rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 p-4 text-center hover:shadow-lg transition-all">
                                     <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.avgRisk}%</p>
