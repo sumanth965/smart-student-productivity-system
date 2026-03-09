@@ -30,6 +30,30 @@ export default function Dashboard() {
     sourceType: task.createdBy?._id === currentStudentId ? 'self' : 'teacher',
   }), []);
 
+  const loadAssignedTasks = useCallback(async () => {
+    try {
+      const persistedUser =
+        localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
+
+      if (!persistedUser) return;
+
+      const parsedUser = JSON.parse(persistedUser);
+      const parsedUserId = resolveUserId(parsedUser);
+      if (!parsedUserId) return;
+
+      setStudentId(parsedUserId);
+
+      const response = await axios.get(`/api/students/${parsedUserId}/tasks`);
+      const assignedTasks = Array.isArray(response.data?.data)
+        ? response.data.data.map((task) => mapApiTaskToDashboardTask(task, parsedUserId))
+        : [];
+
+      setTasks(assignedTasks);
+    } catch (error) {
+      console.error('Failed to load assigned tasks for dashboard:', error);
+    }
+  }, [mapApiTaskToDashboardTask, resolveUserId]);
+
   useEffect(() => {
     const savedMode = localStorage.getItem('darkMode');
     if (savedMode !== null) setIsDark(JSON.parse(savedMode));
@@ -41,32 +65,19 @@ export default function Dashboard() {
   }, [isDark]);
 
   useEffect(() => {
-    const loadAssignedTasks = async () => {
-      try {
-        const persistedUser =
-          localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
-
-        if (!persistedUser) return;
-
-        const parsedUser = JSON.parse(persistedUser);
-        const parsedUserId = resolveUserId(parsedUser);
-        if (!parsedUserId) return;
-
-        setStudentId(parsedUserId);
-
-        const response = await axios.get(`/api/students/${parsedUserId}/tasks`);
-        const assignedTasks = Array.isArray(response.data?.data)
-          ? response.data.data.map((task) => mapApiTaskToDashboardTask(task, parsedUserId))
-          : [];
-
-        setTasks(assignedTasks);
-      } catch (error) {
-        console.error('Failed to load assigned tasks for dashboard:', error);
-      }
-    };
-
     loadAssignedTasks();
-  }, [mapApiTaskToDashboardTask, resolveUserId]);
+
+    const handleRefresh = () => loadAssignedTasks();
+    const handleFocus = () => loadAssignedTasks();
+
+    window.addEventListener('tasks:refresh', handleRefresh);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('tasks:refresh', handleRefresh);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [loadAssignedTasks]);
 
   const handleAddTask = useCallback(async (newTask) => {
     if (!studentId) {
@@ -91,6 +102,7 @@ export default function Dashboard() {
         setTasks((prevTasks) => [savedTask, ...prevTasks]);
       }
 
+      window.dispatchEvent(new Event('tasks:refresh'));
       setShowAddModal(false);
       return true;
     } catch (error) {
@@ -100,9 +112,30 @@ export default function Dashboard() {
     }
   }, [mapApiTaskToDashboardTask, studentId]);
 
-  const handleToggleTask = useCallback((taskId) => {
-    setTasks((prevTasks) => prevTasks.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task)));
-  }, []);
+  const handleToggleTask = useCallback(async (taskId) => {
+    const targetTask = tasks.find((task) => task.id === taskId);
+    if (!targetTask) return;
+
+    const nextCompleted = !targetTask.completed;
+
+    setTasks((prevTasks) => prevTasks.map((task) => (
+      task.id === taskId ? { ...task, completed: nextCompleted } : task
+    )));
+
+    try {
+      await axios.put(`/api/tasks/${taskId}`, {
+        status: nextCompleted ? 'Completed' : 'Pending',
+        ...(nextCompleted && studentId ? { completedBy: studentId } : {}),
+      });
+      window.dispatchEvent(new Event('tasks:refresh'));
+    } catch (error) {
+      console.error('Failed to sync task completion state:', error);
+      setTasks((prevTasks) => prevTasks.map((task) => (
+        task.id === taskId ? { ...task, completed: !nextCompleted } : task
+      )));
+      alert('Could not update task status. Please try again.');
+    }
+  }, [studentId, tasks]);
 
   const handleDeleteTask = useCallback((taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {

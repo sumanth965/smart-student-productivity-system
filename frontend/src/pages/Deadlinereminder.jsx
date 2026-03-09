@@ -369,57 +369,71 @@ export default function DeadlineReminder({ isDark = false }) {
     const [isLoading, setIsLoading] = useState(true);
     const [showToast, setShowToast] = useState(null);
     const [error, setError] = useState(null);
+    const [studentId, setStudentId] = useState('');
 
-    // Fetch tasks from database
-    useEffect(() => {
-        const loadTasks = async () => {
-            try {
-                setIsLoading(true);
-                const persistedUser =
-                    localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
+    const loadTasks = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            const persistedUser =
+                localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
 
-                if (!persistedUser) {
-                    setError('User not found. Please log in again.');
-                    return;
-                }
-
-                const parsedUser = JSON.parse(persistedUser);
-                const userId = parsedUser._id || parsedUser.id;
-
-                if (!userId) {
-                    setError('Invalid user information');
-                    return;
-                }
-
-                // Fetch tasks from API
-                const response = await axios.get(`/api/students/${userId}/tasks`);
-                if (response.data.success && Array.isArray(response.data.data)) {
-                    // Map API tasks to component format
-                    const mappedTasks = response.data.data.map((task) => ({
-                        id: task._id,
-                        title: task.title,
-                        subject: task.subject,
-                        dueDate: new Date(task.dueDate),
-                        priority: task.priority?.toLowerCase() || 'medium',
-                        status: task.status?.toLowerCase() || 'pending',
-                        description: task.description,
-                        createdAt: new Date(task.createdAt),
-                    }));
-                    setTasks(mappedTasks);
-                    setError(null);
-                } else {
-                    setTasks([]);
-                }
-            } catch (err) {
-                console.error('Failed to load tasks:', err);
-                setError(err.response?.data?.message || 'Failed to load tasks');
-            } finally {
-                setIsLoading(false);
+            if (!persistedUser) {
+                setError('User not found. Please log in again.');
+                return;
             }
-        };
 
-        loadTasks();
+            const parsedUser = JSON.parse(persistedUser);
+            const userId = parsedUser._id || parsedUser.id;
+
+            if (!userId) {
+                setError('Invalid user information');
+                return;
+            }
+
+            setStudentId(userId);
+
+            // Fetch tasks from API (teacher-assigned + self-assigned)
+            const response = await axios.get(`/api/students/${userId}/tasks`);
+            if (response.data.success && Array.isArray(response.data.data)) {
+                const mappedTasks = response.data.data.map((task) => ({
+                    id: task._id,
+                    title: task.title,
+                    subject: task.subject,
+                    dueDate: new Date(task.dueDate),
+                    priority: task.priority?.toLowerCase() || 'medium',
+                    status: task.status?.toLowerCase() || 'pending',
+                    description: task.description,
+                    createdAt: new Date(task.createdAt),
+                    completed: task.status === 'Completed',
+                }));
+                setTasks(mappedTasks);
+                setCompletedTasks(mappedTasks.filter((task) => task.completed).map((task) => task.id));
+                setError(null);
+            } else {
+                setTasks([]);
+            }
+        } catch (err) {
+            console.error('Failed to load tasks:', err);
+            setError(err.response?.data?.message || 'Failed to load tasks');
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        loadTasks();
+
+        const handleRefresh = () => loadTasks();
+        const handleFocus = () => loadTasks();
+
+        window.addEventListener('tasks:refresh', handleRefresh);
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            window.removeEventListener('tasks:refresh', handleRefresh);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [loadTasks]);
 
     // Auto-sort tasks by urgency
     const urgencyCategories = useMemo(() => {
@@ -435,14 +449,33 @@ export default function DeadlineReminder({ isDark = false }) {
 
     const completed = tasks.filter(t => completedTasks.includes(t.id));
 
-    const handleComplete = useCallback((taskId) => {
-        setCompletedTasks(prev => [...prev, taskId]);
-        setShowToast({ type: 'success', message: '✓ Task completed!' });
+    const handleComplete = useCallback(async (taskId) => {
+        const wasCompleted = completedTasks.includes(taskId);
+        const nextCompletedTasks = wasCompleted
+            ? completedTasks.filter((id) => id !== taskId)
+            : [...completedTasks, taskId];
+
+        setCompletedTasks(nextCompletedTasks);
+        setShowToast({ type: 'success', message: wasCompleted ? '↺ Task marked pending' : '✓ Task completed!' });
         setTimeout(() => setShowToast(null), 3000);
 
-        // Log API endpoint for MERN backend
-        console.log(`[API] PATCH /api/tasks/${taskId}/complete`, { completed: true });
-    }, []);
+        try {
+            await axios.put(`/api/tasks/${taskId}`, {
+                status: wasCompleted ? 'Pending' : 'Completed',
+                ...(!wasCompleted && studentId ? { completedBy: studentId } : {}),
+            });
+
+            setTasks((prevTasks) => prevTasks.map((task) => (
+                task.id === taskId ? { ...task, completed: !wasCompleted, status: !wasCompleted ? 'completed' : 'pending' } : task
+            )));
+            window.dispatchEvent(new Event('tasks:refresh'));
+        } catch (error) {
+            console.error('Failed to update task completion state:', error);
+            setCompletedTasks(completedTasks);
+            setShowToast({ type: 'error', message: 'Failed to update task status. Please try again.' });
+            setTimeout(() => setShowToast(null), 3000);
+        }
+    }, [completedTasks, studentId]);
 
     const handleSnooze = useCallback((taskId) => {
         const task = tasks.find(t => t.id === taskId);
