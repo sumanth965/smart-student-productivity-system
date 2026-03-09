@@ -1,4 +1,4 @@
-import { Bell, Menu, Moon, Search, Sun, User, X, Zap, LayoutDashboard, Clock, Brain, ShieldCheck, LogOut } from 'lucide-react';
+import { Bell, Menu, Moon, Search, Sun, User, X, Zap, LayoutDashboard, Clock, Brain, ShieldCheck, LogOut, Lock } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import UserProfileModal from './UserProfileModal';
@@ -14,6 +14,10 @@ export default function DashboardNavbar({
   const navigate = useNavigate();
   const location = useLocation();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showAdminAuth, setShowAdminAuth] = useState(false);
+  const [adminName, setAdminName] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminError, setAdminError] = useState('');
 
   const handleLogout = () => {
     localStorage.removeItem('student_token');
@@ -23,11 +27,36 @@ export default function DashboardNavbar({
     navigate('/login');
   };
 
+  const handleAdminClick = () => {
+    setShowAdminAuth(true);
+    setAdminError('');
+    setAdminName('');
+    setAdminPassword('');
+  };
+
+  const handleAdminAuth = () => {
+    if ((adminName === 'admin1' && adminPassword === '123') || (adminName === 'admin2' && adminPassword === '321')) {
+      setShowAdminAuth(false);
+      setAdminName('');
+      setAdminPassword('');
+      navigate('/admin');
+    } else {
+      setAdminError('Invalid admin name or password');
+      setAdminPassword('');
+    }
+  };
+
+  const handleAdminModalClose = () => {
+    setShowAdminAuth(false);
+    setAdminName('');
+    setAdminPassword('');
+    setAdminError('');
+  };
+
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/deadline', label: 'Deadlines', icon: Clock },
     { to: '/ai', label: 'AI Insights', icon: Brain },
-    { to: '/admin', label: 'Admin', icon: ShieldCheck },
   ];
 
   return (
@@ -64,6 +93,20 @@ export default function DashboardNavbar({
                 </Link>
               );
             })}
+            {/* Admin Button */}
+            <button
+              onClick={handleAdminClick}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200
+                ${location.pathname === '/admin'
+                  ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                  : isDark
+                    ? 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Admin
+            </button>
           </div>
 
           {/* Right section */}
@@ -150,6 +193,21 @@ export default function DashboardNavbar({
                 {label}
               </Link>
             ))}
+            {/* Mobile Admin Button */}
+            <button
+              onClick={() => {
+                setShowMobileMenu(false);
+                handleAdminClick();
+              }}
+              className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-all w-full text-left
+                ${location.pathname === '/admin'
+                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10'
+                  : isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Admin
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg w-full text-left transition-all mt-1"
@@ -160,6 +218,75 @@ export default function DashboardNavbar({
           </div>
         )}
       </div>
+
+      {/* Admin Authentication Modal */}
+      {showAdminAuth && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen bg-black/50 backdrop-blur-sm p-4">
+          <div className={`w-full max-w-md rounded-2xl shadow-2xl p-6 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <Lock className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Admin Access</h2>
+            </div>
+
+            <p className={`text-sm mb-4 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              Please enter admin credentials to proceed
+            </p>
+
+            {/* Error message */}
+            {adminError && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
+                <p className="text-red-600 dark:text-red-400 text-sm">{adminError}</p>
+              </div>
+            )}
+
+            {/* Admin Name Input */}
+            <div className="mb-4">
+              <label className={`block text-sm font-semibold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                Admin Name
+              </label>
+              <input
+                type="text"
+                value={adminName}
+                onChange={(e) => setAdminName(e.target.value)}
+                placeholder="Enter admin name"
+                className={`w-full px-4 py-2 rounded-lg border ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                onKeyPress={(e) => e.key === 'Enter' && handleAdminAuth()}
+              />
+            </div>
+
+            {/* Admin Password Input */}
+            <div className="mb-6">
+              <label className={`block text-sm font-semibold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                Password
+              </label>
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Enter password"
+                className={`w-full px-4 py-2 rounded-lg border ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                onKeyPress={(e) => e.key === 'Enter' && handleAdminAuth()}
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleAdminAuth}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-all"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={handleAdminModalClose}
+                className={`flex-1 border font-semibold py-2 rounded-lg transition-all ${isDark ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-700 hover:bg-slate-100'}`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* User Profile Modal */}
       <UserProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} isDark={isDark} />

@@ -71,7 +71,7 @@ export default function UserProfileModal({ isOpen, onClose, isDark }) {
                 {/* Header - Fixed */}
                 <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
                     <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        User Profile
+                        My Profile
                     </h2>
                     <button
                         onClick={onClose}
