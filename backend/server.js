@@ -1,11 +1,22 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const connectDB = require('./Database/connection');
 const userRoutes = require('./Routes/userRoutes');
 const studentRoutes = require('./Routes/studentRoutes');
 
 const app = express();
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// Verify Gemini API Key
+if (!process.env.GEMINI_API_KEY) {
+  console.warn('⚠️  WARNING: GEMINI_API_KEY not found in .env file!');
+} else {
+  console.log('✓ Gemini AI API Key loaded successfully');
+}
 
 // Connect to MongoDB
 connectDB();
@@ -23,6 +34,105 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api', studentRoutes);
+
+// ============================================================================
+// GEMINI AI CHAT ENDPOINT
+// ============================================================================
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { message, tasks } = req.body;
+
+    console.log('\n🔵 Chat Request Received');
+    console.log('Message:', message);
+    console.log('Tasks Count:', tasks?.length || 0);
+
+    // Validate input
+    if (!message || message.trim().length === 0) {
+      console.warn('⚠️  Empty message received');
+      return res.status(400).json({ error: 'Message cannot be empty' });
+    }
+
+    // Check API Key
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === '') {
+      console.error('❌ GEMINI_API_KEY is missing or empty');
+      return res.status(500).json({
+        success: false,
+        error: 'Gemini API Key not configured',
+        details: 'GEMINI_API_KEY is missing or empty in .env file'
+      });
+    }
+
+    console.log('✓ API Key found (length:', process.env.GEMINI_API_KEY.length, ')');
+
+    // Build prompt with task context
+    const prompt = `
+You are an AI productivity assistant for students managing their academic tasks.
+
+Student's Current Tasks:
+${tasks && tasks.length > 0 ? JSON.stringify(tasks, null, 2) : 'No active tasks'}
+
+Student Question/Request:
+${message}
+
+Provide helpful, concise, and actionable advice. If referring to specific tasks, use their actual names. Keep response under 300 words.
+`;
+
+    console.log('📤 Calling Gemini 1.5 Flash API...');
+
+    // Call Gemini AI with better error handling
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    const result = await model.generateContent(prompt);
+
+    // Check if response exists
+    if (!result || !result.response) {
+      throw new Error('Invalid response from Gemini AI - no response object');
+    }
+
+    const reply = result.response.text();
+
+    if (!reply || reply.trim().length === 0) {
+      throw new Error('Gemini returned empty response');
+    }
+
+    console.log('✅ Response generated successfully');
+    console.log('Reply length:', reply.length, 'characters\n');
+
+    // Return response
+    res.status(200).json({
+      success: true,
+      reply,
+      timestamp: new Date(),
+    });
+
+  } catch (error) {
+    console.error('\n❌ Chat Error Details:');
+    console.error('Error Message:', error.message);
+    console.error('Error Code:', error.code);
+    console.error('Error Status:', error.status);
+    console.error('Full Error:', error);
+
+    // Provide specific error messages
+    let detailMessage = error.message;
+
+    if (error.message.includes('API key')) {
+      detailMessage = 'Invalid or expired Gemini API key. Please check your .env file.';
+    } else if (error.message.includes('403')) {
+      detailMessage = 'Access denied - API key may be invalid or not activated.';
+    } else if (error.message.includes('404')) {
+      detailMessage = 'Model not found - check model name.';
+    } else if (error.message.includes('429')) {
+      detailMessage = 'Rate limited - too many requests. Please try again later.';
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate AI response',
+      details: detailMessage,
+      hint: 'Verify GEMINI_API_KEY in .env. Get new key from https://ai.google.dev/'
+    });
+  }
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -43,5 +153,8 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
+  console.log('\n' + '='.repeat(60));
   console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`🤖 Gemini AI integrated - /api/chat endpoint ready`);
+  console.log('='.repeat(60) + '\n');
 });

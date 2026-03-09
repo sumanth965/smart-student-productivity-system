@@ -766,7 +766,7 @@ GET    /api/ai/trends                      - Get risk trends`}
             </div>
 
             {/* CUSTOM STYLES */}
-            <style jsx global>{`
+            <style>{`
         @keyframes ai-glow {
           0%, 100% { 
             text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);

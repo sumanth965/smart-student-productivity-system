@@ -1,85 +1,98 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Brain, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * AI Chat Box Component
  * Standalone chat interface for AI task assistant
- * Provides real-time responses based on task analysis
+ * Provides real-time responses based on task analysis via Gemini AI
  */
 const AIChatBox = ({ tasks }) => {
     const [messages, setMessages] = useState([
-        { role: 'ai', text: 'Hi! Ask me anything about your tasks or workload.' }
+        { role: 'ai', text: 'Hi! Ask me anything about your tasks or workload.', timestamp: new Date() }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const messagesEndRef = useRef(null);
 
-    /**
-     * Generate contextual AI responses based on task data
-     */
-    const generateAIResponse = (query) => {
-        const highRiskTasks = tasks.filter(t => t.riskScore >= 70);
-        const urgentTasks = tasks.filter(t => {
-            const days = (new Date(t.dueDate) - new Date()) / (1000 * 60 * 60 * 24);
-            return days < 2;
-        });
-
-        const lowerQuery = query.toLowerCase();
-
-        // What should I do first / start / priority
-        if (lowerQuery.includes('what should') || lowerQuery.includes('first') || lowerQuery.includes('start')) {
-            if (highRiskTasks.length > 0) {
-                return `Start with "${highRiskTasks[0].title}" - it has the highest risk score (${highRiskTasks[0].riskScore}%). This is both important and urgent.`;
-            }
-            return 'Focus on tasks with upcoming deadlines first.';
-        }
-
-        // General help / how questions
-        if (lowerQuery.includes('help') || lowerQuery.includes('how') || lowerQuery.includes('can')) {
-            return `You have ${tasks.length} tasks. I recommend focusing on ${highRiskTasks.length} high-risk items. Would you like specific tips?`;
-        }
-
-        // Urgent / deadline questions
-        if (lowerQuery.includes('urgent') || lowerQuery.includes('deadline') || lowerQuery.includes('soon')) {
-            return `${urgentTasks.length} tasks are due within 2 days: ${urgentTasks.map(t => t.title).join(', ')}. I recommend prioritizing these.`;
-        }
-
-        // Complex tasks / breakdown questions
-        if (lowerQuery.includes('break down') || lowerQuery.includes('subtask') || lowerQuery.includes('complex')) {
-            const complexTask = tasks.find(t => t.complexity >= 0.85);
-            if (complexTask) {
-                return `"${complexTask.title}" is complex. Break it into: (1) Research/Planning, (2) Draft/Development, (3) Review/Polish.`;
-            }
-            return 'Complex tasks work best when broken into 3-4 subtasks.';
-        }
-
-        // Balance / schedule / planning questions
-        if (lowerQuery.includes('balance') || lowerQuery.includes('schedule') || lowerQuery.includes('plan')) {
-            return `Spend 40% on high-risk tasks, 35% on medium-risk, 25% on low-risk. Your current distribution needs adjustment.`;
-        }
-
-        // Default response
-        return `I analyzed your ${tasks.length} tasks. ${highRiskTasks.length} are high-risk. Would you like recommendations for specific tasks?`;
+    // Auto-scroll to bottom when messages change
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
     /**
-     * Handle sending a message to the AI
+     * Send message to Gemini AI and get real response
      */
-    const handleSend = () => {
+    const handleSend = useCallback(async () => {
         if (!input.trim()) return;
 
-        setMessages(prev => [...prev, { role: 'user', text: input }]);
+        const userMessage = input;
+        setMessages(prev => [...prev, { role: 'user', text: userMessage, timestamp: new Date() }]);
         setInput('');
         setIsLoading(true);
 
-        setTimeout(() => {
-            const response = generateAIResponse(input);
-            setMessages(prev => [...prev, { role: 'ai', text: response }]);
-            setIsLoading(false);
+        try {
+            console.log('🔵 Sending message to backend:', userMessage);
 
-            console.log(`[API] POST /api/ai/chat`, { message: input, response });
-        }, 600);
-    };
+            const response = await fetch('http://localhost:5000/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: userMessage,
+                    tasks: tasks || [],
+                }),
+            });
+
+            console.log('📊 Response Status:', response.status, response.statusText);
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                // Backend returned detailed error
+                const errorMessage = data.details || data.error || `API Error: ${response.status}`;
+                const hint = data.hint || '';
+                const fullError = `${errorMessage}${hint ? ' - ' + hint : ''}`;
+                throw new Error(fullError);
+            }
+
+            // Handle successful response
+            const aiResponse = data.reply || data.message || 'No response received';
+
+            setMessages(prev => [...prev, {
+                role: 'ai',
+                text: aiResponse,
+                timestamp: new Date(),
+            }]);
+
+            console.log('✅ AI Response generated:', aiResponse.substring(0, 100) + '...');
+
+        } catch (error) {
+            console.error('❌ Chat Error:', error.message);
+
+            let errorText = error.message;
+
+            // Add helpful hints
+            if (error.message.includes('Failed to fetch')) {
+                errorText = '❌ Cannot connect to backend. Make sure npm run dev is running on port 5000';
+            } else if (error.message.includes('API key')) {
+                errorText = '❌ Gemini API key error. Get a new key from https://ai.google.dev/ and add to .env';
+            }
+
+            setMessages(prev => [...prev, {
+                role: 'ai',
+                text: `⚠️ Error: ${errorText}`,
+                timestamp: new Date(),
+            }]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [input, tasks]);
 
     return (
         <motion.div
@@ -95,16 +108,18 @@ const AIChatBox = ({ tasks }) => {
 
             {/* Chat Messages Container */}
             <div className="h-64 overflow-y-auto space-y-3 bg-slate-50 dark:bg-slate-900/30 rounded-xl p-4">
-                <AnimatePresence>
+                <AnimatePresence mode="popLayout">
                     {messages.map((msg, i) => (
                         <motion.div
-                            key={i}
+                            key={`msg-${i}-${msg.timestamp.getTime()}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
                             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                             <div
-                                className={`max-w-xs px-4 py-2 rounded-lg text-sm ${msg.role === 'user'
+                                className={`max-w-xs px-4 py-2 rounded-lg text-sm leading-relaxed ${msg.role === 'user'
                                     ? 'bg-blue-500 text-white rounded-br-none'
                                     : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-none'
                                     }`}
@@ -113,22 +128,40 @@ const AIChatBox = ({ tasks }) => {
                             </div>
                         </motion.div>
                     ))}
+
+                    {/* Loading indicator */}
                     {isLoading && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
                             className="flex justify-start"
                         >
                             <div className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700">
                                 <div className="flex gap-1">
-                                    <div className="w-2 h-2 rounded-full bg-slate-600 dark:bg-slate-400 animate-bounce" />
-                                    <div className="w-2 h-2 rounded-full bg-slate-600 dark:bg-slate-400 animate-bounce" style={{ animationDelay: '0.1s' }} />
-                                    <div className="w-2 h-2 rounded-full bg-slate-600 dark:bg-slate-400 animate-bounce" style={{ animationDelay: '0.2s' }} />
+                                    <motion.div
+                                        className="w-2 h-2 rounded-full bg-slate-600 dark:bg-slate-400"
+                                        animate={{ y: [0, -4, 0] }}
+                                        transition={{ duration: 0.6, repeat: Infinity }}
+                                    />
+                                    <motion.div
+                                        className="w-2 h-2 rounded-full bg-slate-600 dark:bg-slate-400"
+                                        animate={{ y: [0, -4, 0] }}
+                                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.1 }}
+                                    />
+                                    <motion.div
+                                        className="w-2 h-2 rounded-full bg-slate-600 dark:bg-slate-400"
+                                        animate={{ y: [0, -4, 0] }}
+                                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
+                                    />
                                 </div>
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Scroll anchor */}
+                <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}
@@ -137,14 +170,16 @@ const AIChatBox = ({ tasks }) => {
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                    onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSend()}
                     placeholder="Ask me anything..."
-                    className="flex-1 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    disabled={isLoading}
+                    className="flex-1 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
                     onClick={handleSend}
                     disabled={!input.trim() || isLoading}
-                    className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:opacity-50 text-white font-semibold transition-colors"
+                    className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors"
+                    title={isLoading ? 'Waiting for response...' : 'Send message'}
                 >
                     <Send className="w-5 h-5" />
                 </button>
