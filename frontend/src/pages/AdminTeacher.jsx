@@ -855,7 +855,7 @@ export default function AdminTeacher() {
 
         {/* ── Navbar ─────────────────────────────────────────────────────────── */}
         <nav className="sticky top-0 z-50 backdrop-blur-2xl bg-white/80 border-b border-slate-200/60 shadow-sm">
-            <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+            <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
                 {/* Left */}
                 <div className="flex items-center gap-3">
                     <Link
@@ -890,7 +890,7 @@ export default function AdminTeacher() {
                 </div>
 
                 {/* Right actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto sm:justify-end">
                     <button
                         onClick={() => setShowCSVModal(true)}
                         className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-sm font-bold shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 transition-all"
@@ -968,7 +968,7 @@ export default function AdminTeacher() {
                             </Field>
 
                             {/* Row 2: USN + Roll No */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="USN" required icon={Hash} error={errors.usn}>
                                     <Input name="usn" value={formData.usn} onChange={handleChange} placeholder="12A001" className={`font-mono ${errors.usn ? 'border-red-400 focus:ring-red-200' : ''}`} />
                                 </Field>
@@ -978,7 +978,7 @@ export default function AdminTeacher() {
                             </div>
 
                             {/* Row 3: Class + Section */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="Class" required>
                                     <Select name="class" value={formData.class} onChange={handleChange}>
                                         {CLASS_OPTIONS.map(c => <option key={c}>{c}</option>)}
@@ -992,7 +992,7 @@ export default function AdminTeacher() {
                             </div>
 
                             {/* Row 4: Join Year + Passout Year */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="Join Year" required icon={Calendar}>
                                     <Select name="joinYear" value={formData.joinYear} onChange={handleChange}>
                                         {JOIN_YEARS.map(y => <option key={y}>{y}</option>)}
@@ -1006,7 +1006,7 @@ export default function AdminTeacher() {
                             </div>
 
                             {/* Row 5: Phone + Email */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="Phone" icon={Phone} error={errors.phone}>
                                     <Input name="phone" value={formData.phone} onChange={handleChange} placeholder="9876543210" type="tel" className={errors.phone ? 'border-red-400 focus:ring-red-200' : ''} />
                                 </Field>
@@ -1016,7 +1016,7 @@ export default function AdminTeacher() {
                             </div>
 
                             {/* Row 6: Parent Phone + Status */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="Parent Phone" error={errors.parentPhone}>
                                     <Input name="parentPhone" value={formData.parentPhone} onChange={handleChange} placeholder="Parent no." type="tel" className={errors.parentPhone ? 'border-red-400 focus:ring-red-200' : ''} />
                                 </Field>
@@ -1072,9 +1072,9 @@ export default function AdminTeacher() {
                 <div className="flex-1 min-w-0 space-y-4">
 
                     {/* Search + Filter bar */}
-                    <div className="backdrop-blur-xl bg-white/80 rounded-2xl shadow-md ring-1 ring-slate-200/40 p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                    <div className="backdrop-blur-xl bg-white/80 rounded-2xl shadow-md ring-1 ring-slate-200/40 p-4 flex flex-wrap gap-3 items-stretch md:items-center">
                         {/* Search */}
-                        <div className="flex-1 relative">
+                        <div className="relative w-full md:flex-1 md:min-w-[260px]">
                             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input
                                 type="text"
@@ -1094,7 +1094,7 @@ export default function AdminTeacher() {
                         <select
                             value={filterClass}
                             onChange={e => setFilterClass(e.target.value)}
-                            className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[100px]"
+                            className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[100px] md:min-w-[130px]"
                         >
                             <option value="All">All Classes</option>
                             {CLASS_OPTIONS.map(c => <option key={c}>{c}</option>)}
@@ -1104,7 +1104,7 @@ export default function AdminTeacher() {
                         <select
                             value={filterSection}
                             onChange={e => setFilterSection(e.target.value)}
-                            className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[110px]"
+                            className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[110px] md:min-w-[140px]"
                         >
                             <option value="All">All Sections</option>
                             {SECTION_OPTIONS.map(s => <option key={s}>Section {s}</option>)}
@@ -1114,7 +1114,7 @@ export default function AdminTeacher() {
                         <select
                             value={filterStatus}
                             onChange={e => setFilterStatus(e.target.value)}
-                            className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[110px]"
+                            className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[110px] md:min-w-[140px]"
                         >
                             <option value="All">All Status</option>
                             <option>Active</option>
@@ -1124,7 +1124,7 @@ export default function AdminTeacher() {
                         {/* Assign Task Button */}
                         <button
                             onClick={() => setShowTaskModal(true)}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 transition-all whitespace-nowrap"
+                            className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 transition-all whitespace-nowrap"
                             title="Assign new task to students"
                         >
                             <Bell className="w-4 h-4" />
@@ -1132,7 +1132,7 @@ export default function AdminTeacher() {
                         </button>
 
                         {/* Results count + clear */}
-                        <div className="flex items-center gap-2 text-sm text-slate-500 whitespace-nowrap">
+                        <div className="flex items-center justify-between sm:justify-start gap-2 text-sm text-slate-500 whitespace-nowrap w-full sm:w-auto md:ml-auto">
                             <span className="font-semibold text-slate-700">{filteredStudents.length}</span> results
                             {(filterClass !== 'All' || filterSection !== 'All' || filterStatus !== 'All' || searchTerm) && (
                                 <button
@@ -1276,7 +1276,7 @@ export default function AdminTeacher() {
 
                         {/* Table footer */}
                         {filteredStudents.length > 0 && (
-                            <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/80 flex items-center justify-between text-xs text-slate-500">
+                            <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row gap-2 sm:items-center justify-between text-xs text-slate-500">
                                 <span>Showing {filteredStudents.length} of {students.length} students</span>
                                 <div className="flex items-center gap-4">
                                     <span className="text-emerald-600 font-semibold">
