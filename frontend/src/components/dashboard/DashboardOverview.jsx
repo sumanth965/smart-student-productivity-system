@@ -18,8 +18,8 @@ export default function DashboardOverview({ isDark, tasks, stats, deadlineData }
 
         <div className={`rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 ${isDark ? 'bg-slate-800/80 ring-slate-700/50' : 'bg-white/80 ring-slate-200/50'}`}>
           <h3 className={`mb-4 font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>📊 Deadline Analytics</h3>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-72 min-h-[18rem] min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={280} minHeight={240}>
               <BarChart data={deadlineData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />

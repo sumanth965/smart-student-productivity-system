@@ -16,6 +16,8 @@ export default function Dashboard() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const resolveUserId = useCallback((user) => user?._id || user?.id || '', []);
+
   const mapApiTaskToDashboardTask = useCallback((task, currentStudentId) => ({
     id: task._id,
     title: task.title,
@@ -47,13 +49,14 @@ export default function Dashboard() {
         if (!persistedUser) return;
 
         const parsedUser = JSON.parse(persistedUser);
-        if (!parsedUser?._id) return;
+        const parsedUserId = resolveUserId(parsedUser);
+        if (!parsedUserId) return;
 
-        setStudentId(parsedUser._id);
+        setStudentId(parsedUserId);
 
-        const response = await axios.get(`/api/students/${parsedUser._id}/tasks`);
+        const response = await axios.get(`/api/students/${parsedUserId}/tasks`);
         const assignedTasks = Array.isArray(response.data?.data)
-          ? response.data.data.map((task) => mapApiTaskToDashboardTask(task, parsedUser._id))
+          ? response.data.data.map((task) => mapApiTaskToDashboardTask(task, parsedUserId))
           : [];
 
         setTasks(assignedTasks);
@@ -63,10 +66,13 @@ export default function Dashboard() {
     };
 
     loadAssignedTasks();
-  }, [mapApiTaskToDashboardTask]);
+  }, [mapApiTaskToDashboardTask, resolveUserId]);
 
   const handleAddTask = useCallback(async (newTask) => {
-    if (!studentId) return;
+    if (!studentId) {
+      alert('Unable to identify the current student. Please log in again.');
+      return false;
+    }
 
     try {
       const response = await axios.post(`/api/students/${studentId}/tasks`, {
@@ -86,9 +92,11 @@ export default function Dashboard() {
       }
 
       setShowAddModal(false);
+      return true;
     } catch (error) {
       console.error('Failed to save self task:', error);
       alert('Unable to save task to database. Please try again.');
+      return false;
     }
   }, [mapApiTaskToDashboardTask, studentId]);
 
