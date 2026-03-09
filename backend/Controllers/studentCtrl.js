@@ -110,26 +110,22 @@ exports.updateStudent = async (req, res) => {
         delete updates.loginId;
         delete updates.password;
 
-        // Normalize USN if provided
-        if (updates.usn) {
-            updates.usn = updates.usn.toUpperCase();
-
-            // Check for duplicate USN
-            const existingStudent = await User.findOne({ usn: updates.usn, _id: { $ne: id } });
-            if (existingStudent) {
-                return res.status(409).json({ success: false, message: 'A student with this USN already exists' });
-            }
-        }
-
-        // Update isActive based on status
+        // If status is being updated, sync isActive field
         if (updates.status) {
             updates.isActive = updates.status === 'Active';
+        }
+
+        // Ensure USN is uppercase if provided
+        if (updates.usn) {
+            updates.usn = updates.usn.toUpperCase();
         }
 
         const updatedStudent = await User.findByIdAndUpdate(id, updates, {
             new: true,
             runValidators: true,
-        }).select('-password');
+        })
+            .select('-password')
+            .populate('assignedTasks');
 
         if (!updatedStudent) {
             return res.status(404).json({ success: false, message: 'Student not found' });
@@ -160,13 +156,12 @@ exports.deleteStudent = async (req, res) => {
         // Also remove this student from any assigned tasks
         await Task.updateMany(
             { assignedTo: id },
-            { $pull: { assignedTo: id } }
+            { $pull: { assignedTo: id }, $inc: { assignedCount: -1 } }
         );
 
         return res.status(200).json({
             success: true,
             message: 'Student deleted successfully',
-            data: deletedStudent,
         });
     } catch (error) {
         console.error('Error deleting student:', error);
@@ -183,7 +178,7 @@ exports.getAllTasks = async (req, res) => {
     try {
         const tasks = await Task.find()
             .populate('assignedTo', 'name email usn class section')
-            .populate('createdBy', 'name email')
+            .populate('createdBy', 'name email role')
             .sort({ createdAt: -1 });
 
         return res.status(200).json({
@@ -200,7 +195,7 @@ exports.getAllTasks = async (req, res) => {
 // CREATE new task (assign to students)
 exports.createTask = async (req, res) => {
     try {
-        const { title, description, subject, class: cls, section, dueDate, priority, assignedTo, assignedCount } = req.body;
+        const { title, description, subject, class: cls, section, dueDate, priority, assignedTo, assignedCount, createdBy } = req.body;
 
         // Validate required fields
         if (!title || !description || !subject || !dueDate) {
@@ -237,8 +232,8 @@ exports.createTask = async (req, res) => {
             dueDate: new Date(dueDate),
             priority: priority || 'Medium',
             assignedTo: studentIds,
-            assignedCount: studentIds.length,
-            createdBy: req.userId || null,
+            assignedCount: assignedCount || studentIds.length,
+            createdBy: req.userId || createdBy || null,
             status: 'Pending',
         });
 
@@ -252,7 +247,7 @@ exports.createTask = async (req, res) => {
 
         await newTask.populate([
             { path: 'assignedTo', select: 'name email usn class section' },
-            { path: 'createdBy', select: 'name email' },
+            { path: 'createdBy', select: 'name email role' },
         ]);
 
         return res.status(201).json({
@@ -266,14 +261,66 @@ exports.createTask = async (req, res) => {
     }
 };
 
+// CREATE self-assigned task for a student
+exports.createStudentSelfTask = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { title, description, subject, dueDate, priority } = req.body;
+
+        if (!title || !description || !subject || !dueDate) {
+            return res.status(400).json({
+                success: false,
+                message: 'Title, description, subject, and dueDate are required',
+            });
+        }
+
+        const student = await User.findOne({ _id: studentId, role: 'student' });
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        const selfTask = new Task({
+            title,
+            description,
+            subject,
+            class: student.class || 'All',
+            section: student.section || 'All',
+            dueDate: new Date(dueDate),
+            priority: priority || 'Medium',
+            assignedTo: [studentId],
+            assignedCount: 1,
+            createdBy: studentId,
+            status: 'Pending',
+        });
+
+        await selfTask.save();
+
+        await User.findByIdAndUpdate(studentId, { $push: { assignedTasks: selfTask._id } });
+
+        await selfTask.populate([
+            { path: 'assignedTo', select: 'name email usn class section' },
+            { path: 'createdBy', select: 'name email role' },
+        ]);
+
+        return res.status(201).json({
+            success: true,
+            message: 'Self task created successfully',
+            data: selfTask,
+        });
+    } catch (error) {
+        console.error('Error creating self task:', error);
+        return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
+
 // GET tasks by student ID
 exports.getStudentTasks = async (req, res) => {
     try {
         const { studentId } = req.params;
 
         const tasks = await Task.find({ assignedTo: studentId })
-            .populate('createdBy', 'name email')
-            .sort({ dueDate: 1 });
+            .populate('createdBy', 'name email role')
+            .sort({ createdAt: -1 });
 
         return res.status(200).json({
             success: true,
@@ -303,7 +350,7 @@ exports.updateTask = async (req, res) => {
             runValidators: true,
         })
             .populate('assignedTo', 'name email usn class section')
-            .populate('createdBy', 'name email');
+            .populate('createdBy', 'name email role');
 
         if (!updatedTask) {
             return res.status(404).json({ success: false, message: 'Task not found' });

@@ -1,21 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import AddTaskModal from '../components/dashboard/AddTaskModal';
 import DashboardNavbar from '../components/dashboard/DashboardNavbar';
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import RecentTasksSection from '../components/dashboard/RecentTasksSection';
-import { calculatePriority, getDaysUntil, isOverdue, MOCK_TASKS } from '../components/dashboard/dashboardUtils';
+import { calculatePriority, getDaysUntil, isOverdue } from '../components/dashboard/dashboardUtils';
 import axios from '../lib/axios';
 
 export default function Dashboard() {
   const [open, setOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
-  const [tasks, setTasks] = useState(MOCK_TASKS);
+  const [tasks, setTasks] = useState([]);
+  const [studentId, setStudentId] = useState('');
   const [filter, setFilter] = useState('all');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const mapApiTaskToDashboardTask = useCallback((task) => ({
+  const mapApiTaskToDashboardTask = useCallback((task, currentStudentId) => ({
     id: task._id,
     title: task.title,
     subject: task.subject,
@@ -24,12 +25,12 @@ export default function Dashboard() {
     completed: task.status === 'Completed',
     description: task.description,
     createdAt: new Date(task.createdAt),
+    sourceType: task.createdBy?._id === currentStudentId ? 'self' : 'teacher',
   }), []);
 
   useEffect(() => {
     const savedMode = localStorage.getItem('darkMode');
     if (savedMode !== null) setIsDark(JSON.parse(savedMode));
-    console.log('[MERN Integration] Dashboard mounted - Ready for API calls');
   }, []);
 
   useEffect(() => {
@@ -48,9 +49,11 @@ export default function Dashboard() {
         const parsedUser = JSON.parse(persistedUser);
         if (!parsedUser?._id) return;
 
+        setStudentId(parsedUser._id);
+
         const response = await axios.get(`/api/students/${parsedUser._id}/tasks`);
         const assignedTasks = Array.isArray(response.data?.data)
-          ? response.data.data.map(mapApiTaskToDashboardTask)
+          ? response.data.data.map((task) => mapApiTaskToDashboardTask(task, parsedUser._id))
           : [];
 
         setTasks(assignedTasks);
@@ -62,10 +65,32 @@ export default function Dashboard() {
     loadAssignedTasks();
   }, [mapApiTaskToDashboardTask]);
 
-  const handleAddTask = useCallback((newTask) => {
-    setTasks((prevTasks) => [newTask, ...prevTasks]);
-    setShowAddModal(false);
-  }, []);
+  const handleAddTask = useCallback(async (newTask) => {
+    if (!studentId) return;
+
+    try {
+      const response = await axios.post(`/api/students/${studentId}/tasks`, {
+        title: newTask.title,
+        description: newTask.description || 'Self assigned task',
+        subject: newTask.subject,
+        dueDate: newTask.deadline,
+        priority: (newTask.priority || 'medium').charAt(0).toUpperCase() + (newTask.priority || 'medium').slice(1),
+      });
+
+      const savedTask = response.data?.data
+        ? mapApiTaskToDashboardTask(response.data.data, studentId)
+        : null;
+
+      if (savedTask) {
+        setTasks((prevTasks) => [savedTask, ...prevTasks]);
+      }
+
+      setShowAddModal(false);
+    } catch (error) {
+      console.error('Failed to save self task:', error);
+      alert('Unable to save task to database. Please try again.');
+    }
+  }, [mapApiTaskToDashboardTask, studentId]);
 
   const handleToggleTask = useCallback((taskId) => {
     setTasks((prevTasks) => prevTasks.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task)));
@@ -77,7 +102,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  const filteredTasks = tasks
+  const filteredTasks = useMemo(() => tasks
     .filter((task) => {
       if (filter === 'pending') return !task.completed;
       if (filter === 'completed') return task.completed;
@@ -89,14 +114,20 @@ export default function Dashboard() {
       (task) =>
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.subject.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
+    ), [filter, searchQuery, tasks]);
 
-  const recentTasks = filteredTasks.slice(0, 5);
+  const recentTeacherTasks = filteredTasks
+    .filter((task) => task.sourceType === 'teacher')
+    .slice(0, 2);
+
+  const recentSelfTasks = filteredTasks
+    .filter((task) => task.sourceType === 'self')
+    .slice(0, 2);
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((t) => t.completed).length;
   const pendingTasks = totalTasks - completedTasks;
-  const productivity = Math.round((completedTasks / totalTasks) * 100);
+  const productivity = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const deadlineData = [
     { name: 'Overdue', count: tasks.filter((t) => isOverdue(t.deadline, t.completed)).length },
@@ -132,7 +163,8 @@ export default function Dashboard() {
             setFilter={setFilter}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            recentTasks={recentTasks}
+            recentTeacherTasks={recentTeacherTasks}
+            recentSelfTasks={recentSelfTasks}
             handleToggleTask={handleToggleTask}
             handleDeleteTask={handleDeleteTask}
             setShowAddModal={setShowAddModal}
