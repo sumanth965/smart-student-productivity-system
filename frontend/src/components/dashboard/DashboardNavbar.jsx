@@ -1,5 +1,7 @@
 import { Bell, Menu, Moon, Search, Sun, User, X, Zap, LayoutDashboard, Clock, Brain, ShieldCheck, LogOut } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import UserProfileModal from './UserProfileModal';
 
 export default function DashboardNavbar({
   isDark,
@@ -11,6 +13,7 @@ export default function DashboardNavbar({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('student_token');
@@ -97,9 +100,13 @@ export default function DashboardNavbar({
 
             {/* User avatar */}
             <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-slate-200/50">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center">
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center hover:ring-2 hover:ring-blue-400 transition-all"
+                title="Click to view profile"
+              >
                 <User className="h-4 w-4 text-white" />
-              </div>
+              </button>
             </div>
 
             {/* Logout */}
@@ -153,6 +160,9 @@ export default function DashboardNavbar({
           </div>
         )}
       </div>
+
+      {/* User Profile Modal */}
+      <UserProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} isDark={isDark} />
     </nav>
   );
 }
