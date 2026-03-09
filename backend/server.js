@@ -8,8 +8,15 @@ const studentRoutes = require('./Routes/studentRoutes');
 
 const app = express();
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Initialize Gemini AI (lazy validation happens in /api/chat)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+
+const GEMINI_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-latest',
+  'gemini-pro',
+];
 
 // Verify Gemini API Key
 if (!process.env.GEMINI_API_KEY) {
@@ -80,12 +87,29 @@ ${message}
 Provide helpful, concise, and actionable advice. If referring to specific tasks, use their actual names. Keep response under 300 words.
 `;
 
-    console.log('📤 Calling Gemini AI (gemini-1.5-flash)...');
+    console.log('📤 Calling Gemini AI with fallback models...');
 
-    // Call Gemini AI with better error handling
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Try models in order because model availability varies by API version / account
+    let result;
+    let selectedModel;
+    let lastError;
 
-    const result = await model.generateContent(prompt);
+    for (const modelName of GEMINI_MODELS) {
+      try {
+        console.log(`↪️  Trying model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        result = await model.generateContent(prompt);
+        selectedModel = modelName;
+        break;
+      } catch (modelError) {
+        lastError = modelError;
+        console.warn(`⚠️  Model failed: ${modelName} -> ${modelError.message}`);
+      }
+    }
+
+    if (!result) {
+      throw lastError || new Error('All Gemini models failed to generate content.');
+    }
 
     // Check if response exists
     if (!result || !result.response) {
@@ -98,7 +122,7 @@ Provide helpful, concise, and actionable advice. If referring to specific tasks,
       throw new Error('Gemini returned empty response - API may not be responding correctly');
     }
 
-    console.log('✅ Response generated successfully');
+    console.log(`✅ Response generated successfully using ${selectedModel}`);
     console.log('Reply length:', reply.length, 'characters\n');
 
     // Return response
