@@ -34,6 +34,9 @@ router.post('/tasks', studentCtrl.createTask);
 // GET tasks by student ID
 router.get('/students/:studentId/tasks', studentCtrl.getStudentTasks);
 
+// CREATE self-assigned task by student ID
+router.post('/students/:studentId/tasks', studentCtrl.createStudentSelfTask);
+
 // UPDATE task
 router.put('/tasks/:id', studentCtrl.updateTask);
 

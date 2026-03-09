@@ -9,6 +9,21 @@ const FILTER_OPTIONS = [
   { label: 'High Priority', value: 'high-priority' },
 ];
 
+function TaskGroup({ title, tasks, isDark, handleToggleTask, handleDeleteTask, emptyMessage }) {
+  return (
+    <div className="space-y-3">
+      <h4 className={`text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{title}</h4>
+      {tasks.length > 0 ? (
+        tasks.map((task) => (
+          <TaskItem key={task.id} task={task} onToggle={handleToggleTask} onDelete={handleDeleteTask} isDark={isDark} />
+        ))
+      ) : (
+        <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{emptyMessage}</p>
+      )}
+    </div>
+  );
+}
+
 export default function RecentTasksSection({
   isDark,
   open,
@@ -17,11 +32,14 @@ export default function RecentTasksSection({
   setFilter,
   searchQuery,
   setSearchQuery,
-  recentTasks,
+  recentTeacherTasks,
+  recentSelfTasks,
   handleToggleTask,
   handleDeleteTask,
   setShowAddModal,
 }) {
+  const hasTasks = recentTeacherTasks.length > 0 || recentSelfTasks.length > 0;
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
       <div className="lg:col-span-3">
@@ -56,11 +74,24 @@ export default function RecentTasksSection({
             </div>
           </div>
 
-          {recentTasks.length > 0 ? (
-            <div className="space-y-3">
-              {recentTasks.map((task) => (
-                <TaskItem key={task.id} task={task} onToggle={handleToggleTask} onDelete={handleDeleteTask} isDark={isDark} />
-              ))}
+          {hasTasks ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              <TaskGroup
+                title="Teacher Assigned (Latest 2)"
+                tasks={recentTeacherTasks}
+                isDark={isDark}
+                handleToggleTask={handleToggleTask}
+                handleDeleteTask={handleDeleteTask}
+                emptyMessage="No teacher-assigned tasks found"
+              />
+              <TaskGroup
+                title="My Self Tasks (Latest 2)"
+                tasks={recentSelfTasks}
+                isDark={isDark}
+                handleToggleTask={handleToggleTask}
+                handleDeleteTask={handleDeleteTask}
+                emptyMessage="No self-created tasks found"
+              />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12">
