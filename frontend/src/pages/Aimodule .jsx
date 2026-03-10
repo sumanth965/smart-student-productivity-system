@@ -386,8 +386,6 @@ export default function AIModule({ isDark = false }) {
 
         const handleRefresh = () => loadTasks();
         const handleFocus = () => loadTasks();
-        const autoRefresh = window.setInterval(() => loadTasks(), 30000);
-
         window.addEventListener('tasks:refresh', handleRefresh);
         window.addEventListener('focus', handleFocus);
 
@@ -532,7 +530,7 @@ export default function AIModule({ isDark = false }) {
 
                             {!isAnalyzing && (
                                 <p className="w-full text-right text-xs text-slate-500 dark:text-slate-400">
-                                    Auto-refresh every 30s • Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : 'just now'}
+                                    Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : 'just now'}
                                 </p>
                             )}
                         </div>
