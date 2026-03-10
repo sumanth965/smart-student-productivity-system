@@ -330,27 +330,28 @@ What would you like help with? 🎓`;
 ${tasks && tasks.length > 0 ? `You have ${tasks.length} task(s) tracked. Ask me anything about them!` : 'Start by adding tasks to your dashboard for better guidance!'}
 
 📱 The more detail you provide, the better advice I can give! 🚀`;
+}
 
-  // Register other routes (AFTER /api/chat)
-  app.use('/api/users', userRoutes);
-  app.use('/api', studentRoutes);
+// Register other routes (AFTER /api/chat)
+app.use('/api/users', userRoutes);
+app.use('/api', studentRoutes);
 
-  // 404 Not Found handler
-  app.use((req, res) => {
-    res.status(404).json({ message: 'Route not found' });
-  });
+// 404 Not Found handler
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
 
-  // Error handling middleware
-  app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ message: 'Internal Server Error', error: err.message });
-  });
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Internal Server Error', error: err.message });
+});
 
-  // Start server
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log('\n' + '='.repeat(60));
-    console.log(`✅ Server running on http://localhost:${PORT}`);
-    console.log(`🤖 Gemini AI integrated - /api/chat endpoint ready`);
-    console.log('='.repeat(60) + '\n');
-  });
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log('\n' + '='.repeat(60));
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`🤖 Gemini AI integrated - /api/chat endpoint ready`);
+  console.log('='.repeat(60) + '\n');
+});
