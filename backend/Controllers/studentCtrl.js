@@ -46,6 +46,8 @@ exports.getStudentById = async (req, res) => {
 exports.createStudent = async (req, res) => {
     try {
         const { name, usn, phone, email, class: cls, section, rollNo, joinYear, passoutYear, parentPhone, status, notes, loginId, password, createdBy } = req.body;
+        const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+        const normalizedLoginId = typeof loginId === 'string' ? loginId.trim() : '';
 
         // Validate required fields
         if (!name || !usn || !rollNo) {
@@ -59,8 +61,8 @@ exports.createStudent = async (req, res) => {
         }
 
         // Check if loginId already exists
-        if (loginId) {
-            const existingLogin = await User.findOne({ loginId });
+        if (normalizedLoginId) {
+            const existingLogin = await User.findOne({ loginId: normalizedLoginId });
             if (existingLogin) {
                 return res.status(409).json({ success: false, message: 'This login ID is already in use' });
             }
@@ -71,8 +73,9 @@ exports.createStudent = async (req, res) => {
             name,
             usn: usn.toUpperCase(),
             phone: phone || '',
-            email: email || '',
-            class: cls || '12A',
+            // Keep optional unique fields undefined when blank to avoid duplicate key errors on empty strings
+            email: normalizedEmail || undefined,
+            class: cls || 'BCA',
             section: section || 'A',
             rollNo,
             joinYear: joinYear || new Date().getFullYear().toString(),
@@ -80,7 +83,7 @@ exports.createStudent = async (req, res) => {
             parentPhone: parentPhone || '',
             status: status || 'Active',
             notes: notes || '',
-            loginId: loginId || name.toUpperCase(),
+            loginId: normalizedLoginId || name.toUpperCase(),
             password: password || `${usn.toUpperCase()}@2026`,
             role: 'student',
             createdBy: createdBy || 'teacher',

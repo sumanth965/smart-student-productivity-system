@@ -49,11 +49,22 @@ const envAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
   .filter(Boolean);
 
 const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envAllowedOrigins])];
+const renderDomainPattern = /^https:\/\/[a-z0-9-]+\.onrender\.com$/i;
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+
+  // Support Render preview/production URLs without requiring redeploy-time env edits.
+  if (renderDomainPattern.test(origin)) return true;
+
+  return false;
+};
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow server-to-server requests or tools that do not send an Origin header
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
 
@@ -62,6 +73,7 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
