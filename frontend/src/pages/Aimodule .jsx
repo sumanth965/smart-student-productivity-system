@@ -386,6 +386,7 @@ export default function AIModule({ isDark = false }) {
 
         const handleRefresh = () => loadTasks();
         const handleFocus = () => loadTasks();
+        const autoRefresh = window.setInterval(handleRefresh, 5 * 60 * 1000);
         window.addEventListener('tasks:refresh', handleRefresh);
         window.addEventListener('focus', handleFocus);
 
@@ -642,28 +643,30 @@ export default function AIModule({ isDark = false }) {
                                             <h3 className="text-lg font-bold text-slate-900 dark:text-white">📈 Risk Trends</h3>
                                         </div>
 
-                                        <ResponsiveContainer width="100%" height={300}>
-                                            <AreaChart data={riskTrend}>
-                                                <defs>
-                                                    <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#a855f7" stopOpacity={0.8} />
-                                                        <stop offset="95%" stopColor="#a855f7" stopOpacity={0.1} />
-                                                    </linearGradient>
-                                                </defs>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
-                                                <XAxis dataKey="day" stroke="#94a3b8" className="dark:stroke-slate-500" />
-                                                <YAxis stroke="#94a3b8" className="dark:stroke-slate-500" />
-                                                <Tooltip
-                                                    contentStyle={{
-                                                        background: 'rgba(15, 23, 42, 0.95)',
-                                                        border: '1px solid rgba(148, 163, 184, 0.3)',
-                                                        borderRadius: '8px',
-                                                        color: '#f1f5f9'
-                                                    }}
-                                                />
-                                                <Area type="monotone" dataKey="risk" stroke="#a855f7" fill="url(#colorRisk)" />
-                                            </AreaChart>
-                                        </ResponsiveContainer>
+                                        <div className="w-full min-h-[300px]">
+                                            <ResponsiveContainer width="100%" height="100%" minWidth={280} minHeight={240}>
+                                                <AreaChart data={riskTrend}>
+                                                    <defs>
+                                                        <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#a855f7" stopOpacity={0.8} />
+                                                            <stop offset="95%" stopColor="#a855f7" stopOpacity={0.1} />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
+                                                    <XAxis dataKey="day" stroke="#94a3b8" className="dark:stroke-slate-500" />
+                                                    <YAxis stroke="#94a3b8" className="dark:stroke-slate-500" />
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            background: 'rgba(15, 23, 42, 0.95)',
+                                                            border: '1px solid rgba(148, 163, 184, 0.3)',
+                                                            borderRadius: '8px',
+                                                            color: '#f1f5f9'
+                                                        }}
+                                                    />
+                                                    <Area type="monotone" dataKey="risk" stroke="#a855f7" fill="url(#colorRisk)" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        </div>
 
                                         <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                                             <p className="text-xs text-slate-600 dark:text-slate-400">
