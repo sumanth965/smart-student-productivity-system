@@ -13,6 +13,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 const GEMINI_MODELS = [
   'gemini-2.0-flash',
+  'gemini-3-flash',
   'gemini-1.5-flash',
   'gemini-1.5-flash-latest',
   'gemini-pro',
@@ -43,7 +44,7 @@ app.use(express.urlencoded({ extended: true }));
 // ============================================================================
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, tasks } = req.body;
+    const { message, tasks, history } = req.body;
 
     console.log('\n🔵 Chat Request Received');
     console.log('Message:', message);
@@ -71,16 +72,32 @@ app.post('/api/chat', async (req, res) => {
     console.log('✓ API Key starts with:', apiKey.substring(0, 10) + '...');
 
     // Build prompt with task context
+
+    const conversationHistory = Array.isArray(history)
+      ? history
+          .filter((turn) => turn?.text && (turn?.role === 'user' || turn?.role === 'assistant'))
+          .slice(-12)
+      : [];
+
     const prompt = `
-You are an AI productivity assistant for students managing their academic tasks.
+You are a virtual academic assistant in the Smart Student Productivity System.
+Support students with studying, productivity, programming, assignments, and academic guidance.
 
 Student's Current Tasks:
 ${tasks && tasks.length > 0 ? JSON.stringify(tasks, null, 2) : 'No active tasks'}
 
+Recent Conversation (oldest to newest):
+${conversationHistory.length > 0 ? conversationHistory.map((turn) => `${turn.role.toUpperCase()}: ${turn.text}`).join('\n') : 'No prior messages'}
+
 Student Question/Request:
 ${message}
 
-Provide helpful, concise, and actionable advice. If referring to specific tasks, use their actual names. Keep response under 300 words.
+Instructions:
+- Keep answers accurate, practical, and friendly.
+- Use concise formatting with short bullets when useful.
+- For coding help, include clear steps or a short example.
+- If something is unclear, ask one concise follow-up question.
+- Keep response under 300 words.
 `;
 
     console.log('📤 Calling Gemini AI with fallback models...');
@@ -93,10 +110,7 @@ Provide helpful, concise, and actionable advice. If referring to specific tasks,
     for (const modelName of GEMINI_MODELS) {
       try {
         console.log(`↪️  Trying model: ${modelName}`);
-        // const model = genAI.getGenerativeModel({ model: modelName });
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.0-flash"
-        });
+        const model = genAI.getGenerativeModel({ model: modelName });
         result = await model.generateContent(prompt);
         selectedModel = modelName;
         break;
