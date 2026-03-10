@@ -16,11 +16,9 @@ const responseCache = new Map();
 const MAX_CACHE_SIZE = 100; // Limit cache size to prevent memory issues
 
 const GEMINI_MODELS = [
-  'gemini-2.0-flash',
-  'gemini-3-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-latest',
   'gemini-pro',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-flash',
 ];
 
 // Verify Gemini API Key
@@ -116,9 +114,9 @@ Instructions:
 - Keep response under 300 words.
 `;
 
-    console.log('📤 Calling Gemini AI with fallback models...');
+    console.log('📤 Calling Gemini AI (Free Tier)...');
 
-    // Try models in order because model availability varies by API version / account
+    // Use free tier models with fallbacks
     let result;
     let selectedModel;
     let lastError;
@@ -129,6 +127,7 @@ Instructions:
         const model = genAI.getGenerativeModel({ model: modelName });
         result = await model.generateContent(prompt);
         selectedModel = modelName;
+        console.log(`✅ Success with model: ${modelName}`);
         break;
       } catch (modelError) {
         lastError = modelError;
@@ -136,8 +135,8 @@ Instructions:
 
         // Check if it's a quota error
         if (modelError.status === 429 || modelError.message.includes('429')) {
-          console.log('ℹ️  Quota exceeded - will use fallback response');
-          break; // Stop trying other models if quota is exceeded
+          console.log('ℹ️  Free tier quota exceeded - using fallback response');
+          break;
         }
       }
     }
@@ -233,88 +232,125 @@ Instructions:
 function generateFallbackResponse(message, tasks) {
   const lowerMessage = message.toLowerCase();
 
-  // Basic response patterns
-  if (lowerMessage.includes('time') || lowerMessage.includes('schedule')) {
-    return `Based on your request about time management: 
+  // Task prioritization queries
+  if (lowerMessage.includes('first') || lowerMessage.includes('priority') || lowerMessage.includes('which') || lowerMessage.includes('start')) {
+    if (tasks && tasks.length > 0) {
+      const taskNames = tasks.slice(0, 3).map(t => `**${t.title || t.name || 'Task'}**`).join(', ');
+      return `To prioritize your tasks, consider:
 
-1. **Break tasks into smaller steps** - This makes them less overwhelming
-2. **Use the Pomodoro technique** - 25 minutes focus, 5 minutes break
-3. **Prioritize by deadline** - Start with tasks due soonest
-4. **Track your progress** - Celebrate small wins to stay motivated
+1. **Deadlines** - Start with tasks due soonest
+2. **Importance** - Focus on high-impact assignments first
+3. **Difficulty** - Handle challenging tasks when you're fresh
+4. **Dependencies** - Complete tasks that other work depends on
 
-${tasks && tasks.length > 0 ? `You currently have ${tasks.length} active task(s). Try focusing on one at a time to avoid burnout.` : ''}
+Your current tasks: ${taskNames}
 
-💡 Tip: A task is only difficult until you break it down!`;
+📋 Try sorting by deadline to see what's urgent!`;
+    } else {
+      return `To decide which task to do first:
+
+1. **Check deadlines** - What's due soonest?
+2. **Consider difficulty** - Do harder tasks while fresh
+3. **Look at importance** - Which impacts your grade most?
+4. **Check dependencies** - Any tasks needed for other work?
+
+💡 Add tasks to your dashboard to get personalized prioritization!`;
+    }
   }
 
-  if (lowerMessage.includes('difficult') || lowerMessage.includes('stuck') || lowerMessage.includes('help')) {
-    return `I understand you're facing a challenge! Here's what you can do:
+  // Time management and scheduling
+  if (lowerMessage.includes('time') || lowerMessage.includes('schedule') || lowerMessage.includes('how long')) {
+    return `For managing your study time effectively:
 
-1. **Break it down** - Divide the big problem into smaller, manageable pieces
-2. **Ask for help** - Don't hesitate to reach out to teachers, classmates, or online communities
-3. **Take a break** - Sometimes stepping away helps you see things differently
-4. **Review fundamentals** - Go back to basics if you're confused about concepts
-5. **Practice regularly** - Consistent practice builds confidence over time
+1. **Set specific durations** - Know how long each task takes
+2. **Use Pomodoro** - 25 minutes focus + 5 minute break
+3. **Block your calendar** - Schedule study blocks in advance
+4. **Track actual time** - Compare estimates vs. real time
+5. **Buffer time** - Add extra cushion for complex tasks
 
-${tasks && tasks.length > 0 ? `With ${tasks.length} task(s) on your plate, focus on one challenge at a time.` : ''}
+${tasks && tasks.length > 0 ? `You have ${tasks.length} task(s). Try scheduling them across the next few days.` : ''}
 
-🎯 Remember: Every expert was once a beginner!`;
+⏰ Realistic scheduling prevents last-minute stress!`;
   }
 
-  if (lowerMessage.includes('motivation') || lowerMessage.includes('lazy') || lowerMessage.includes('procrastin')) {
-    return `Feeling unmotivated? Here are some powerful strategies:
+  // Difficulty/stuck/help
+  if (lowerMessage.includes('difficult') || lowerMessage.includes('stuck') || lowerMessage.includes('help') || lowerMessage.includes('confused')) {
+    return `When you're stuck on a task:
 
-1. **Start small** - Begin with just 5-10 minutes of work
-2. **Set clear goals** - Know exactly what "done" looks like
-3. **Remove distractions** - Put your phone away, close unnecessary tabs
-4. **Track progress** - Seeing progress is motivating!
-5. **Reward yourself** - Plan something fun after completing tasks
-6. **Find your why** - Remember why this task matters to you
+1. **Take a break** - 10-15 minutes away helps reset your brain
+2. **Review basics** - Go back to fundamentals or examples
+3. **Search online** - Look for similar problems/tutorials
+4. **Ask for help** - Teachers, classmates, or online forums
+5. **Break it down** - Divide the problem into smaller pieces
 
-${tasks && tasks.length > 0 ? `You have ${tasks.length} pending task(s). Completing even one will boost your confidence!` : ''}
+${tasks && tasks.length > 0 ? `You have ${tasks.length} other task(s) - sometimes switching helps!` : ''}
 
-💪 Action beats motivation - just start, and motivation will follow!`;
+🎯 Every problem has a solution - be patient with yourself!`;
+  }
+
+  // Motivation/procrastination
+  if (lowerMessage.includes('motivation') || lowerMessage.includes('lazy') || lowerMessage.includes('procrastin') || lowerMessage.includes('hard to start')) {
+    return `Overcoming procrastination:
+
+1. **Start tiny** - Just 5 minutes, not the whole task
+2. **Remove obstacles** - Close distractions and prep materials
+3. **Find accountability** - Study with someone or join a group
+4. **Celebrate wins** - Acknowledge progress frequently
+5. **Reward yourself** - Plan something fun after completing
+
+${tasks && tasks.length > 0 ? `${tasks.length} task(s) waiting - conquering one now creates momentum!` : ''}
+
+💪 Done is better than perfect - start imperfectly!`;
+  }
+
+  // General questions or greetings
+  if (lowerMessage.includes('hi') || lowerMessage.includes('hello') || lowerMessage.includes('hey')) {
+    return `👋 Hey there! I'm your AI study buddy. I can help with:
+
+- **Task prioritization** - Which task should I do first?
+- **Time management** - How should I schedule my work?
+- **Study strategies** - Tips for better learning
+- **Motivation** - How to stay focused and avoid procrastination
+- **Problem solving** - Help when you're stuck on assignments
+
+${tasks && tasks.length > 0 ? `You have ${tasks.length} task(s) tracked. Ask me anything about managing them!` : 'Add some tasks to your dashboard and I can give personalized advice!'}
+
+What would you like help with? 🎓`;
   }
 
   // Default helpful response
-  return `Thanks for reaching out! Here are some general productivity tips:
+  return `I'm here to help with your academic goals! Tell me:
 
-1. **Organize your tasks** - Use your dashboard to track everything
-2. **Set realistic goals** - Break big goals into smaller milestones
-3. **Create a schedule** - Plan when you'll work on each task
-4. **Stay consistent** - Small daily efforts add up to big results
-5. **Review and adjust** - Check what's working and what isn't
+- **Which task to do first** - I'll help you prioritize
+- **Time management** - How to schedule your work
+- **Study strategies** - Tips for learning better
+- **When you're stuck** - Guidance on problem-solving
+- **Motivation tips** - How to stay focused
 
-${tasks && tasks.length > 0 ? `You have ${tasks.length} task(s) currently tracked. Keep pushing forward!` : 'Once you add tasks to your dashboard, I can give more specific advice!'}
+${tasks && tasks.length > 0 ? `You have ${tasks.length} task(s) tracked. Ask me anything about them!` : 'Start by adding tasks to your dashboard for better guidance!'}
 
-📱 Keep using this AI chat for personalized guidance on your academic journey!`;
-}
+📱 The more detail you provide, the better advice I can give! 🚀`;
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ message: 'Server is running', status: 'OK' });
-});
+  // Register other routes (AFTER /api/chat)
+  app.use('/api/users', userRoutes);
+  app.use('/api', studentRoutes);
 
-// Register other routes (AFTER /api/chat)
-app.use('/api/users', userRoutes);
-app.use('/api', studentRoutes);
+  // 404 Not Found handler
+  app.use((req, res) => {
+    res.status(404).json({ message: 'Route not found' });
+  });
 
-// 404 Not Found handler
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+  // Error handling middleware
+  app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Internal Server Error', error: err.message });
+  });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Internal Server Error', error: err.message });
-});
-
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log('\n' + '='.repeat(60));
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-  console.log(`🤖 Gemini AI integrated - /api/chat endpoint ready`);
-  console.log('='.repeat(60) + '\n');
-});
+  // Start server
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log('\n' + '='.repeat(60));
+    console.log(`✅ Server running on http://localhost:${PORT}`);
+    console.log(`🤖 Gemini AI integrated - /api/chat endpoint ready`);
+    console.log('='.repeat(60) + '\n');
+  });
