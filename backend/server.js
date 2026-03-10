@@ -38,12 +38,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use('/api/users', userRoutes);
-app.use('/api', studentRoutes);
-
 // ============================================================================
-// GEMINI AI CHAT ENDPOINT
+// GEMINI AI CHAT ENDPOINT (MUST BE BEFORE /api route)
 // ============================================================================
 app.post('/api/chat', async (req, res) => {
   try {
@@ -97,7 +93,10 @@ Provide helpful, concise, and actionable advice. If referring to specific tasks,
     for (const modelName of GEMINI_MODELS) {
       try {
         console.log(`↪️  Trying model: ${modelName}`);
-        const model = genAI.getGenerativeModel({ model: modelName });
+        // const model = genAI.getGenerativeModel({ model: modelName });
+        const model = genAI.getGenerativeModel({
+          model: "gemini-2.0-flash"
+        });
         result = await model.generateContent(prompt);
         selectedModel = modelName;
         break;
@@ -165,6 +164,10 @@ Provide helpful, concise, and actionable advice. If referring to specific tasks,
 app.get('/api/health', (req, res) => {
   res.status(200).json({ message: 'Server is running', status: 'OK' });
 });
+
+// Register other routes (AFTER /api/chat)
+app.use('/api/users', userRoutes);
+app.use('/api', studentRoutes);
 
 // 404 Not Found handler
 app.use((req, res) => {
