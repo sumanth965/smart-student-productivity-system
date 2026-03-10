@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Brain, Send } from 'lucide-react';
+import { Brain, Send, Bot, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from '../lib/axios';
 
@@ -10,7 +10,11 @@ import axios from '../lib/axios';
  */
 const AIChatBox = ({ tasks }) => {
     const [messages, setMessages] = useState([
-        { role: 'ai', text: 'Hi! Ask me anything about your tasks or workload.', timestamp: new Date() }
+        {
+            role: 'assistant',
+            text: 'Hi! I\'m your academic assistant. Ask me about study plans, assignments, coding help, productivity, or any academic concept.',
+            timestamp: new Date(),
+        }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -31,8 +35,10 @@ const AIChatBox = ({ tasks }) => {
     const handleSend = useCallback(async () => {
         if (!input.trim()) return;
 
-        const userMessage = input;
-        setMessages(prev => [...prev, { role: 'user', text: userMessage, timestamp: new Date() }]);
+        const userMessage = input.trim();
+        const updatedMessages = [...messages, { role: 'user', text: userMessage, timestamp: new Date() }];
+
+        setMessages(updatedMessages);
         setInput('');
         setIsLoading(true);
 
@@ -42,13 +48,16 @@ const AIChatBox = ({ tasks }) => {
             const { data } = await axios.post('/api/chat', {
                 message: userMessage,
                 tasks: tasks || [],
+                history: updatedMessages
+                    .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+                    .map((msg) => ({ role: msg.role, text: msg.text })),
             });
 
             // Handle successful response
             const aiResponse = data.reply || data.message || 'No response received';
 
             setMessages(prev => [...prev, {
-                role: 'ai',
+                role: 'assistant',
                 text: aiResponse,
                 timestamp: new Date(),
             }]);
@@ -58,7 +67,7 @@ const AIChatBox = ({ tasks }) => {
         } catch (error) {
             console.error('❌ Chat Error:', error.message);
 
-            let errorText = error.message;
+            let errorText = error?.response?.data?.details || error?.response?.data?.error || error.message;
 
             // Add helpful hints
             if (error.message.includes('Failed to fetch')) {
@@ -68,14 +77,14 @@ const AIChatBox = ({ tasks }) => {
             }
 
             setMessages(prev => [...prev, {
-                role: 'ai',
+                role: 'assistant',
                 text: `⚠️ Error: ${errorText}`,
                 timestamp: new Date(),
             }]);
         } finally {
             setIsLoading(false);
         }
-    }, [input, tasks]);
+    }, [input, tasks, messages]);
 
     return (
         <motion.div
@@ -90,7 +99,7 @@ const AIChatBox = ({ tasks }) => {
             </h3>
 
             {/* Chat Messages Container */}
-            <div className="h-64 overflow-y-auto space-y-3 bg-slate-50 dark:bg-slate-900/30 rounded-xl p-4">
+            <div className="h-80 overflow-y-auto space-y-3 bg-slate-50 dark:bg-slate-900/30 rounded-xl p-4">
                 <AnimatePresence mode="popLayout">
                     {messages.map((msg, i) => (
                         <motion.div
@@ -102,11 +111,15 @@ const AIChatBox = ({ tasks }) => {
                             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                             <div
-                                className={`max-w-xs px-4 py-2 rounded-lg text-sm leading-relaxed ${msg.role === 'user'
+                                className={`w-full sm:w-auto sm:max-w-md px-4 py-3 rounded-xl text-sm leading-relaxed shadow-sm ${msg.role === 'user'
                                     ? 'bg-blue-500 text-white rounded-br-none'
-                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-none'
+                                    : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-none border border-slate-200 dark:border-slate-600'
                                     }`}
                             >
+                                <div className="flex items-center gap-2 mb-1 text-xs font-semibold opacity-80">
+                                    {msg.role === 'user' ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
+                                    {msg.role === 'user' ? 'You' : 'Assistant'}
+                                </div>
                                 {msg.text}
                             </div>
                         </motion.div>
@@ -154,7 +167,7 @@ const AIChatBox = ({ tasks }) => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSend()}
-                    placeholder="Ask me anything..."
+                    placeholder="Ask for study tips, coding help, assignment guidance..."
                     disabled={isLoading}
                     className="flex-1 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
