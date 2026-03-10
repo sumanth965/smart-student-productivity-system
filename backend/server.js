@@ -61,6 +61,18 @@ const isAllowedOrigin = (origin) => {
   return false;
 };
 
+const defaultAllowedHeaders = [
+  'Content-Type',
+  'Authorization',
+  'Accept',
+  'X-Requested-With',
+];
+
+const envAllowedHeaders = (process.env.CORS_ALLOWED_HEADERS || '')
+  .split(',')
+  .map((header) => header.trim())
+  .filter(Boolean);
+
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow server-to-server requests or tools that do not send an Origin header
@@ -75,16 +87,9 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  // Reflect preflight-requested headers so browsers don't fail when additional
-  // safe headers (e.g., Accept, X-Requested-With) are present.
-  allowedHeaders: (req, callback) => {
-    const requestedHeaders = req.header('Access-Control-Request-Headers');
-    if (requestedHeaders) {
-      return callback(null, requestedHeaders);
-    }
-
-    return callback(null, ['Content-Type', 'Authorization']);
-  },
+  // Keep this static/array-based (supported by cors package).
+  // Function callbacks here can break preflight in some setups.
+  allowedHeaders: [...new Set([...defaultAllowedHeaders, ...envAllowedHeaders])],
   optionsSuccessStatus: 204,
 };
 
