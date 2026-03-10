@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../lib/axios';
 import { Lock, Mail, Eye, EyeOff, Chrome, Facebook } from 'lucide-react';
-
-// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://smart-student-productivity-system-backend.onrender.com';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -28,7 +25,7 @@ const Login = () => {
         setErrorMessage('');
 
         try {
-            const { data } = await axios.post(`${API_BASE_URL}/api/users/login`, {
+            const { data } = await axios.post('/api/users/login', {
                 email,
                 password,
             });
