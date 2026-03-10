@@ -390,6 +390,7 @@ export default function AIModule({ isDark = false }) {
         window.addEventListener('focus', handleFocus);
 
         return () => {
+            window.clearInterval(autoRefresh);
             window.removeEventListener('tasks:refresh', handleRefresh);
             window.removeEventListener('focus', handleFocus);
         };
