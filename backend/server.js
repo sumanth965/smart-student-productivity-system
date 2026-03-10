@@ -61,20 +61,35 @@ const isAllowedOrigin = (origin) => {
   return false;
 };
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
     // Allow server-to-server requests or tools that do not send an Origin header
     if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
 
-    return callback(new Error(`Not allowed by CORS: ${origin}`));
+    // Do not throw from CORS callback, otherwise Express turns this into a 500.
+    // Returning false cleanly rejects cross-origin access without crashing preflight.
+    console.warn(`⚠️  CORS blocked origin: ${origin}`);
+    return callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  // Reflect preflight-requested headers so browsers don't fail when additional
+  // safe headers (e.g., Accept, X-Requested-With) are present.
+  allowedHeaders: (req, callback) => {
+    const requestedHeaders = req.header('Access-Control-Request-Headers');
+    if (requestedHeaders) {
+      return callback(null, requestedHeaders);
+    }
+
+    return callback(null, ['Content-Type', 'Authorization']);
+  },
   optionsSuccessStatus: 204,
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
