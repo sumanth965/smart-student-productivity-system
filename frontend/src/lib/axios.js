@@ -8,7 +8,8 @@ const parseResponse = async (response) => {
   return response.text();
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://smart-student-productivity-system-backend.onrender.com';
 
 const request = async (method, url, payload, config = {}) => {
   const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;

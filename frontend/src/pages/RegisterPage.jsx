@@ -4,7 +4,8 @@ import axios from 'axios';
 import { User, Mail, Lock, Shield, Eye, EyeOff, Chrome, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://smart-student-productivity-system-backend.onrender.com';
 
 const Register = () => {
     const [formData, setFormData] = useState({
