@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Brain, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from '../lib/axios';
 
 /**
  * AI Chat Box Component
@@ -38,28 +39,10 @@ const AIChatBox = ({ tasks }) => {
         try {
             console.log('🔵 Sending message to backend:', userMessage);
 
-            const response = await fetch('http://localhost:5000/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: userMessage,
-                    tasks: tasks || [],
-                }),
+            const { data } = await axios.post('/api/chat', {
+                message: userMessage,
+                tasks: tasks || [],
             });
-
-            console.log('📊 Response Status:', response.status, response.statusText);
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                // Backend returned detailed error
-                const errorMessage = data.details || data.error || `API Error: ${response.status}`;
-                const hint = data.hint || '';
-                const fullError = `${errorMessage}${hint ? ' - ' + hint : ''}`;
-                throw new Error(fullError);
-            }
 
             // Handle successful response
             const aiResponse = data.reply || data.message || 'No response received';
@@ -170,7 +153,7 @@ const AIChatBox = ({ tasks }) => {
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleSend()}
+                    onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSend()}
                     placeholder="Ask me anything..."
                     disabled={isLoading}
                     className="flex-1 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
