@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../lib/axios';
 import { User, Mail, Lock, Shield, Eye, EyeOff, Chrome, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://smart-student-productivity-system-backend.onrender.com';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -118,7 +115,7 @@ const Register = () => {
         setIsLoading(true);
 
         try {
-            const { data } = await axios.post(`${API_BASE_URL}/api/users/register`, {
+            const { data } = await axios.post('/api/users/register', {
                 name: formData.fullName,
                 email: formData.email,
                 password: formData.password,
