@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
     Brain, ChevronLeft, RefreshCw, AlertTriangle, TrendingDown, Zap,
     CheckCircle2, AlertCircle, Info, Download, Send, Lightbulb, BarChart3,
@@ -309,6 +309,8 @@ export default function AIModule({ isDark = false }) {
     const [isAnalyzing, setIsAnalyzing] = useState(true);
     const [showExportModal, setShowExportModal] = useState(false);
     const [error, setError] = useState('');
+    const [lastUpdated, setLastUpdated] = useState(null);
+    const loadingRef = useRef(false);
 
     const resolveUserId = useCallback((user) => user?._id || user?.id || '', []);
 
@@ -338,6 +340,12 @@ export default function AIModule({ isDark = false }) {
     }, []);
 
     const loadTasks = useCallback(async () => {
+        if (loadingRef.current) {
+            return;
+        }
+
+        loadingRef.current = true;
+
         try {
             setError('');
             setIsAnalyzing(true);
@@ -361,12 +369,15 @@ export default function AIModule({ isDark = false }) {
 
             const activeTasks = apiTasks.filter((task) => task.status !== 'completed');
             setTasks(activeTasks.length ? activeTasks : SAMPLE_TASKS.slice(0, 8));
+            setLastUpdated(new Date());
         } catch (err) {
             console.error('Failed to load AI insights tasks:', err);
             setError(err.response?.data?.message || 'Could not load tasks from dashboard database. Showing fallback insights.');
             setTasks(SAMPLE_TASKS.slice(0, 8));
+            setLastUpdated(new Date());
         } finally {
             setTimeout(() => setIsAnalyzing(false), 600);
+            loadingRef.current = false;
         }
     }, [mapApiTaskToAiTask, resolveUserId]);
 
@@ -375,7 +386,6 @@ export default function AIModule({ isDark = false }) {
 
         const handleRefresh = () => loadTasks();
         const handleFocus = () => loadTasks();
-
         window.addEventListener('tasks:refresh', handleRefresh);
         window.addEventListener('focus', handleFocus);
 
@@ -477,7 +487,7 @@ export default function AIModule({ isDark = false }) {
                     className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-800/80 border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg"
                 >
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                             {/* Left */}
                             <div className="flex items-center gap-3">
                                 <button
@@ -496,13 +506,13 @@ export default function AIModule({ isDark = false }) {
                             </div>
 
                             {/* Right - Actions */}
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
                                 {!isAnalyzing && (
                                     <>
                                         <motion.div
                                             initial={{ opacity: 0, scale: 0.9 }}
                                             animate={{ opacity: 1, scale: 1 }}
-                                            className={`px-4 py-2 rounded-full text-sm font-bold ${riskColor.bg} border ${riskColor.border} ${riskColor.text}`}
+                                            className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold ${riskColor.bg} border ${riskColor.border} ${riskColor.text}`}
                                         >
                                             Risk Level: {stats.overallRiskLevel}
                                         </motion.div>
@@ -516,6 +526,12 @@ export default function AIModule({ isDark = false }) {
                                     </>
                                 )}
                             </div>
+
+                            {!isAnalyzing && (
+                                <p className="w-full text-right text-xs text-slate-500 dark:text-slate-400">
+                                    Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : 'just now'}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </motion.nav>
@@ -558,7 +574,7 @@ export default function AIModule({ isDark = false }) {
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="grid grid-cols-2 md:grid-cols-5 gap-4"
+                                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4"
                             >
                                 <div className="backdrop-blur-xl rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 p-4 text-center hover:shadow-lg transition-all">
                                     <p className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.highRisk}</p>
