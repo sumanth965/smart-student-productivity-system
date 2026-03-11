@@ -61,27 +61,7 @@ const Login = () => {
                 <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-400/10 dark:bg-cyan-600/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
             </div>
 
-            {/* Navigation Bar */}
-            <nav className={`relative z-50 border-b border-white/20 dark:border-slate-700/50 backdrop-blur-md bg-white/40 dark:bg-slate-900/40 transition-all duration-500 ${pageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">ST</span>
-                        </div>
-                        <span className="text-lg font-bold bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent hidden sm:inline">
-                            Smart Student
-                        </span>
-                    </div>
-                    <div className="flex gap-4">
-                        <Link to="/login" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-blue-600 dark:border-blue-400">
-                            Login
-                        </Link>
-                        <Link to="/register" className="px-6 py-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">
-                            Register
-                        </Link>
-                    </div>
-                </div>
-            </nav>
+            
 
             {/* Main Content */}
             <div className="relative z-10 min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-12">
@@ -332,13 +312,7 @@ const Login = () => {
                                             )}
                                         </button>
 
-                                        {/* Register Link */}
-                                        <p className="text-center text-slate-600 dark:text-slate-400 text-sm">
-                                            Don't have an account?{' '}
-                                            <Link to="/register" className="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 hover:underline">
-                                                Register
-                                            </Link>
-                                        </p>
+                                       
                                     </form>
 
                                     {/* Divider */}
@@ -347,33 +321,12 @@ const Login = () => {
                                             <div className="w-full border-t border-slate-300/50 dark:border-slate-700/50"></div>
                                         </div>
                                         <div className="relative flex justify-center text-xs">
-                                            <span className="px-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400">Or continue with</span>
+                                            {/* <span className="px-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400">Or continue with</span> */}
                                         </div>
                                     </div>
 
                                     {/* Social Login Buttons */}
                                     <div className="relative z-10 space-y-3">
-                                        {/* Google Button */}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSocialLogin('Google')}
-                                            className="w-full py-3 px-4 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600 rounded-xl font-semibold text-slate-900 dark:text-white transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 shadow-md hover:shadow-lg dark:shadow-blue-600/10"
-                                            aria-label="Login with Google"
-                                        >
-                                            <Chrome className="w-5 h-5 text-blue-600 dark:text-blue-400" strokeWidth={1.5} />
-                                            <span>Login with Google</span>
-                                        </button>
-
-                                        {/*  Facebook Button */}
-                                        {/* <button
-                                            type="button"
-                                            onClick={() => handleSocialLogin('Facebook')}
-                                            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-500 dark:to-blue-600 dark:hover:from-blue-600 dark:hover:to-blue-700 rounded-xl font-semibold text-white transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 shadow-md shadow-blue-600/50 dark:shadow-blue-600/30"
-                                            aria-label="Login with Facebook"
-                                        >
-                                            <Facebook className="w-5 h-5" strokeWidth={1.5} />
-                                            <span>Login with Facebook</span>
-                                        </button> */}
                                     </div>
                                 </div>
 
