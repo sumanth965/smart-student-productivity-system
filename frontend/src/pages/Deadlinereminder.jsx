@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Clock, AlertCircle, CheckCircle2, ChevronLeft, Zap, Calendar, Flag, X, Check, Wind } from 'lucide-react';
+import {
+  Clock, AlertCircle, CheckCircle2, ChevronLeft, Zap, Calendar,
+  Flag, X, Check, Wind, Plus, TrendingUp, Circle
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from '../lib/axios';
@@ -11,217 +14,174 @@ import axios from '../lib/axios';
 const formatTimeLeft = (dueDate) => {
   const now = new Date();
   const diff = new Date(dueDate) - now;
-
   if (diff < 0) {
-    const absDiff = Math.abs(diff);
-    const days = Math.floor(absDiff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((absDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const abs = Math.abs(diff);
+    const days = Math.floor(abs / 86400000);
+    const hours = Math.floor((abs % 86400000) / 3600000);
     return `${days}d ${hours}h overdue`;
   }
-
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-  if (days > 0) return `${days}d ${hours}h`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  return `${minutes}m`;
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  if (days > 0) return `${days}d ${hours}h left`;
+  if (hours > 0) return `${hours}h ${mins}m left`;
+  return `${mins}m left`;
 };
 
 const getDateCategory = (dueDate) => {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-  const diffTime = dueDay - today;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) return 'overdue';
-  if (diffDays === 0) return 'today';
-  if (diffDays === 1) return 'tomorrow';
-  if (diffDays <= 7) return 'week';
+  const due = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+  const diff = Math.ceil((due - today) / 86400000);
+  if (diff < 0) return 'overdue';
+  if (diff === 0) return 'today';
+  if (diff === 1) return 'tomorrow';
+  if (diff <= 7) return 'week';
   return 'future';
 };
 
-const getUrgencyColor = (dueDate) => {
-  const now = new Date();
-  const diffMs = new Date(dueDate) - now;
-  const daysLeft = diffMs / (1000 * 60 * 60 * 24);
-
-  if (daysLeft < 0) return 'from-red-500 via-red-500 to-red-600';
-  if (daysLeft < 1) return 'from-red-500 via-orange-500 to-red-600';
-  if (daysLeft < 2) return 'from-orange-500 via-orange-500 to-amber-500';
-  if (daysLeft < 3) return 'from-amber-500 via-amber-500 to-yellow-500';
-  if (daysLeft < 5) return 'from-yellow-500 via-yellow-500 to-lime-500';
-  return 'from-lime-500 via-green-500 to-emerald-500';
+const PRIORITY_CONFIG = {
+  high: { border: '#EF4444', badge: '#EF4444', label: 'HIGH' },
+  medium: { border: '#F59E0B', badge: '#F59E0B', label: 'MED' },
+  low: { border: '#3B82F6', badge: '#3B82F6', label: 'LOW' },
 };
 
-const getPriorityBadgeColor = (priority) => {
-  const colors = {
-    high: 'bg-red-500/90 shadow-lg shadow-red-500/40',
-    medium: 'bg-amber-500/90 shadow-lg shadow-amber-500/40',
-    low: 'bg-blue-500/90 shadow-lg shadow-blue-500/40',
-  };
-  return colors[priority] || 'bg-slate-500/90';
+const SUBJECT_COLORS = {
+  EJAVA: '#F97316', AWT: '#A855F7', 'FSDD/ADSA': '#3B82F6',
+  PCS: '#22C55E', SET: '#10B981', 'DW&DM': '#F43F5E',
+  'WDR&P': '#F59E0B', 'DIP&PR': '#06B6D4', Japanese: '#EC4899',
+  Mathematics: '#6366F1', Physics: '#8B5CF6', Chemistry: '#22C55E',
+  Biology: '#10B981', English: '#F43F5E', History: '#F59E0B',
+  Languages: '#06B6D4', 'Computer Science': '#6366F1', Art: '#EC4899',
 };
 
-const getSubjectColor = (subject) => {
-  const colors = {
-    EJAVA: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800',
-    AWT: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-    'FSDD/ADSA': 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-    PCS: 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
-    SET: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-    'DW&DM': 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
-    'WDR&P': 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-    'DIP&PR': 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
-    Japanese: 'bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-800',
-    Mathematics: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
-    Physics: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-    Chemistry: 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
-    Biology: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-    English: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
-    History: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-    Languages: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
-    'Computer Science': 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
-    Art: 'bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-800',
-  };
-  return colors[subject] || 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800';
-};
+const getSubjectColor = (subject) => SUBJECT_COLORS[subject] || '#64748B';
 
 // ============================================================================
-// COUNTDOWN TIMER COMPONENT
+// COUNTDOWN TIMER
 // ============================================================================
-
 const CountdownTimer = ({ dueDate }) => {
   const [timeLeft, setTimeLeft] = useState(() => formatTimeLeft(dueDate));
-
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTimeLeft(formatTimeLeft(dueDate));
-    }, 1000);
+    const interval = setInterval(() => setTimeLeft(formatTimeLeft(dueDate)), 1000);
     return () => clearInterval(interval);
   }, [dueDate]);
-
   const isOverdue = new Date(dueDate) < new Date();
-
   return (
-    <span
-      className={`font-mono text-sm font-bold animate-pulse ${
-        isOverdue ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'
-      }`}
-    >
+    <span className={`font-mono text-xs font-bold tracking-tight ${isOverdue ? 'text-red-500' : 'text-blue-600'}`}>
       {timeLeft}
     </span>
   );
 };
 
 // ============================================================================
-// TASK CARD COMPONENT
+// TASK CARD — responsive, correct sizing
 // ============================================================================
-
-const TaskCard = ({ task, onComplete, onSnooze, isOverdue, isDark }) => {
+const TaskCard = ({ task, onComplete, onSnooze, isOverdue }) => {
   const [showDetail, setShowDetail] = useState(false);
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.08, duration: 0.4, ease: 'easeOut' },
-    }),
-    hover: { scale: 1.02, y: -4 },
-  };
+  const [actionsVisible, setActionsVisible] = useState(false);
+  const priority = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium;
+  const subjectColor = getSubjectColor(task.subject);
 
   return (
     <>
       <motion.div
-        custom={0}
-        variants={cardVariants}
-        initial="hidden"
-        animate="visible"
-        whileHover={isOverdue ? undefined : 'hover'}
-        className={`relative group backdrop-blur-xl rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer h-full
-          ${
-            isOverdue
-              ? 'bg-red-500/10 border border-red-300/50 dark:border-red-700/50 shadow-2xl shadow-red-500/20 animate-shake'
-              : 'bg-white/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50 shadow-xl hover:shadow-2xl hover:shadow-blue-500/25 hover:ring-2 ring-blue-500/30'
-          }`}
+        layout
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8, scale: 0.97 }}
+        transition={{ duration: 0.22 }}
         onClick={() => setShowDetail(true)}
+        onMouseEnter={() => setActionsVisible(true)}
+        onMouseLeave={() => setActionsVisible(false)}
+        className="relative bg-white rounded-xl cursor-pointer overflow-hidden w-full"
+        style={{
+          borderLeft: `4px solid ${priority.border}`,
+          boxShadow: isOverdue
+            ? '0 0 0 1px #FEE2E2, 0 4px 16px rgba(239,68,68,0.10)'
+            : '0 2px 8px rgba(0,0,0,0.07), 0 0 0 1px #F1F5F9',
+        }}
       >
-        {/* Urgency Bar */}
-        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${getUrgencyColor(task.dueDate)}`} />
+        {isOverdue && <div className="absolute inset-0 bg-red-50/60 pointer-events-none" />}
 
-        <div className="p-4 sm:p-5 space-y-3 flex flex-col h-full">
-          {/* Header Row */}
-          <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="relative p-3 sm:p-4 flex flex-col gap-2.5">
+          {/* Top row: title + priority badge */}
+          <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-slate-900 dark:text-white truncate text-sm sm:text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+              <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2"
+                style={{ fontFamily: "'DM Sans', sans-serif" }}>
                 {task.title}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                {task.description}
-              </p>
+              {task.description && (
+                <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 leading-relaxed">{task.description}</p>
+              )}
             </div>
-            <div
-              className={`px-2 sm:px-2.5 py-1 rounded-full text-xs font-bold text-white whitespace-nowrap flex-shrink-0 ${getPriorityBadgeColor(
-                task.priority
-              )}`}
+            <span
+              className="text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5"
+              style={{ backgroundColor: priority.badge }}
             >
-              {task.priority.charAt(0).toUpperCase()}
-            </div>
-          </div>
-
-          {/* Subject Badge */}
-          <div className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border w-fit ${getSubjectColor(task.subject)}`}>
-            {task.subject}
-          </div>
-
-          {/* Timer & Date Row - Spacer to push to bottom */}
-          <div className="flex-grow" />
-
-          {/* Timer & Date Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
-            <div className="flex items-center gap-2">
-              <Clock
-                className={`w-4 h-4 flex-shrink-0 ${
-                  isOverdue ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'
-                }`}
-              />
-              <CountdownTimer dueDate={task.dueDate} />
-            </div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 text-right sm:text-left">
-              {task.dueDate.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {priority.label}
             </span>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Subject */}
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: subjectColor }} />
+            <span className="text-xs font-medium text-slate-500 truncate">{task.subject}</span>
+          </div>
+
+          {/* Time row */}
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Clock className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              <CountdownTimer dueDate={task.dueDate} />
+            </div>
+            <span className="text-[10px] text-slate-400 flex-shrink-0">
+              {task.dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              {' · '}
+              {task.dueDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+
+          {/* Action buttons — visible on hover (desktop) or always on mobile */}
+          <AnimatePresence>
+            {(actionsVisible) && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.15 }}
+                className="flex gap-2 overflow-hidden"
+              >
+                <button
+                  onClick={(e) => { e.stopPropagation(); onComplete(task.id); }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 text-emerald-700 text-xs font-semibold transition-colors"
+                >
+                  <Check className="w-3.5 h-3.5" /> Complete
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onSnooze(task.id); }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 active:bg-blue-200 text-blue-700 text-xs font-semibold transition-colors"
+                >
+                  <Wind className="w-3.5 h-3.5" /> Snooze
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Always-visible action buttons on mobile (touch devices) */}
+          <div className="flex gap-2 sm:hidden">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onComplete(task.id);
-              }}
-              className="flex-1 flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg bg-green-500/90 hover:bg-green-600 text-white text-xs font-semibold transition-all shadow-lg shadow-green-500/30"
-              title="Mark task complete"
+              onClick={(e) => { e.stopPropagation(); onComplete(task.id); }}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-50 active:bg-emerald-100 text-emerald-700 text-xs font-semibold"
             >
-              <Check className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden sm:inline">Complete</span>
+              <Check className="w-3.5 h-3.5" /> Complete
             </button>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSnooze(task.id);
-              }}
-              className="flex-1 flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg bg-blue-500/90 hover:bg-blue-600 text-white text-xs font-semibold transition-all shadow-lg shadow-blue-500/30"
-              title="Snooze for 1 hour"
+              onClick={(e) => { e.stopPropagation(); onSnooze(task.id); }}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-blue-50 active:bg-blue-100 text-blue-700 text-xs font-semibold"
             >
-              <Wind className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden sm:inline">Snooze</span>
+              <Wind className="w-3.5 h-3.5" /> Snooze
             </button>
           </div>
         </div>
@@ -235,117 +195,87 @@ const TaskCard = ({ task, onComplete, onSnooze, isOverdue, isDark }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowDetail(false)}
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+            style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-5 sm:p-6 space-y-5 max-h-[90vh] overflow-y-auto"
+              className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden"
             >
-              {/* Modal Header */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white break-words">
-                    {task.title}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    {task.description}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowDetail(false)}
-                  className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors flex-shrink-0"
-                  aria-label="Close"
-                >
-                  <X className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                </button>
+              {/* Drag handle — mobile only */}
+              <div className="flex justify-center pt-3 pb-1 sm:hidden">
+                <div className="w-10 h-1 rounded-full bg-slate-200" />
               </div>
 
-              {/* Modal Content */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                      Subject
-                    </p>
-                    <p
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getSubjectColor(
-                        task.subject
-                      )}`}
-                    >
-                      {task.subject}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                      Priority
-                    </p>
-                    <div
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-bold text-white ${getPriorityBadgeColor(
-                        task.priority
-                      )}`}
-                    >
-                      {task.priority.toUpperCase()}
-                    </div>
-                  </div>
-                </div>
+              {/* Color bar */}
+              <div className="h-1" style={{ background: `linear-gradient(to right, ${priority.border}, ${subjectColor})` }} />
 
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-2">
-                    <Calendar className="w-4 h-4 flex-shrink-0" />
-                    Due Date & Time
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-900 dark:text-white font-semibold break-words">
-                    {task.dueDate.toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-2">
-                    <Clock className="w-4 h-4 flex-shrink-0" />
-                    Time Remaining
-                  </p>
-                  <p
-                    className={`text-lg font-bold font-mono ${
-                      isOverdue ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'
-                    }`}
+              <div className="p-5 sm:p-6 space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight"
+                      style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                      {task.title}
+                    </h2>
+                    {task.description && (
+                      <p className="text-sm text-slate-500 mt-1 leading-relaxed">{task.description}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowDetail(false)}
+                    className="p-1.5 hover:bg-slate-100 active:bg-slate-200 rounded-lg transition-colors flex-shrink-0"
                   >
-                    <CountdownTimer dueDate={task.dueDate} />
+                    <X className="w-4 h-4 text-slate-500" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Subject', value: task.subject, color: subjectColor },
+                    { label: 'Priority', value: priority.label, color: priority.border },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="space-y-1.5">
+                      <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">{label}</p>
+                      <span className="inline-block text-xs font-bold px-2.5 py-1 rounded-full text-white"
+                        style={{ backgroundColor: color }}>
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Due Date</p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {task.dueDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                    {' at '}
+                    {task.dueDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
-              </div>
 
-              {/* Modal Actions */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <button
-                  onClick={() => {
-                    onComplete(task.id);
-                    setShowDetail(false);
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg shadow-green-500/30 transition-all text-sm sm:text-base"
-                >
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                  Mark Complete
-                </button>
-                <button
-                  onClick={() => {
-                    onSnooze(task.id);
-                    setShowDetail(false);
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-bold transition-all text-sm sm:text-base"
-                >
-                  <Wind className="w-5 h-5 flex-shrink-0" />
-                  Snooze 1h
-                </button>
+                <div className="p-3 rounded-xl bg-slate-50 flex items-center gap-3">
+                  <Clock className={`w-4 h-4 flex-shrink-0 ${isOverdue ? 'text-red-500' : 'text-blue-500'}`} />
+                  <CountdownTimer dueDate={task.dueDate} />
+                </div>
+
+                <div className="flex gap-3 pt-1 pb-safe">
+                  <button
+                    onClick={() => { onComplete(task.id); setShowDetail(false); }}
+                    className="flex-1 py-3 rounded-xl text-white text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Mark Complete
+                  </button>
+                  <button
+                    onClick={() => { onSnooze(task.id); setShowDetail(false); }}
+                    className="flex-1 py-3 rounded-xl text-slate-700 text-sm font-semibold bg-slate-100 hover:bg-slate-200 active:bg-slate-300 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Wind className="w-4 h-4" /> Snooze 1h
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -356,88 +286,133 @@ const TaskCard = ({ task, onComplete, onSnooze, isOverdue, isDark }) => {
 };
 
 // ============================================================================
-// EMPTY STATE COMPONENT
+// SECTION HEADER
 // ============================================================================
-
-const EmptyState = ({ icon: Icon, title, description }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="flex flex-col items-center justify-center py-12 px-4 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900/50 dark:to-blue-950/50 border border-slate-200/50 dark:border-slate-700/50"
-  >
-    <Icon className="w-12 sm:w-16 h-12 sm:h-16 text-blue-400 dark:text-blue-500 mb-4 opacity-60" />
-    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-2 text-center">
-      {title}
-    </h3>
-    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 text-center">{description}</p>
-  </motion.div>
-);
-
-// ============================================================================
-// SECTION HEADER COMPONENT
-// ============================================================================
-
-const SectionHeader = ({ icon: Icon, title, count, color, isOverdue }) => (
-  <motion.div
-    initial={{ opacity: 0, x: -20 }}
-    animate={{ opacity: 1, x: 0 }}
-    className="flex items-center gap-2 sm:gap-3 mb-5 sticky top-16 sm:top-20 z-10 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900 py-3 px-4 rounded-xl"
-  >
-    <div className={`p-2 rounded-lg flex-shrink-0 ${color}`}>
-      <Icon
-        className={`w-5 h-5 ${
-          isOverdue ? 'text-red-600 dark:text-red-400 animate-pulse' : 'text-white'
-        }`}
-      />
-    </div>
-    <div className="min-w-0 flex-1">
-      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">
+const SectionHeader = ({ icon: Icon, title, count, accentColor, isOverdue }) => (
+  <div className="flex items-center justify-between mb-3">
+    <div className="flex items-center gap-2">
+      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: `${accentColor}20` }}>
+        <Icon className="w-3.5 h-3.5" style={{ color: accentColor }} />
+      </div>
+      <h2 className="text-sm font-bold tracking-wide uppercase"
+        style={{ color: accentColor, fontFamily: "'DM Sans', sans-serif" }}>
         {title}
       </h2>
-      <p className="text-xs text-slate-600 dark:text-slate-400">{count} tasks</p>
+      {isOverdue && (
+        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+      )}
     </div>
-  </motion.div>
+    <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full flex-shrink-0">
+      {count} {count === 1 ? 'task' : 'tasks'}
+    </span>
+  </div>
 );
 
 // ============================================================================
-// SKELETON LOADER COMPONENT
+// SKELETON
 // ============================================================================
-
 const SkeletonLoader = () => (
-  <div className="space-y-4">
-    {[...Array(3)].map((_, i) => (
+  <div className="space-y-3">
+    {[...Array(4)].map((_, i) => (
       <motion.div
         key={i}
-        animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{ duration: 1.5, repeat: Infinity }}
-        className="h-24 sm:h-32 backdrop-blur-xl rounded-2xl bg-white/40 dark:bg-slate-800/40 border border-slate-200/30 dark:border-slate-700/30"
+        animate={{ opacity: [0.4, 0.8, 0.4] }}
+        transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.15 }}
+        className="h-24 bg-slate-100 rounded-xl border-l-4 border-slate-200"
       />
     ))}
   </div>
 );
 
 // ============================================================================
-// STATS CARD COMPONENT
+// STATS BAR
 // ============================================================================
-
-const StatsCard = ({ icon: Icon, label, value, color }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="backdrop-blur-xl rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50 p-4 text-center"
-  >
-    <div className={`flex justify-center mb-2 ${color}`}>
-      <Icon className="w-6 h-6" />
+const StatsBar = ({ overdue, today, upcoming, completed }) => {
+  const stats = [
+    { label: 'Overdue', value: overdue, color: '#EF4444', bg: '#FEF2F2' },
+    { label: 'Today', value: today, color: '#F59E0B', bg: '#FFFBEB' },
+    { label: 'Upcoming', value: upcoming, color: '#3B82F6', bg: '#EFF6FF' },
+    { label: 'Done', value: completed, color: '#10B981', bg: '#ECFDF5' },
+  ];
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-8">
+      {stats.map(({ label, value, color, bg }, i) => (
+        <motion.div
+          key={label}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.06 }}
+          className="rounded-xl p-3 sm:p-4 text-center"
+          style={{ backgroundColor: bg }}
+        >
+          <p className="text-2xl sm:text-3xl font-bold leading-none"
+            style={{ color, fontFamily: "'DM Sans', sans-serif" }}>{value}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest mt-1.5"
+            style={{ color: `${color}99` }}>{label}</p>
+        </motion.div>
+      ))}
     </div>
-    <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{label}</p>
+  );
+};
+
+// ============================================================================
+// EMPTY STATE
+// ============================================================================
+const EmptyState = ({ title, description }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    className="flex flex-col items-center justify-center py-16 sm:py-24 text-center px-4"
+  >
+    <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4">
+      <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+    </div>
+    <h3 className="text-base font-bold text-slate-700" style={{ fontFamily: "'DM Sans', sans-serif" }}>{title}</h3>
+    <p className="text-sm text-slate-400 mt-1 max-w-xs leading-relaxed">{description}</p>
   </motion.div>
 );
 
 // ============================================================================
-// MAIN DEADLINE REMINDER COMPONENT
+// FILTER TABS — scrollable on mobile
 // ============================================================================
+const FilterTabs = ({ filter, setFilter, overdueCount }) => {
+  const FILTERS = [
+    { id: 'all', label: 'All' },
+    { id: 'overdue', label: 'Overdue' },
+    { id: 'today', label: 'Today' },
+    { id: 'week', label: 'Week' },
+    { id: 'future', label: 'Future' },
+  ];
 
+  return (
+    <div className="flex items-center bg-slate-100 rounded-lg p-0.5 gap-0.5 overflow-x-auto scrollbar-none">
+      {FILTERS.map(({ id, label }) => (
+        <button
+          key={id}
+          onClick={() => setFilter(id)}
+          className="relative px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0"
+          style={{
+            backgroundColor: filter === id ? '#fff' : 'transparent',
+            color: filter === id ? '#1E40AF' : '#64748B',
+            boxShadow: filter === id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+          }}
+        >
+          {label}
+          {id === 'overdue' && overdueCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full text-white text-[8px] flex items-center justify-center font-bold">
+              {overdueCount > 9 ? '9+' : overdueCount}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 export default function DeadlineReminder({ isDark = false }) {
   const navigate = useNavigate();
   const onNavigateBack = () => navigate('/dashboard');
@@ -454,44 +429,30 @@ export default function DeadlineReminder({ isDark = false }) {
     try {
       setIsLoading(true);
       const persistedUser = localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
-
-      if (!persistedUser) {
-        setError('User not found. Please log in again.');
-        return;
-      }
-
+      if (!persistedUser) { setError('User not found. Please log in again.'); return; }
       const parsedUser = JSON.parse(persistedUser);
       const userId = parsedUser._id || parsedUser.id;
-
-      if (!userId) {
-        setError('Invalid user information');
-        return;
-      }
-
+      if (!userId) { setError('Invalid user information'); return; }
       setStudentId(userId);
 
-      // Fetch tasks from API
       const response = await axios.get(`/api/students/${userId}/tasks`);
       if (response.data.success && Array.isArray(response.data.data)) {
-        const mappedTasks = response.data.data.map((task) => ({
-          id: task._id,
-          title: task.title,
-          subject: task.subject,
-          dueDate: new Date(task.dueDate),
-          priority: task.priority?.toLowerCase() || 'medium',
-          status: task.status?.toLowerCase() || 'pending',
-          description: task.description,
-          createdAt: new Date(task.createdAt),
-          completed: task.status === 'Completed',
+        const mapped = response.data.data.map((t) => ({
+          id: t._id, title: t.title, subject: t.subject,
+          dueDate: new Date(t.dueDate),
+          priority: t.priority?.toLowerCase() || 'medium',
+          status: t.status?.toLowerCase() || 'pending',
+          description: t.description,
+          createdAt: new Date(t.createdAt),
+          completed: t.status === 'Completed',
         }));
-        setTasks(mappedTasks);
-        setCompletedTasks(mappedTasks.filter((task) => task.completed).map((task) => task.id));
+        setTasks(mapped);
+        setCompletedTasks(mapped.filter((t) => t.completed).map((t) => t.id));
         setError(null);
       } else {
         setTasks([]);
       }
     } catch (err) {
-      console.error('Failed to load tasks:', err);
       setError(err.response?.data?.message || 'Failed to load tasks');
     } finally {
       setIsLoading(false);
@@ -500,490 +461,292 @@ export default function DeadlineReminder({ isDark = false }) {
 
   useEffect(() => {
     loadTasks();
-
-    const handleRefresh = () => loadTasks();
-    const handleFocus = () => loadTasks();
-
-    window.addEventListener('tasks:refresh', handleRefresh);
-    window.addEventListener('focus', handleFocus);
-
+    const refresh = () => loadTasks();
+    window.addEventListener('tasks:refresh', refresh);
+    window.addEventListener('focus', refresh);
     return () => {
-      window.removeEventListener('tasks:refresh', handleRefresh);
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('tasks:refresh', refresh);
+      window.removeEventListener('focus', refresh);
     };
   }, [loadTasks]);
 
-  // Auto-sort tasks by urgency
   const urgencyCategories = useMemo(() => {
-    const filteredTasks = tasks.filter((t) => !completedTasks.includes(t.id));
-
+    const active = tasks.filter((t) => !completedTasks.includes(t.id));
     return {
-      overdue: filteredTasks.filter((t) => getDateCategory(t.dueDate) === 'overdue'),
-      today: filteredTasks.filter((t) => getDateCategory(t.dueDate) === 'today'),
-      tomorrow: filteredTasks.filter((t) => getDateCategory(t.dueDate) === 'tomorrow'),
-      week: filteredTasks.filter((t) => getDateCategory(t.dueDate) === 'week'),
-      future: filteredTasks.filter((t) => getDateCategory(t.dueDate) === 'future'),
+      overdue: active.filter((t) => getDateCategory(t.dueDate) === 'overdue'),
+      today: active.filter((t) => getDateCategory(t.dueDate) === 'today'),
+      tomorrow: active.filter((t) => getDateCategory(t.dueDate) === 'tomorrow'),
+      week: active.filter((t) => getDateCategory(t.dueDate) === 'week'),
+      future: active.filter((t) => getDateCategory(t.dueDate) === 'future'),
     };
   }, [tasks, completedTasks]);
 
   const completed = tasks.filter((t) => completedTasks.includes(t.id));
 
-  const handleComplete = useCallback(
-    async (taskId) => {
-      const wasCompleted = completedTasks.includes(taskId);
-      const nextCompletedTasks = wasCompleted
-        ? completedTasks.filter((id) => id !== taskId)
-        : [...completedTasks, taskId];
-
-      setCompletedTasks(nextCompletedTasks);
-      setShowToast({
-        type: 'success',
-        message: wasCompleted ? '↺ Task marked pending' : '✓ Task completed!',
+  const handleComplete = useCallback(async (taskId) => {
+    const wasCompleted = completedTasks.includes(taskId);
+    const next = wasCompleted
+      ? completedTasks.filter((id) => id !== taskId)
+      : [...completedTasks, taskId];
+    setCompletedTasks(next);
+    setShowToast({ type: wasCompleted ? 'info' : 'success', message: wasCompleted ? 'Task marked pending' : 'Task completed!' });
+    setTimeout(() => setShowToast(null), 3000);
+    try {
+      await axios.put(`/api/tasks/${taskId}`, {
+        status: wasCompleted ? 'Pending' : 'Completed',
+        ...(!wasCompleted && studentId ? { completedBy: studentId } : {}),
       });
-      setTimeout(() => setShowToast(null), 3000);
-
-      try {
-        await axios.put(`/api/tasks/${taskId}`, {
-          status: wasCompleted ? 'Pending' : 'Completed',
-          ...(!wasCompleted && studentId ? { completedBy: studentId } : {}),
-        });
-
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  completed: !wasCompleted,
-                  status: !wasCompleted ? 'completed' : 'pending',
-                }
-              : task
-          )
-        );
-        window.dispatchEvent(new Event('tasks:refresh'));
-      } catch (error) {
-        console.error('Failed to update task completion state:', error);
-        setCompletedTasks(completedTasks);
-        setShowToast({
-          type: 'error',
-          message: 'Failed to update task status. Please try again.',
-        });
-        setTimeout(() => setShowToast(null), 3000);
-      }
-    },
-    [completedTasks, studentId]
-  );
-
-  const handleSnooze = useCallback((taskId) => {
-    const task = tasks.find((t) => t.id === taskId);
-    if (task) {
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId
-            ? { ...t, dueDate: new Date(new Date(t.dueDate).getTime() + 60 * 60 * 1000) }
+            ? { ...t, completed: !wasCompleted, status: !wasCompleted ? 'completed' : 'pending' }
             : t
         )
       );
-      setShowToast({ type: 'info', message: '⏱ Snoozed for 1 hour' });
+      window.dispatchEvent(new Event('tasks:refresh'));
+    } catch {
+      setCompletedTasks(completedTasks);
+      setShowToast({ type: 'error', message: 'Failed to update task. Try again.' });
       setTimeout(() => setShowToast(null), 3000);
-
-      console.log(`[API] PATCH /api/tasks/${taskId}/snooze`, { duration: '1h' });
     }
-  }, [tasks]);
+  }, [completedTasks, studentId]);
+
+  const handleSnooze = useCallback((taskId) => {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId ? { ...t, dueDate: new Date(t.dueDate.getTime() + 3600000) } : t
+      )
+    );
+    setShowToast({ type: 'info', message: 'Snoozed for 1 hour' });
+    setTimeout(() => setShowToast(null), 3000);
+  }, []);
 
   const handleCompleteAllOverdue = useCallback(() => {
-    urgencyCategories.overdue.forEach((task) => {
-      setCompletedTasks((prev) => [...prev, task.id]);
-    });
-    setShowToast({
-      type: 'success',
-      message: `✓ ${urgencyCategories.overdue.length} overdue tasks completed!`,
-    });
-    setTimeout(() => setShowToast(null), 4000);
-
-    console.log('[API] POST /api/tasks/complete-bulk', {
-      taskIds: urgencyCategories.overdue.map((t) => t.id),
-    });
+    const ids = urgencyCategories.overdue.map((t) => t.id);
+    setCompletedTasks((prev) => [...new Set([...prev, ...ids])]);
+    setShowToast({ type: 'success', message: `${ids.length} overdue tasks completed!` });
+    setTimeout(() => setShowToast(null), 3500);
   }, [urgencyCategories.overdue]);
 
-  // Filter display based on selected filter
-  const displayData = (() => {
+  const displayData = useMemo(() => {
     switch (filter) {
-      case 'overdue':
-        return { overdue: urgencyCategories.overdue };
-      case 'today':
-        return { today: urgencyCategories.today };
-      case 'week':
-        return {
-          today: urgencyCategories.today,
-          tomorrow: urgencyCategories.tomorrow,
-          week: urgencyCategories.week,
-        };
-      case 'future':
-        return { future: urgencyCategories.future };
-      default:
-        return urgencyCategories;
+      case 'overdue': return { overdue: urgencyCategories.overdue };
+      case 'today': return { today: urgencyCategories.today };
+      case 'week': return { today: urgencyCategories.today, tomorrow: urgencyCategories.tomorrow, week: urgencyCategories.week };
+      case 'future': return { future: urgencyCategories.future };
+      default: return urgencyCategories;
     }
-  })();
+  }, [filter, urgencyCategories]);
+
+  const SECTIONS = [
+    { key: 'overdue', icon: AlertCircle, title: 'Overdue', color: '#EF4444', isOverdue: true },
+    { key: 'today', icon: Zap, title: 'Today', color: '#F59E0B', isOverdue: false },
+    { key: 'tomorrow', icon: Calendar, title: 'Tomorrow', color: '#8B5CF6', isOverdue: false },
+    { key: 'week', icon: Flag, title: 'This Week', color: '#3B82F6', isOverdue: false },
+    { key: 'future', icon: TrendingUp, title: 'Upcoming', color: '#6366F1', isOverdue: false },
+  ];
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${isDark ? 'dark' : ''}`}>
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 min-h-screen">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+        @media (max-width: 640px) {
+          .task-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div
+        className="min-h-screen w-full"
+        style={{ backgroundColor: '#F8FAFC', fontFamily: "'DM Sans', sans-serif" }}
+      >
         {/* ===== NAVBAR ===== */}
-        <motion.nav
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-800/80 border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg"
-        >
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
-            <div className="flex items-center justify-between gap-2">
-              {/* Left Section */}
-              <div className="flex items-center gap-2 min-w-0">
-                <button
-                  onClick={onNavigateBack}
-                  className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors flex-shrink-0"
-                  aria-label="Go back"
-                >
-                  <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                </button>
-                <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg flex-shrink-0">
-                  <Clock className="w-4 sm:w-5 h-4 sm:h-5 text-white animate-bounce" />
+        <div className="sticky top-0 z-40 bg-white border-b border-slate-200"
+          style={{ boxShadow: '0 1px 0 #E2E8F0' }}>
+          <div className="w-full max-w-screen-xl mx-auto px-3 sm:px-5 lg:px-8">
+            <div className="flex items-center h-14 gap-2 sm:gap-4">
+
+              {/* Back button */}
+              <button
+                onClick={onNavigateBack}
+                className="p-1.5 hover:bg-slate-100 active:bg-slate-200 rounded-lg transition-colors flex-shrink-0"
+                aria-label="Go back"
+              >
+                <ChevronLeft className="w-4 h-4 text-slate-500" />
+              </button>
+
+              {/* Brand */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5 text-white" />
                 </div>
-                <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">
+                <span className="font-bold text-slate-800 text-sm hidden xs:block sm:block">
                   Deadline Tracker
-                </h1>
+                </span>
               </div>
 
-              {/* Right Section - Filter Buttons */}
-              <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-0 scrollbar-hide">
-                {['all', 'overdue', 'today', 'week', 'future'].map((filterOption) => (
-                  <button
-                    key={filterOption}
-                    onClick={() => setFilter(filterOption)}
-                    className={`px-3 sm:px-4 py-2 rounded-full font-semibold text-xs sm:text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                      filter === filterOption
-                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/40'
-                        : 'bg-white/50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
-                  </button>
-                ))}
+              {/* Filter — grows to fill center space */}
+              <div className="flex-1 flex justify-center overflow-hidden px-1">
+                <FilterTabs
+                  filter={filter}
+                  setFilter={setFilter}
+                  overdueCount={urgencyCategories.overdue.length}
+                />
               </div>
+
+              {/* New Task */}
+              <button
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">New Task</span>
+              </button>
             </div>
           </div>
-        </motion.nav>
+        </div>
+
+        {/* ===== TOAST ===== */}
+        <AnimatePresence>
+          {showToast && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-xl pointer-events-none whitespace-nowrap"
+              style={{
+                background:
+                  showToast.type === 'success' ? '#10B981'
+                    : showToast.type === 'error' ? '#EF4444'
+                      : '#3B82F6',
+              }}
+            >
+              {showToast.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ===== MAIN CONTENT ===== */}
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8 sm:space-y-12">
-          {/* Toast Notification */}
-          <AnimatePresence>
-            {showToast && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className={`fixed bottom-4 right-4 left-4 sm:left-auto sm:w-auto px-4 sm:px-6 py-3 sm:py-4 rounded-xl font-semibold text-white shadow-2xl backdrop-blur-xl z-50 ${
-                  showToast.type === 'success'
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 shadow-green-500/40'
-                    : showToast.type === 'error'
-                    ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-red-500/40'
-                    : 'bg-gradient-to-r from-blue-500 to-cyan-600 shadow-blue-500/40'
-                }`}
-              >
-                {showToast.message}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Loading State */}
+        <div className="w-full max-w-screen-xl mx-auto px-3 sm:px-5 lg:px-8 py-5 sm:py-7 space-y-7">
           {isLoading ? (
             <SkeletonLoader />
           ) : error ? (
-            <EmptyState
-              icon={AlertCircle}
-              title="⚠️ Error Loading Tasks"
-              description={error}
-            />
+            <EmptyState title="Error Loading Tasks" description={error} />
           ) : (
             <>
-              {/* OVERDUE SECTION */}
-              {displayData.overdue && displayData.overdue.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  <SectionHeader
-                    icon={AlertCircle}
-                    title="🔴 OVERDUE"
-                    count={displayData.overdue.length}
-                    color="bg-red-500/20"
-                    isOverdue={true}
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {displayData.overdue.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onComplete={handleComplete}
-                        onSnooze={handleSnooze}
-                        isOverdue={true}
-                        isDark={isDark}
-                      />
-                    ))}
-                  </div>
+              {SECTIONS.map(({ key, icon, title, color, isOverdue }) => {
+                const sectionTasks = displayData[key];
+                if (!sectionTasks || sectionTasks.length === 0) return null;
 
-                  {/* Complete All Overdue Button */}
-                  {displayData.overdue.length > 1 && (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleCompleteAllOverdue}
-                      className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg shadow-green-500/30 transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
-                    >
-                      <CheckCircle2 className="w-5 h-5" />
-                      Complete All Overdue Tasks ({displayData.overdue.length})
-                    </motion.button>
-                  )}
+                return (
+                  <motion.section
+                    key={key}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SectionHeader
+                      icon={icon}
+                      title={title}
+                      count={sectionTasks.length}
+                      accentColor={color}
+                      isOverdue={isOverdue}
+                    />
 
-                  <div className="h-px bg-gradient-to-r from-transparent via-red-200 dark:via-red-800/30 to-transparent my-4" />
-                </motion.div>
-              )}
+                    {/* Responsive grid:
+                        - mobile (< sm):  1 col
+                        - tablet (sm):    2 col
+                        - desktop (lg):   3 col
+                        - wide (xl):      4 col              */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+                      <AnimatePresence>
+                        {sectionTasks.map((task) => (
+                          <TaskCard
+                            key={task.id}
+                            task={task}
+                            onComplete={handleComplete}
+                            onSnooze={handleSnooze}
+                            isOverdue={isOverdue}
+                          />
+                        ))}
+                      </AnimatePresence>
+                    </div>
 
-              {/* TODAY SECTION */}
-              {displayData.today && displayData.today.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  <SectionHeader
-                    icon={Zap}
-                    title="🟠 TODAY"
-                    count={displayData.today.length}
-                    color="bg-orange-500/20"
-                    isOverdue={false}
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {displayData.today.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onComplete={handleComplete}
-                        onSnooze={handleSnooze}
-                        isOverdue={false}
-                        isDark={isDark}
-                      />
-                    ))}
-                  </div>
-                  <div className="h-px bg-gradient-to-r from-transparent via-orange-200 dark:via-orange-800/30 to-transparent my-4" />
-                </motion.div>
-              )}
+                    {/* Complete All overdue */}
+                    {isOverdue && sectionTasks.length > 1 && (
+                      <motion.button
+                        whileHover={{ scale: 1.005 }}
+                        whileTap={{ scale: 0.995 }}
+                        onClick={handleCompleteAllOverdue}
+                        className="mt-3 w-full py-2.5 rounded-xl text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 border border-emerald-200 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        Complete All Overdue ({sectionTasks.length})
+                      </motion.button>
+                    )}
+                  </motion.section>
+                );
+              })}
 
-              {/* TOMORROW SECTION */}
-              {displayData.tomorrow && displayData.tomorrow.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  <SectionHeader
-                    icon={Calendar}
-                    title="🟡 TOMORROW"
-                    count={displayData.tomorrow.length}
-                    color="bg-yellow-500/20"
-                    isOverdue={false}
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {displayData.tomorrow.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onComplete={handleComplete}
-                        onSnooze={handleSnooze}
-                        isOverdue={false}
-                        isDark={isDark}
-                      />
-                    ))}
-                  </div>
-                  <div className="h-px bg-gradient-to-r from-transparent via-yellow-200 dark:via-yellow-800/30 to-transparent my-4" />
-                </motion.div>
-              )}
-
-              {/* THIS WEEK SECTION */}
-              {displayData.week && displayData.week.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  <SectionHeader
-                    icon={Flag}
-                    title="🔵 THIS WEEK"
-                    count={displayData.week.length}
-                    color="bg-blue-500/20"
-                    isOverdue={false}
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {displayData.week.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onComplete={handleComplete}
-                        onSnooze={handleSnooze}
-                        isOverride={false}
-                        isDark={isDark}
-                      />
-                    ))}
-                  </div>
-                  <div className="h-px bg-gradient-to-r from-transparent via-blue-200 dark:via-blue-800/30 to-transparent my-4" />
-                </motion.div>
-              )}
-
-              {/* UPCOMING SECTION */}
-              {displayData.future && displayData.future.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  <SectionHeader
-                    icon={Calendar}
-                    title="🟣 UPCOMING"
-                    count={displayData.future.length}
-                    color="bg-violet-500/20"
-                    isOverdue={false}
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {displayData.future.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onComplete={handleComplete}
-                        onSnooze={handleSnooze}
-                        isOverride={false}
-                        isDark={isDark}
-                      />
-                    ))}
-                  </div>
-                  <div className="h-px bg-gradient-to-r from-transparent via-violet-200 dark:via-violet-800/30 to-transparent my-4" />
-                </motion.div>
-              )}
-
-              {/* COMPLETED SECTION */}
-              {completed.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+              {/* Completed section */}
+              {completed.length > 0 && filter === 'all' && (
+                <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <SectionHeader
                     icon={CheckCircle2}
-                    title="✅ COMPLETED"
+                    title="Completed"
                     count={completed.length}
-                    color="bg-green-500/20"
+                    accentColor="#10B981"
                     isOverdue={false}
                   />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {completed.map((task, i) => (
-                      <motion.div
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+                    {completed.map((task) => (
+                      <div
                         key={task.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: i * 0.05 }}
-                        className="backdrop-blur-xl rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-200/50 dark:border-green-700/30 p-4 sm:p-5 space-y-3"
+                        className="bg-white rounded-xl p-3 sm:p-4 opacity-60 border-l-4 border-emerald-300 w-full"
+                        style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-slate-900 dark:text-white line-through opacity-70 break-words text-sm sm:text-base">
+                            <p className="text-sm font-semibold text-slate-600 line-through line-clamp-2 leading-snug">
                               {task.title}
-                            </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{task.description}</p>
+                            </p>
+                            {task.description && (
+                              <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{task.description}</p>
+                            )}
                           </div>
-                          <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                         </div>
-                        <div
-                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getSubjectColor(
-                            task.subject
-                          )}`}
-                        >
-                          {task.subject}
+                        <div className="flex items-center gap-1.5 mt-3">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: getSubjectColor(task.subject) }} />
+                          <span className="text-xs text-slate-400 truncate">{task.subject}</span>
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
-                </motion.div>
+                </motion.section>
               )}
 
-              {/* EMPTY STATE */}
+              {/* All empty */}
               {Object.values(displayData).every((arr) => arr.length === 0) && completed.length === 0 && (
                 <EmptyState
-                  icon={CheckCircle2}
-                  title="🎉 No Pending Tasks"
-                  description="You're all caught up! Great job managing your deadlines."
+                  title="All Clear!"
+                  description="You're all caught up. Great job staying on top of your deadlines."
                 />
               )}
 
-              {/* STATS FOOTER */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 sm:mt-12 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4"
-              >
-                <StatsCard icon={AlertCircle} label="Overdue" value={urgencyCategories.overdue.length} color="text-red-600 dark:text-red-400" />
-                <StatsCard icon={Zap} label="Today" value={urgencyCategories.today.length} color="text-orange-600 dark:text-orange-400" />
-                <StatsCard
-                  icon={Calendar}
-                  label="Upcoming"
-                  value={urgencyCategories.tomorrow.length + urgencyCategories.week.length}
-                  color="text-yellow-600 dark:text-yellow-400"
-                />
-                <StatsCard icon={CheckCircle2} label="Completed" value={completed.length} color="text-green-600 dark:text-green-400" />
-              </motion.div>
+              {/* Stats Bar */}
+              <StatsBar
+                overdue={urgencyCategories.overdue.length}
+                today={urgencyCategories.today.length}
+                upcoming={urgencyCategories.tomorrow.length + urgencyCategories.week.length + urgencyCategories.future.length}
+                completed={completed.length}
+              />
             </>
           )}
-
-          {/* DEBUG INFO - API Endpoints */}
-          <details className="mt-8 sm:mt-12 text-xs text-slate-500 dark:text-slate-400">
-            <summary className="cursor-pointer font-semibold hover:text-slate-700 dark:hover:text-slate-200">
-              API Endpoints (Development)
-            </summary>
-            <pre className="mt-3 p-3 bg-slate-900/50 dark:bg-slate-950 rounded overflow-x-auto text-green-400 text-xs">{`GET    /api/tasks                    - Fetch all tasks
-POST   /api/tasks                    - Create new task
-PATCH  /api/tasks/:id                - Update task
-PATCH  /api/tasks/:id/complete       - Mark task complete
-PATCH  /api/tasks/:id/snooze         - Snooze task
-POST   /api/tasks/complete-bulk      - Complete multiple tasks
-DELETE /api/tasks/:id                - Delete task
-GET    /api/tasks/stats              - Get dashboard stats`}</pre>
-          </details>
         </div>
       </div>
-
-      {/* Global Styles for Custom Animations */}
-      <style jsx global>{`
-        @keyframes shake {
-          0%, 100% {
-            transform: translateX(0);
-          }
-          10%, 30%, 50%, 70%, 90% {
-            transform: translateX(-3px);
-          }
-          20%, 40%, 60%, 80% {
-            transform: translateX(3px);
-          }
-        }
-
-        .animate-shake {
-          animation: shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) 2s infinite;
-        }
-
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-slide-up {
-          animation: slide-up 0.4s ease-out;
-        }
-
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-
-        @supports (backdrop-filter: blur(1px)) {
-          .backdrop-blur-xl {
-            backdrop-filter: blur(12px);
-          }
-        }
-      `}</style>
-    </div>
+    </>
   );
 }
