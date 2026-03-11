@@ -1,357 +1,436 @@
 <!DOCTYPE html>
 
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Smart Student Productivity System | Optimize Your Academic Journey</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <script>
         tailwind.config = {
-            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#0ab3d1",
-                        "background-light": "#f5f8f8",
-                        "background-dark": "#101f22",
+                        'navy-primary': '#19207b',
+                        'gold-accent': '#ffc107',
+                        'gold-dark': '#e0a800',
+                        'bg-dark': '#0f172a',
                     },
                     fontFamily: {
-                        "display": ["Inter"]
+                        sans: ['Inter', 'sans-serif'],
                     },
-                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
-                },
-            },
+                    borderRadius: {
+                        'custom': '8px',
+                    }
+                }
+            }
         }
     </script>
-<title>Student Productivity Dashboard</title>
+    <style data-purpose="custom-layout">
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(rgba(25, 32, 123, 0.8), rgba(25, 32, 123, 0.6)), url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1920');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .process-line {
+            position: relative;
+        }
+
+        .process-line::after {
+            content: '';
+            position: absolute;
+            top: 2rem;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: repeating-linear-gradient(to right, #19207b 0, #19207b 10px, transparent 10px, transparent 20px);
+            z-index: 0;
+        }
+
+        @media (max-width: 768px) {
+            .process-line::after {
+                display: none;
+            }
+        }
+    </style>
 </head>
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
-<div class="flex h-screen overflow-hidden">
-<!-- Sidebar Navigation -->
-<aside class="w-72 bg-white dark:bg-slate-900 border-r border-primary/10 flex flex-col h-full">
-<div class="p-6 flex items-center gap-3">
-<div class="bg-primary/20 p-2 rounded-lg text-primary">
-<span class="material-symbols-outlined text-2xl">school</span>
-</div>
-<div>
-<h1 class="font-bold text-lg leading-tight">Student Portal</h1>
-<p class="text-xs text-slate-500 dark:text-slate-400">Productivity Tracker</p>
-</div>
-</div>
-<nav class="flex-1 px-4 space-y-1 mt-4">
-<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary text-white shadow-md shadow-primary/20" href="#">
-<span class="material-symbols-outlined">dashboard</span>
-<span class="font-medium text-sm">Dashboard</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-primary/5 transition-colors" href="#">
-<span class="material-symbols-outlined text-slate-400">check_box</span>
-<span class="font-medium text-sm">Tasks</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-primary/5 transition-colors" href="#">
-<span class="material-symbols-outlined text-slate-400">calendar_month</span>
-<span class="font-medium text-sm">Calendar</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-primary/5 transition-colors" href="#">
-<span class="material-symbols-outlined text-slate-400">bar_chart</span>
-<span class="font-medium text-sm">Stats</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-primary/5 transition-colors" href="#">
-<span class="material-symbols-outlined text-slate-400">track_changes</span>
-<span class="font-medium text-sm">Goals</span>
-</a>
-</nav>
-<div class="p-6">
-<button class="w-full flex items-center justify-center gap-2 bg-primary text-white font-bold py-3 rounded-xl shadow-lg shadow-primary/30 hover:opacity-90 transition-all active:scale-95">
-<span class="material-symbols-outlined">add</span>
-<span class="text-sm">Add New Task</span>
-</button>
-</div>
-</aside>
-<!-- Main Content -->
-<main class="flex-1 flex flex-col overflow-y-auto">
-<!-- Header -->
-<header class="sticky top-0 z-10 flex items-center justify-between px-10 py-5 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/5">
-<div class="flex items-center gap-4">
-<div class="p-2 bg-yellow-400/20 text-yellow-600 rounded-lg">
-<span class="material-symbols-outlined">light_mode</span>
-</div>
-<h2 class="text-xl font-bold tracking-tight">Sunshine Greetings, Alex!</h2>
-</div>
-<div class="flex items-center gap-6">
-<div class="relative w-64 group">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-<input class="w-full bg-white dark:bg-slate-800 border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary shadow-sm" placeholder="Search tasks..." type="text"/>
-</div>
-<div class="flex items-center gap-3 border-x border-primary/10 px-6">
-<button class="p-2 bg-white dark:bg-slate-800 rounded-xl text-slate-500 hover:text-primary transition-colors shadow-sm">
-<span class="material-symbols-outlined">dark_mode</span>
-</button>
-<button class="p-2 bg-white dark:bg-slate-800 rounded-xl text-slate-500 hover:text-primary transition-colors shadow-sm relative">
-<span class="material-symbols-outlined">notifications</span>
-<span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>
-</button>
-<button class="p-2 bg-white dark:bg-slate-800 rounded-xl text-slate-500 hover:text-primary transition-colors shadow-sm">
-<span class="material-symbols-outlined">settings</span>
-</button>
-</div>
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full bg-slate-200 border-2 border-primary overflow-hidden">
-<img class="w-full h-full object-cover" data-alt="User avatar of a young student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdsrlfONnzFAcEPdULmXYqteXnmyUMUwdezPQYDROhbxNprrptdPjcDcWcZ0njisOK2OYboluUQ71q1OeLOgyRcE4ueICchOIrBFgLMneQafafNwWOshM14Dzi-HUfzscQQqYP1Xt35QxEKMMljIeqlK5esiv6P78h0n3UPMnwjMab_c0TxcvgswiUNhgHvkJmtWKGcTrz3x4NGQLZgYfAdlxctlLT51BjFmr0dCrWKPz__9W3oQO2Mn6iBDtC0oTpahgqsixpImU"/>
-</div>
-</div>
-</div>
-</header>
-<div class="p-10 space-y-8">
-<!-- Welcome Section -->
-<div>
-<h3 class="text-4xl font-black tracking-tighter mb-2">Ready for today?</h3>
-<p class="text-slate-500 dark:text-slate-400 max-w-lg">Stay focused and reach your academic goals. You've completed 85% of your weekly targets so far!</p>
-</div>
-<!-- Progress Cards -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none border border-primary/5 flex flex-col gap-4">
-<div class="flex justify-between items-start">
-<div class="p-2 bg-primary/10 text-primary rounded-xl">
-<span class="material-symbols-outlined">task_alt</span>
-</div>
-<span class="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">+12%</span>
-</div>
-<div>
-<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Task Completion</p>
-<h4 class="text-3xl font-bold">85%</h4>
-</div>
-<div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-<div class="bg-primary h-full w-[85%]"></div>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none border border-primary/5 flex flex-col gap-4">
-<div class="flex justify-between items-start">
-<div class="p-2 bg-cyan-500/10 text-cyan-600 rounded-xl">
-<span class="material-symbols-outlined">timer</span>
-</div>
-<span class="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-full">-2h</span>
-</div>
-<div>
-<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Study Hours</p>
-<h4 class="text-3xl font-bold">42h</h4>
-</div>
-<p class="text-xs text-slate-400">Target: 48h per week</p>
-</div>
-<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none border border-primary/5 flex flex-col gap-4">
-<div class="flex justify-between items-start">
-<div class="p-2 bg-emerald-500/10 text-emerald-600 rounded-xl">
-<span class="material-symbols-outlined">emoji_events</span>
-</div>
-<span class="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">+1</span>
-</div>
-<div>
-<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Weekly Goals</p>
-<h4 class="text-3xl font-bold">12/15</h4>
-</div>
-<div class="flex -space-x-2">
-<div class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900 bg-primary/30 flex items-center justify-center text-[10px] font-bold">A</div>
-<div class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500/30 flex items-center justify-center text-[10px] font-bold">B</div>
-<div class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900 bg-yellow-500/30 flex items-center justify-center text-[10px] font-bold">C</div>
-</div>
-</div>
-</div>
-<!-- Main Layout Grid -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-<!-- Productivity Trends Chart -->
-<div class="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-lg border border-primary/5">
-<div class="flex items-center justify-between mb-8">
-<div>
-<h3 class="text-xl font-bold">Productivity Trends</h3>
-<p class="text-sm text-slate-500">Your activity over the last 7 days</p>
-</div>
-<select class="bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm py-2 px-4 focus:ring-primary">
-<option>Weekly</option>
-<option>Monthly</option>
-</select>
-</div>
-<div class="h-64 flex items-end justify-between gap-2 px-2">
-<div class="flex-1 flex flex-col items-center gap-3">
-<div class="w-full bg-primary/20 rounded-t-lg h-[40%] group relative">
-<div class="absolute inset-0 bg-primary h-0 group-hover:h-full transition-all duration-300 rounded-t-lg"></div>
-</div>
-<span class="text-xs text-slate-400 font-medium">Mon</span>
-</div>
-<div class="flex-1 flex flex-col items-center gap-3">
-<div class="w-full bg-primary/20 rounded-t-lg h-[65%] group relative">
-<div class="absolute inset-0 bg-primary h-0 group-hover:h-full transition-all duration-300 rounded-t-lg"></div>
-</div>
-<span class="text-xs text-slate-400 font-medium">Tue</span>
-</div>
-<div class="flex-1 flex flex-col items-center gap-3">
-<div class="w-full bg-primary/20 rounded-t-lg h-[85%] group relative">
-<div class="absolute inset-0 bg-primary h-0 group-hover:h-full transition-all duration-300 rounded-t-lg"></div>
-</div>
-<span class="text-xs text-slate-400 font-medium">Wed</span>
-</div>
-<div class="flex-1 flex flex-col items-center gap-3">
-<div class="w-full bg-primary/20 rounded-t-lg h-[55%] group relative">
-<div class="absolute inset-0 bg-primary h-0 group-hover:h-full transition-all duration-300 rounded-t-lg"></div>
-</div>
-<span class="text-xs text-slate-400 font-medium">Thu</span>
-</div>
-<div class="flex-1 flex flex-col items-center gap-3">
-<div class="w-full bg-primary/20 rounded-t-lg h-[90%] group relative border-x-4 border-primary/40">
-<div class="absolute inset-0 bg-primary h-full rounded-t-lg"></div>
-</div>
-<span class="text-xs text-primary font-bold">Fri</span>
-</div>
-<div class="flex-1 flex flex-col items-center gap-3">
-<div class="w-full bg-primary/20 rounded-t-lg h-[30%] group relative">
-<div class="absolute inset-0 bg-primary h-0 group-hover:h-full transition-all duration-300 rounded-t-lg"></div>
-</div>
-<span class="text-xs text-slate-400 font-medium">Sat</span>
-</div>
-<div class="flex-1 flex flex-col items-center gap-3">
-<div class="w-full bg-primary/20 rounded-t-lg h-[45%] group relative">
-<div class="absolute inset-0 bg-primary h-0 group-hover:h-full transition-all duration-300 rounded-t-lg"></div>
-</div>
-<span class="text-xs text-slate-400 font-medium">Sun</span>
-</div>
-</div>
-</div>
-<!-- Side Panel: Goals -->
-<div class="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-lg border border-primary/5">
-<h3 class="text-xl font-bold mb-6">Current Goals</h3>
-<div class="space-y-6">
-<div class="space-y-2">
-<div class="flex justify-between text-sm">
-<span class="font-medium">Calculus II Exam</span>
-<span class="text-primary font-bold">70%</span>
-</div>
-<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full">
-<div class="h-full bg-primary rounded-full w-[70%]"></div>
-</div>
-</div>
-<div class="space-y-2">
-<div class="flex justify-between text-sm">
-<span class="font-medium">Machine Learning Project</span>
-<span class="text-emerald-500 font-bold">45%</span>
-</div>
-<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full">
-<div class="h-full bg-emerald-500 rounded-full w-[45%]"></div>
-</div>
-</div>
-<div class="space-y-2">
-<div class="flex justify-between text-sm">
-<span class="font-medium">Literature Essay</span>
-<span class="text-yellow-500 font-bold">90%</span>
-</div>
-<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full">
-<div class="h-full bg-yellow-500 rounded-full w-[90%]"></div>
-</div>
-</div>
-</div>
-<button class="w-full mt-8 py-3 border-2 border-dashed border-primary/30 rounded-xl text-primary font-bold text-sm hover:bg-primary/5 transition-colors">
-                            + Add New Goal
-                        </button>
-</div>
-</div>
-<!-- Recent Tasks -->
-<div class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-primary/5 overflow-hidden">
-<div class="px-8 py-6 border-b border-primary/5 flex items-center justify-between">
-<h3 class="text-xl font-bold">Recent Tasks</h3>
-<button class="text-primary text-sm font-bold hover:underline">View All Tasks</button>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left">
-<thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
-<tr>
-<th class="px-8 py-4">Task Name</th>
-<th class="px-8 py-4">Category</th>
-<th class="px-8 py-4">Due Date</th>
-<th class="px-8 py-4">Status</th>
-<th class="px-8 py-4 text-right">Action</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-primary/5">
-<tr class="hover:bg-primary/5 transition-colors group">
-<td class="px-8 py-4">
-<div class="flex items-center gap-3">
-<div class="w-5 h-5 border-2 border-primary rounded flex items-center justify-center">
-<span class="material-symbols-outlined text-[14px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">check</span>
-</div>
-<span class="text-sm font-medium">Finalize ML Model Weights</span>
-</div>
-</td>
-<td class="px-8 py-4">
-<span class="text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-600 dark:text-slate-300">Technology</span>
-</td>
-<td class="px-8 py-4 text-sm">Oct 24, 2023</td>
-<td class="px-8 py-4">
-<span class="text-xs font-bold px-3 py-1 rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 uppercase tracking-wide">In Progress</span>
-</td>
-<td class="px-8 py-4 text-right">
-<button class="text-slate-400 hover:text-primary"><span class="material-symbols-outlined">more_vert</span></button>
-</td>
-</tr>
-<tr class="hover:bg-primary/5 transition-colors group">
-<td class="px-8 py-4">
-<div class="flex items-center gap-3">
-<div class="w-5 h-5 border-2 border-primary rounded flex items-center justify-center">
-<span class="material-symbols-outlined text-[14px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">check</span>
-</div>
-<span class="text-sm font-medium">Calculus Assignment 4</span>
-</div>
-</td>
-<td class="px-8 py-4">
-<span class="text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-600 dark:text-slate-300">Mathematics</span>
-</td>
-<td class="px-8 py-4 text-sm">Oct 26, 2023</td>
-<td class="px-8 py-4">
-<span class="text-xs font-bold px-3 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 uppercase tracking-wide">Urgent</span>
-</td>
-<td class="px-8 py-4 text-right">
-<button class="text-slate-400 hover:text-primary"><span class="material-symbols-outlined">more_vert</span></button>
-</td>
-</tr>
-<tr class="hover:bg-primary/5 transition-colors group">
-<td class="px-8 py-4">
-<div class="flex items-center gap-3">
-<div class="w-5 h-5 border-2 border-emerald-500 bg-emerald-500 rounded flex items-center justify-center">
-<span class="material-symbols-outlined text-[14px] text-white">check</span>
-</div>
-<span class="text-sm font-medium line-through text-slate-400">Read Literature Chapters 1-5</span>
-</div>
-</td>
-<td class="px-8 py-4">
-<span class="text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-600 dark:text-slate-300">Literature</span>
-</td>
-<td class="px-8 py-4 text-sm text-slate-400">Oct 20, 2023</td>
-<td class="px-8 py-4">
-<span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wide">Completed</span>
-</td>
-<td class="px-8 py-4 text-right">
-<button class="text-slate-400 hover:text-primary"><span class="material-symbols-outlined">more_vert</span></button>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<!-- Footer Area -->
-<footer class="mt-auto border-t border-primary/5 bg-white dark:bg-slate-900 p-6 flex flex-col md:flex-row gap-4 items-center justify-between px-10">
-<div class="text-sm text-slate-500 font-medium">
-                    © 2023 Student Portal. Keep up the great work!
+
+<body class="bg-white text-gray-900">
+    <!-- BEGIN: Navigation -->
+    <nav class="sticky top-0 z-50 bg-white border-b border-gray-100 px-6 py-4 shadow-sm" data-purpose="main-navigation">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div
+                    class="w-10 h-10 bg-navy-primary rounded-custom flex items-center justify-center text-white font-bold text-xl">
+                    S</div>
+                <span class="text-xl font-extrabold text-navy-primary tracking-tight">STUDENT<span
+                        class="text-gold-accent">PRO</span></span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 font-medium text-navy-primary">
+                <a class="hover:text-gold-accent transition" href="#features">Features</a>
+                <a class="hover:text-gold-accent transition" href="#process">How it Works</a>
+                <a class="hover:text-gold-accent transition" href="#why-us">Why Us</a>
+                <a class="bg-gold-accent hover:bg-gold-dark text-navy-primary px-6 py-2 rounded-full font-bold transition flex items-center gap-2"
+                    href="#">
+                    GET STARTED <span class="text-lg">→</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+    <!-- END: Navigation -->
+    <!-- BEGIN: Hero Section -->
+    <section class="hero-gradient min-h-[600px] flex items-center text-white relative overflow-hidden"
+        data-purpose="hero-section">
+        <div class="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row items-center justify-between gap-12">
+            <div class="md:w-1/2 space-y-6 z-10">
+                <div class="inline-block py-1 px-4 bg-gold-accent text-navy-primary font-bold rounded-full text-sm">
+                    ADMISSIONS OPEN 2025
                 </div>
-<div class="flex items-center gap-4">
-<button class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-<span class="material-symbols-outlined text-lg">calendar_today</span>
-                        Schedule Meeting
+                <h1 class="text-4xl md:text-6xl font-extrabold leading-tight">
+                    Master Your Studies with <br />
+                    <span class="text-gold-accent">Smart Productivity</span>
+                </h1>
+                <p class="text-lg text-gray-100 max-w-lg">
+                    Transform your academic life with the all-in-one system designed for the modern student. Manage
+                    tasks, schedules, and resources effortlessly.
+                </p>
+                <div class="flex flex-wrap gap-4 pt-4">
+                    <button
+                        class="bg-gold-accent hover:bg-gold-dark text-navy-primary font-bold py-4 px-10 rounded-custom transition shadow-lg text-lg">
+                        REGISTER NOW
                     </button>
-<button class="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95">
-<span class="material-symbols-outlined text-lg">add</span>
-                        Quick Task
-                    </button>
-</div>
-</footer>
-</main>
-</div>
-</body></html>
+                    <div
+                        class="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-custom flex flex-col justify-center">
+                        <span class="text-xs uppercase font-bold tracking-widest text-gold-accent">Available On</span>
+                        <span class="font-bold text-lg">WEB &amp; MOBILE</span>
+                    </div>
+                </div>
+                <p class="text-sm font-medium text-gray-300">
+                    ✓ AI-Powered Scheduling | ✓ Cloud Sync | ✓ Study Group Collaboration
+                </p>
+            </div>
+            <div class="md:w-1/2 relative">
+                <!-- Main Hero Image -->
+                <img alt="Student using tablet" class="rounded-2xl shadow-2xl border-4 border-white/10"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDN0dUTLN_4dsN5R0Y4zKq_2vCCqY2vy1UPkgzSikXud9KEF9mNwqofytaSUUIdjgH9f2PHjUdxr-4CciQO61TV-xXlyzEdJhwub7OoN90jDJ1TR82ukWJfw1mWOc3fIKQgDcNNWZ1K3MA9kxP8JBr8qEw5O_meMlIcAh7GaIB9wTXw_GD0OZ7e7uZ5B4cHwuH4Rh0wWm0rBAP1RDFyYCx8Rb5cSJrDm_mKq9C5j4EtNTct-Efr4EmsUVbm4MxrUhf_GzKiCwCLL4A" />
+                <!-- Floating Stats Element -->
+                <div
+                    class="absolute -bottom-6 -left-6 bg-navy-primary p-6 rounded-custom shadow-xl border-l-4 border-gold-accent">
+                    <div class="text-3xl font-bold text-gold-accent">4.9/5</div>
+                    <div class="text-xs uppercase tracking-tighter text-white opacity-80">User Satisfaction</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- END: Hero Section -->
+    <!-- BEGIN: Application Process -->
+    <section class="py-20 bg-gray-50 overflow-hidden" data-purpose="process-flow" id="process">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-navy-primary mb-4">Onboarding Process</h2>
+                <div class="w-24 h-1.5 bg-gold-accent mx-auto"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-8 process-line">
+                <!-- Step 1 -->
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <div
+                        class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-6 text-navy-primary border-b-4 border-navy-primary">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-navy-primary mb-2">1. Create Account</h3>
+                    <p class="text-sm text-gray-600">Secure sign-up using your university email.</p>
+                </div>
+                <!-- Step 2 -->
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <div
+                        class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-6 text-navy-primary border-b-4 border-navy-primary">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-navy-primary mb-2">2. Set Goals</h3>
+                    <p class="text-sm text-gray-600">Define your courses and academic targets.</p>
+                </div>
+                <!-- Step 3 -->
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <div
+                        class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-6 text-navy-primary border-b-4 border-navy-primary">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-navy-primary mb-2">3. Import Schedule</h3>
+                    <p class="text-sm text-gray-600">Sync your calendar and exam dates.</p>
+                </div>
+                <!-- Step 4 -->
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <div
+                        class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-6 text-navy-primary border-b-4 border-navy-primary">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-navy-primary mb-2">4. Access Resources</h3>
+                    <p class="text-sm text-gray-600">Upload notes and study materials.</p>
+                </div>
+                <!-- Step 5 -->
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <div
+                        class="w-16 h-16 bg-gold-accent rounded-2xl shadow-lg flex items-center justify-center mb-6 text-navy-primary">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round"
+                                stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-navy-primary mb-2">5. Achieve More</h3>
+                    <p class="text-sm text-gray-600">Track progress and boost performance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- END: Application Process -->
+    <!-- BEGIN: Key Features -->
+    <section class="py-20 bg-white" data-purpose="features-grid" id="features">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-navy-primary mb-4">Core Features</h2>
+                <div class="w-24 h-1.5 bg-navy-primary mx-auto"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Feature 1 -->
+                <div class="p-8 border border-gray-100 rounded-custom hover:shadow-xl transition group">
+                    <div
+                        class="w-12 h-12 bg-blue-50 text-navy-primary rounded-lg flex items-center justify-center mb-6 group-hover:bg-navy-primary group-hover:text-white transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3">Task Management</h4>
+                    <p class="text-sm text-gray-600 leading-relaxed">Prioritize assignments and projects with intuitive
+                        drag-and-drop boards and deadline tracking.</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="p-8 border border-gray-100 rounded-custom hover:shadow-xl transition group">
+                    <div
+                        class="w-12 h-12 bg-blue-50 text-navy-primary rounded-lg flex items-center justify-center mb-6 group-hover:bg-navy-primary group-hover:text-white transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3">Study Schedule</h4>
+                    <p class="text-sm text-gray-600 leading-relaxed">Automated time-blocking based on your course load
+                        and personal preferences for maximum efficiency.</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="p-8 border border-gray-100 rounded-custom hover:shadow-xl transition group">
+                    <div
+                        class="w-12 h-12 bg-blue-50 text-navy-primary rounded-lg flex items-center justify-center mb-6 group-hover:bg-navy-primary group-hover:text-white transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3">Resource Library</h4>
+                    <p class="text-sm text-gray-600 leading-relaxed">Centralized storage for lecture notes, PDFs, and
+                        citations with advanced search and categorization.</p>
+                </div>
+                <!-- Feature 4 -->
+                <div class="p-8 border border-gray-100 rounded-custom hover:shadow-xl transition group">
+                    <div
+                        class="w-12 h-12 bg-blue-50 text-navy-primary rounded-lg flex items-center justify-center mb-6 group-hover:bg-navy-primary group-hover:text-white transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3">Performance Analytics</h4>
+                    <p class="text-sm text-gray-600 leading-relaxed">Visual data on your study habits and grades to help
+                        identify areas for academic improvement.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- END: Key Features -->
+    <!-- BEGIN: Success Metrics -->
+    <section class="py-16 bg-navy-primary text-white" data-purpose="success-metrics">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 items-center">
+                <div class="col-span-1 md:col-span-1">
+                    <div class="bg-gold-accent p-6 rounded-custom text-navy-primary text-center">
+                        <div class="text-4xl font-extrabold">25,000+</div>
+                        <div class="text-xs uppercase font-bold mt-1">Active Students</div>
+                    </div>
+                    <div class="mt-4 bg-white/10 p-4 rounded-custom text-center">
+                        <div class="text-2xl font-bold">120+</div>
+                        <div class="text-xs uppercase font-bold opacity-70">Universities</div>
+                    </div>
+                </div>
+                <div class="col-span-1 md:col-span-3">
+                    <h3 class="text-2xl font-bold mb-8 text-center md:text-left">Trusted by Students from Top
+                        Institutions</h3>
+                    <div
+                        class="flex flex-wrap justify-center md:justify-start gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                        <img alt="Partner Logo" class="h-8"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcSPZGRUquB3f_EiAH5CQov1P1NX2H892szzsEcFAkzfLPVXA78D0JC3hl7KsUdOHI1738W7A0qTQFso_3lwSi-fqODPmLJb9dFlCo_WIVuzkE59sj4eMmbuy6Y0rgUKWJmTyBuhtZ2UcefOzvcGGy3HIfNGPHUrnPv3cVkMKl8aLHiZeZWDfPFkP4lWV_em8TkBkuwisU9z5zokQaa5KTAMk09Mr0l_-4fZlTDvRmc5E1jjvs7w1N0R0tlwtdoS-vEWY97Jgreak" />
+                        <img alt="Partner Logo" class="h-8"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9wNBv1qw9lCwvJUmY_LttJCY6c5XA9N6IkJShxwHumq4bb3PCUUJ75y4QEhJLWSWGd9qZn0MRYG5BLaeJ-dqL_cnsxCMF4MB18U9CRjPymRxOgNikuaCLuCMaUWAamgtalND52tsO0HhiI0r2jhZ8CKHXlP2nSwDC67RRW5vk39zY2ktSJriE-OxcrdEvnaghTnRG_-HnkSXawbE87gS43ry2kihAis5gf6UZ_TPure8v_wYJBauXEGVeZVXY8m1blcCQYE26LwI" />
+                        <img alt="Partner Logo" class="h-8"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvM9ZmPVwCWi8DvwOJdf32QM0trS-2ISAEjg9HBjfrOzqmIpx9blALy1RCBtv272uuBi4ocIJwdf4evEP9qCUrtSoAvc3zEd-jg2aDuX0o4P4P6T_IFxxqSCYyGhaJRHtuqbaWKFtu_Zbgbh022UV8ssdY8hXmGiYSzAhkov0Ahd1I_HzeJ_mzDtPYv-p4MpvaR5wlEH_KngCUHQ05NDrFzdu6FvZIG04F0pcKlNxRkvcoVXnbf33P-m3_0Xl2BZXQbMHV8D2sLIA" />
+                        <img alt="Partner Logo" class="h-8"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuATJot0DBlZxDjl7XjG284SAIuXEqN63YXRFfIkYoHReRzjAXbmB1oLp-lzOVhOGih79qDc2hGS8VLSvbZqqpQsSdsrrIMmuYWFYZ7jajXXIOoxx3j8gLqE5E2_h6xhQoN4yVwtwMFVIxqDi8QHJJMVXEj02oPEO_6jA_IbxoxoKGGfhUZsN_UgCN9puIFtN0SoG2gBB5-rLuSj8Mca_hDGbKVk1RE7PNpN-3VHr87qJsfvbC9BFllznGIZRf8-EynOgtmBrz4yyS0" />
+                        <img alt="Partner Logo" class="h-8"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6sTCVK3QqGfXobH8Fkk9I6o4yQCHU1THQuXZ9nStZUdYdfVeaCodiaISfBU-qwlQk6opK5DR63neibFaEFs-Y4wBILTqJvh1X2j9HyWbrhNtUxb3QCaCYuRx_oB-zkLfZalPwqU6TGshZMR3kYjMrBZxtWXuX53oOUGdQpPMT8cWErcJBWmAtoJlZXacNOXnra7xQ-zakkQr7NjaLwQrDs9u-gTa6VFdP_R7aj0a4ExWtvMe11F-rJLeFbkoSDXOeH-dJMslEdf0" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- END: Success Metrics -->
+    <!-- BEGIN: Why Choose Us -->
+    <section class="py-24 bg-gray-50" data-purpose="benefits-section" id="why-us">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-navy-primary mb-4">Why Choose StudentPro?</h2>
+                <div class="w-24 h-1.5 bg-gold-accent mx-auto"></div>
+            </div>
+            <div class="space-y-6">
+                <!-- Benefit 1 -->
+                <div
+                    class="bg-white p-8 rounded-custom shadow-sm border-l-4 border-navy-primary flex flex-col md:flex-row gap-6 items-start">
+                    <div class="bg-navy-primary/5 p-4 rounded-lg text-navy-primary shrink-0">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-bold text-navy-primary mb-2">Boost Productivity by 40%</h4>
+                        <p class="text-gray-600">Our research shows that students using the time-blocking system report
+                            a significant increase in study efficiency and a reduction in procrastination.</p>
+                    </div>
+                </div>
+                <!-- Benefit 2 -->
+                <div
+                    class="bg-white p-8 rounded-custom shadow-sm border-l-4 border-gold-accent flex flex-col md:flex-row gap-6 items-start">
+                    <div class="bg-gold-accent/10 p-4 rounded-lg text-gold-accent shrink-0">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-bold text-navy-primary mb-2">Enterprise-Grade Security</h4>
+                        <p class="text-gray-600">Your academic records and personal data are protected with end-to-end
+                            encryption and comply with global student privacy regulations (FERPA/GDPR).</p>
+                    </div>
+                </div>
+                <!-- Benefit 3 -->
+                <div
+                    class="bg-white p-8 rounded-custom shadow-sm border-l-4 border-navy-primary flex flex-col md:flex-row gap-6 items-start">
+                    <div class="bg-navy-primary/5 p-4 rounded-lg text-navy-primary shrink-0">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-bold text-navy-primary mb-2">Collaborative Ecosystem</h4>
+                        <p class="text-gray-600">Join verified study groups, share public note repositories, and
+                            participate in peer-to-peer tutoring sessions directly within the platform.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- END: Why Choose Us -->
+    <!-- BEGIN: Footer -->
+    <footer class="bg-navy-primary text-white py-16" data-purpose="main-footer">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <div
+                            class="w-8 h-8 bg-white rounded-custom flex items-center justify-center text-navy-primary font-bold">
+                            S</div>
+                        <span class="text-lg font-extrabold tracking-tight">STUDENT<span
+                                class="text-gold-accent">PRO</span></span>
+                    </div>
+                    <p class="text-sm text-gray-400 leading-relaxed">
+                        Empowering students worldwide to achieve their academic potential through smart technology and
+                        productivity systems.
+                    </p>
+                </div>
+                <div>
+                    <h5 class="font-bold mb-6 text-gold-accent">Product</h5>
+                    <ul class="space-y-4 text-sm text-gray-300">
+                        <li><a class="hover:text-white transition" href="#">Features</a></li>
+                        <li><a class="hover:text-white transition" href="#">Integrations</a></li>
+                        <li><a class="hover:text-white transition" href="#">Pricing</a></li>
+                        <li><a class="hover:text-white transition" href="#">Mobile Apps</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold mb-6 text-gold-accent">Support</h5>
+                    <ul class="space-y-4 text-sm text-gray-300">
+                        <li><a class="hover:text-white transition" href="#">Help Center</a></li>
+                        <li><a class="hover:text-white transition" href="#">Academic Success</a></li>
+                        <li><a class="hover:text-white transition" href="#">Tutorials</a></li>
+                        <li><a class="hover:text-white transition" href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold mb-6 text-gold-accent">Join Our Community</h5>
+                    <p class="text-sm text-gray-400 mb-4">Get the latest study tips and product updates.</p>
+                    <div class="flex">
+                        <input
+                            class="bg-white/10 border-white/20 text-white rounded-l-custom focus:ring-gold-accent focus:border-gold-accent w-full text-sm"
+                            placeholder="Your email" type="email" />
+                        <button
+                            class="bg-gold-accent hover:bg-gold-dark text-navy-primary px-4 rounded-r-custom font-bold text-sm transition">GO</button>
+                    </div>
+                </div>
+            </div>
+            <div
+                class="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 font-medium">
+                <p>© 2025 Smart Student Productivity System. All rights reserved.</p>
+                <div class="flex gap-6">
+                    <a class="hover:text-white" href="#">Privacy Policy</a>
+                    <a class="hover:text-white" href="#">Terms of Service</a>
+                    <a class="hover:text-white" href="#">Cookie Settings</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- END: Footer -->
+</body>
+
+</html>
