@@ -456,13 +456,13 @@ export default function StudentPro() {
           <div className="sp-nav-inner">
             <div className="sp-logo">
               <div className="sp-logo-icon">S</div>
-              <span className="sp-logo-text">STUDENT<span>PRO</span></span>
+              <span className="sp-logo-text">SMART<span>STUDENT</span></span>
             </div>
             <div className="sp-nav-links">
               <a href="#features">Features</a>
               <a href="#process">How it Works</a>
               <a href="#why-us">Why Us</a>
-              <a href="#" className="sp-btn-primary">GET STARTED <span>→</span></a>
+              <a href="/login" className="sp-btn-primary">LOGIN <span>→</span></a>
             </div>
             <button
               className={`sp-hamburger${menuOpen ? " open" : ""}`}
@@ -478,7 +478,7 @@ export default function StudentPro() {
             <a href="#features" onClick={closeMenu}>Features</a>
             <a href="#process" onClick={closeMenu}>How it Works</a>
             <a href="#why-us" onClick={closeMenu}>Why Us</a>
-            <a href="#" className="sp-mobile-cta" onClick={closeMenu}>GET STARTED →</a>
+            <a href="/login" className="sp-mobile-cta" onClick={closeMenu}>LOGIN →</a>
           </div>
         </div>
       </nav>
@@ -487,22 +487,22 @@ export default function StudentPro() {
       <section className="sp-hero">
         <div className="sp-hero-inner">
           <div className="sp-hero-left">
-            <div className="sp-hero-badge">ADMISSIONS OPEN 2025</div>
+            <div className="sp-hero-badge">SMART STUDENT PRODUCTIVITY SYSTEM</div>
             <h1 className="sp-hero-title">
-              Master Your Studies with <br />
-              <span>Smart Productivity</span>
+              Plan, Track, and Finish <br />
+              <span>Every Academic Task</span>
             </h1>
             <p className="sp-hero-desc">
-              Transform your academic life with the all-in-one system designed for the modern student. Manage tasks, schedules, and resources effortlessly.
+              Follow one connected flow: log in, view teacher-assigned work, add your own tasks, get deadline reminders, and use AI support to stay focused every day.
             </p>
             <div className="sp-hero-actions">
-              <button className="sp-hero-cta">REGISTER NOW</button>
+              <button className="sp-hero-cta">START PRODUCTIVE STUDYING</button>
               <div className="sp-hero-avail">
                 <span className="sp-hero-avail-label">Available On</span>
-                <span className="sp-hero-avail-val">WEB &amp; MOBILE</span>
+                <span className="sp-hero-avail-val">STUDENT &amp; TEACHER PORTAL</span>
               </div>
             </div>
-            <p className="sp-hero-features">✓ AI-Powered Scheduling | ✓ Cloud Sync | ✓ Study Group Collaboration</p>
+            <p className="sp-hero-features">✓ Dashboard Tracking | ✓ Deadline Reminders | ✓ AI Chat Assistance</p>
           </div>
           <div className="sp-hero-right">
             <img
@@ -511,8 +511,8 @@ export default function StudentPro() {
               alt="Student using tablet"
             />
             <div className="sp-hero-stat">
-              <div className="sp-hero-stat-num">4.9/5</div>
-              <div className="sp-hero-stat-label">User Satisfaction</div>
+              <div className="sp-hero-stat-num">24/7</div>
+              <div className="sp-hero-stat-label">Task Visibility</div>
             </div>
           </div>
         </div>
@@ -521,16 +521,16 @@ export default function StudentPro() {
       {/* PROCESS */}
       <section className="sp-process" id="process">
         <div className="sp-section-title-wrap">
-          <h2 className="sp-section-title">Onboarding Process</h2>
+          <h2 className="sp-section-title">How the System Flow Works</h2>
           <div className="sp-underline-gold" />
         </div>
         <div className="sp-process-grid">
           {[
-            { path: PATHS.doc, label: "1. Create Account", desc: "Secure sign-up using your university email.", gold: false },
-            { path: PATHS.clip, label: "2. Set Goals", desc: "Define your courses and academic targets.", gold: false },
-            { path: PATHS.cal, label: "3. Import Schedule", desc: "Sync your calendar and exam dates.", gold: false },
-            { path: PATHS.book, label: "4. Access Resources", desc: "Upload notes and study materials.", gold: false },
-            { path: PATHS.check, label: "5. Achieve More", desc: "Track progress and boost performance.", gold: true },
+            { path: PATHS.doc, label: "1. Login Securely", desc: "Students and teachers access role-based dashboards.", gold: false },
+            { path: PATHS.clip, label: "2. Manage Tasks", desc: "Teachers assign tasks and students add personal study goals.", gold: false },
+            { path: PATHS.cal, label: "3. Track Deadlines", desc: "Monitor due dates with upcoming and overdue indicators.", gold: false },
+            { path: PATHS.book, label: "4. Use AI Support", desc: "Get instant learning help from the integrated AI module.", gold: false },
+            { path: PATHS.check, label: "5. Complete & Improve", desc: "Mark done tasks and boost productivity over time.", gold: true },
           ].map((s, i) => (
             <div className="sp-step" key={i}>
               <div className={`sp-step-icon${s.gold ? " gold" : ""}`}><I d={s.path} /></div>
@@ -551,10 +551,10 @@ export default function StudentPro() {
         </div>
         <div className="sp-features-grid">
           {[
-            { path: PATHS.clip, title: "Task Management", desc: "Prioritize assignments and projects with intuitive drag-and-drop boards and deadline tracking." },
-            { path: PATHS.cal, title: "Study Schedule", desc: "Automated time-blocking based on your course load and personal preferences for maximum efficiency." },
-            { path: PATHS.book, title: "Resource Library", desc: "Centralized storage for lecture notes, PDFs, and citations with advanced search and categorization." },
-            { path: PATHS.chart, title: "Performance Analytics", desc: "Visual data on your study habits and grades to help identify areas for academic improvement." },
+            { path: PATHS.clip, title: "Student Task Board", desc: "See teacher-assigned and self-created tasks in one place with priority and status updates." },
+            { path: PATHS.cal, title: "Deadline Reminder View", desc: "Spot critical and upcoming deadlines quickly so nothing slips through." },
+            { path: PATHS.book, title: "AI Learning Module", desc: "Ask academic questions and receive guided answers directly inside the system." },
+            { path: PATHS.chart, title: "Progress Dashboard", desc: "Track completed, pending, and overdue work to measure your productivity." },
           ].map((f, i) => (
             <div className="sp-feature-card" key={i}>
               <div className="sp-feature-icon"><I d={f.path} size={22} /></div>
@@ -572,16 +572,16 @@ export default function StudentPro() {
         <div className="sp-metrics-inner">
           <div className="sp-metrics-stats">
             <div className="sp-metrics-stat-box">
-              <div className="sp-metrics-stat-num">25,000+</div>
-              <div className="sp-metrics-stat-label">Active Students</div>
+              <div className="sp-metrics-stat-num">5+ </div>
+              <div className="sp-metrics-stat-label">Core Workflows</div>
             </div>
             <div className="sp-metrics-uni">
-              <div className="sp-metrics-uni-num">120+</div>
-              <div className="sp-metrics-uni-label">Universities</div>
+              <div className="sp-metrics-uni-num">3</div>
+              <div className="sp-metrics-uni-label">User Roles & Views</div>
             </div>
           </div>
           <div className="sp-metrics-right">
-            <h3>Trusted by Students from Top Institutions</h3>
+            <h3>Built Around the Real Student Productivity Lifecycle</h3>
             <div className="sp-logos">
               {partnerLogos.map((src, i) => <img key={i} src={src} alt="Partner Logo" />)}
             </div>
@@ -593,13 +593,13 @@ export default function StudentPro() {
       <section className="sp-why" id="why-us">
         <div className="sp-why-inner">
           <div className="sp-section-title-wrap">
-            <h2 className="sp-section-title">Why Choose StudentPro?</h2>
+            <h2 className="sp-section-title">Why Choose Smart Student Productivity System?</h2>
             <div className="sp-underline-gold" />
           </div>
           {[
-            { v: "navy", iv: "navy", path: PATHS.bolt, title: "Boost Productivity by 40%", desc: "Our research shows that students using the time-blocking system report a significant increase in study efficiency and a reduction in procrastination." },
-            { v: "gold", iv: "gold", path: PATHS.lock, title: "Enterprise-Grade Security", desc: "Your academic records and personal data are protected with end-to-end encryption and comply with global student privacy regulations (FERPA/GDPR)." },
-            { v: "navy", iv: "navy", path: PATHS.users, title: "Collaborative Ecosystem", desc: "Join verified study groups, share public note repositories, and participate in peer-to-peer tutoring sessions directly within the platform." },
+            { v: "navy", iv: "navy", path: PATHS.bolt, title: "Flow-Based Experience", desc: "From login to completion, each screen supports the next step in student productivity instead of isolated tools." },
+            { v: "gold", iv: "gold", path: PATHS.lock, title: "Secure Academic Workspace", desc: "Authenticated access keeps student and teacher data protected while enabling smooth collaboration." },
+            { v: "navy", iv: "navy", path: PATHS.users, title: "Teacher + Student Alignment", desc: "Assignment visibility, reminders, and progress updates keep both teachers and learners on the same page." },
           ].map((b, i) => (
             <div className={`sp-benefit ${b.v}`} key={i}>
               <div className={`sp-benefit-icon-wrap ${b.iv}`}><I d={b.path} /></div>
@@ -619,25 +619,25 @@ export default function StudentPro() {
             <div>
               <div className="sp-footer-logo">
                 <div className="sp-footer-logo-icon">S</div>
-                <span className="sp-footer-logo-text">STUDENT<span>PRO</span></span>
+                <span className="sp-footer-logo-text">SMART<span>STUDENT</span></span>
               </div>
-              <p className="sp-footer-desc">Empowering students worldwide to achieve their academic potential through smart technology and productivity systems.</p>
+              <p className="sp-footer-desc">A connected productivity platform that helps students plan, execute, and complete academic work with confidence.</p>
             </div>
             <div className="sp-footer-col">
               <h5>Product</h5>
               <ul>
-                {["Features", "Integrations", "Pricing", "Mobile Apps"].map(l => <li key={l}><a href="#">{l}</a></li>)}
+                {["Dashboard", "Task Management", "Deadline Reminder", "AI Module"].map(l => <li key={l}><a href="#">{l}</a></li>)}
               </ul>
             </div>
             <div className="sp-footer-col">
               <h5>Support</h5>
               <ul>
-                {["Help Center", "Academic Success", "Tutorials", "Contact Us"].map(l => <li key={l}><a href="#">{l}</a></li>)}
+                {["Student Login", "Teacher Admin", "Usage Guide", "Contact Team"].map(l => <li key={l}><a href="#">{l}</a></li>)}
               </ul>
             </div>
             <div className="sp-footer-col">
-              <h5>Join Our Community</h5>
-              <p>Get the latest study tips and product updates.</p>
+              <h5>Stay Updated</h5>
+              <p>Receive product updates and productivity tips.</p>
               <div className="sp-email-row">
                 <input
                   className="sp-email-input" type="email" placeholder="Your email"
