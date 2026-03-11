@@ -16,7 +16,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        {/* <Route path="/register" element={<RegisterPage />} /> */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/deadline" element={<DeadlineReminder />} />
         <Route path="/ai" element={<AIModule />} />
