@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-    Plus, Search, Filter, Calendar, Clock, Flag, BookOpen, User,
-    CheckCircle, Edit2, Trash2, AlertCircle, ChevronDown, X,
-    GripVertical, Sparkles, Target, TrendingUp, MoreVertical
+    Plus, Search, Calendar, Clock, Flag, BookOpen, User,
+    CheckCircle, Trash2, AlertCircle, X, Sparkles, Target,
+    ListFilter, LayoutGrid, LayoutList, ChevronRight, TrendingUp,
+    CalendarDays, CheckCheck, AlertTriangle, Timer
 } from 'lucide-react';
 import DashboardNavbar from '../components/dashboard/DashboardNavbar';
+import AddTaskModal from '../components/dashboard/AddTaskModal';
 import { calculatePriority, getDaysUntil, isOverdue } from '../components/dashboard/dashboardUtils';
 import axios from '../lib/axios';
 
@@ -18,6 +20,8 @@ export default function Tasks() {
     const [selectedTask, setSelectedTask] = useState(null);
     const [loading, setLoading] = useState(true);
     const [studentId, setStudentId] = useState('');
+    const [viewMode, setViewMode] = useState('grid');
+    const [activeTab, setActiveTab] = useState('all');
 
     // Load dark mode preference
     useEffect(() => {
@@ -115,6 +119,18 @@ export default function Tasks() {
         };
     }, [tasks, searchQuery, filterType]);
 
+    // Calculate statistics
+    const stats = useMemo(() => {
+        const allTasks = [...tasks.teacher, ...tasks.personal];
+        const total = allTasks.length;
+        const completed = allTasks.filter(t => t.completed).length;
+        const overdue = allTasks.filter(t => isOverdue(t.deadline, t.completed)).length;
+        const dueToday = allTasks.filter(t => getDaysUntil(t.deadline) === 0 && !t.completed).length;
+        const upcoming = allTasks.filter(t => getDaysUntil(t.deadline) > 0 && getDaysUntil(t.deadline) <= 7 && !t.completed).length;
+
+        return { total, completed, overdue, dueToday, upcoming, pending: total - completed };
+    }, [tasks]);
+
     const handleToggleTask = async (taskId, type) => {
         const taskList = type === 'teacher' ? tasks.teacher : tasks.personal;
         const task = taskList.find(t => t.id === taskId);
@@ -150,8 +166,44 @@ export default function Tasks() {
         }
     };
 
+    const handleAddTask = async (newTask) => {
+        if (!studentId) {
+            alert('Unable to identify the current student. Please log in again.');
+            return false;
+        }
+
+        try {
+            const response = await axios.post(`/api/students/${studentId}/tasks`, {
+                title: newTask.title,
+                description: newTask.description || 'Self assigned task',
+                subject: newTask.subject,
+                dueDate: newTask.deadline,
+                priority: (newTask.priority || 'medium').charAt(0).toUpperCase() + (newTask.priority || 'medium').slice(1),
+            });
+
+            if (response.data?.data) {
+                loadTasks();
+            }
+
+            setShowAddModal(false);
+            return true;
+        } catch (error) {
+            console.error('Failed to save task:', error);
+            alert('Unable to save task. Please try again.');
+            return false;
+        }
+    };
+
+    const filterOptions = [
+        { id: 'all', label: 'All Tasks', icon: LayoutGrid, count: stats.total },
+        { id: 'today', label: 'Due Today', icon: CalendarDays, count: stats.dueToday },
+        { id: 'upcoming', label: 'Upcoming', icon: Timer, count: stats.upcoming },
+        { id: 'overdue', label: 'Overdue', icon: AlertTriangle, count: stats.overdue },
+        { id: 'completed', label: 'Completed', icon: CheckCheck, count: stats.completed },
+    ];
+
     return (
-        <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
+        <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
             <DashboardNavbar
                 isDark={isDark}
                 setIsDark={setIsDark}
@@ -162,137 +214,166 @@ export default function Tasks() {
             />
 
             <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                {/* Header Section */}
+                {/* Page Header */}
                 <div className="mb-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                         <div>
-                            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                My Tasks
+                            <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                Task Manager
                             </h1>
-                            <p className={`mt-1 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                                Manage your assignments and personal tasks
+                            <p className={`mt-2 text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                                Organize and track your assignments and personal tasks
                             </p>
                         </div>
 
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-blue-500/30 transition-all active:scale-95"
+                            className="inline-flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/30 transition-all active:scale-[0.98]"
                         >
                             <Plus className="h-5 w-5" />
-                            <span>Add Task</span>
+                            <span>New Task</span>
                         </button>
                     </div>
                 </div>
 
-                {/* Filters & Search */}
-                <div className={`mb-6 p-4 rounded-xl backdrop-blur-md shadow-lg ring-1 ${isDark ? 'bg-slate-800/80 ring-slate-700/50' : 'bg-white/80 ring-slate-200/50'}`}>
-                    <div className="flex flex-col md:flex-row gap-4">
-                        {/* Search */}
-                        <div className="flex-1">
-                            <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg ${isDark ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
-                                <Search className={`h-5 w-5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <StatCard
+                        isDark={isDark}
+                        icon={Target}
+                        label="Total Tasks"
+                        value={stats.total}
+                        color="blue"
+                    />
+                    <StatCard
+                        isDark={isDark}
+                        icon={CheckCircle}
+                        label="Completed"
+                        value={stats.completed}
+                        color="emerald"
+                    />
+                    <StatCard
+                        isDark={isDark}
+                        icon={AlertTriangle}
+                        label="Overdue"
+                        value={stats.overdue}
+                        color="red"
+                    />
+                    <StatCard
+                        isDark={isDark}
+                        icon={TrendingUp}
+                        label="Progress"
+                        value={stats.total > 0 ? `${Math.round((stats.completed / stats.total) * 100)}%` : '0%'}
+                        color="amber"
+                    />
+                </div>
+
+                {/* Filter Tabs & Search */}
+                <div className={`mb-6 p-4 rounded-2xl border ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'}`}>
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                        {/* Filter Tabs */}
+                        <div className="flex-1 flex flex-wrap gap-2">
+                            {filterOptions.map((option) => {
+                                const Icon = option.icon;
+                                const isActive = filterType === option.id;
+                                return (
+                                    <button
+                                        key={option.id}
+                                        onClick={() => setFilterType(option.id)}
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : isDark
+                                                ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                            }`}
+                                    >
+                                        <Icon className="h-4 w-4" />
+                                        <span className="hidden sm:inline">{option.label}</span>
+                                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive
+                                            ? 'bg-white/20 text-white'
+                                            : isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-600'
+                                            }`}>
+                                            {option.count}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Search & View Toggle */}
+                        <div className="flex items-center gap-3">
+                            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg flex-1 lg:flex-initial lg:w-64 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                                <Search className={`h-4 w-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
                                 <input
                                     type="text"
                                     placeholder="Search tasks..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="flex-1 bg-transparent border-none outline-none text-sm"
+                                    className={`flex-1 bg-transparent border-none outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
                                 />
                             </div>
-                        </div>
 
-                        {/* Filter Dropdown */}
-                        <div className="flex gap-2">
-                            <select
-                                value={filterType}
-                                onChange={(e) => setFilterType(e.target.value)}
-                                className={`px-4 py-2.5 rounded-lg text-sm font-medium appearance-none cursor-pointer transition-all ${isDark ? 'bg-slate-700/50 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
-                            >
-                                <option value="all">All Tasks</option>
-                                <option value="overdue">Overdue</option>
-                                <option value="today">Due Today</option>
-                                <option value="upcoming">Upcoming</option>
-                                <option value="completed">Completed</option>
-                            </select>
+                            <div className={`flex items-center gap-1 p-1 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-2 rounded-md transition-all ${viewMode === 'grid'
+                                        ? isDark ? 'bg-slate-700 text-white' : 'bg-white text-slate-900 shadow-sm'
+                                        : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'
+                                        }`}
+                                >
+                                    <LayoutGrid className="h-4 w-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-2 rounded-md transition-all ${viewMode === 'list'
+                                        ? isDark ? 'bg-slate-700 text-white' : 'bg-white text-slate-900 shadow-sm'
+                                        : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'
+                                        }`}
+                                >
+                                    <LayoutList className="h-4 w-4" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Loading State */}
                 {loading ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {[1, 2, 3, 4, 5, 6].map(i => (
-                            <div key={i} className={`h-48 rounded-xl animate-pulse ${isDark ? 'bg-slate-800/50' : 'bg-slate-200/50'}`} />
-                        ))}
+                    <div className="space-y-6">
+                        <LoadingSkeleton isDark={isDark} />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Teacher Assigned Tasks - Takes 2 columns */}
-                        <div className="lg:col-span-2 space-y-4">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 rounded-lg bg-gradient-to-br from-red-500 to-orange-500">
-                                    <BookOpen className="h-5 w-5 text-white" />
-                                </div>
-                                <div>
-                                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                        Teacher Assigned Tasks
-                                    </h2>
-                                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                                        {filteredTasks.teacher.length} task{filteredTasks.teacher.length !== 1 ? 's' : ''}
-                                    </p>
-                                </div>
-                            </div>
+                    <div className="space-y-8">
+                        {/* Teacher Assigned Tasks Section */}
+                        <TaskSection
+                            isDark={isDark}
+                            title="Teacher Assigned Tasks"
+                            subtitle="Assignments from your instructors"
+                            icon={BookOpen}
+                            iconColor="from-rose-500 to-orange-500"
+                            tasks={filteredTasks.teacher}
+                            viewMode={viewMode}
+                            type="teacher"
+                            onToggle={handleToggleTask}
+                            onDelete={handleDeleteTask}
+                            onClick={setSelectedTask}
+                        />
 
-                            {filteredTasks.teacher.length === 0 ? (
-                                <EmptyState isDark={isDark} message="No teacher assigned tasks" />
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {filteredTasks.teacher.map(task => (
-                                        <TeacherTaskCard
-                                            key={task.id}
-                                            task={task}
-                                            isDark={isDark}
-                                            onToggle={() => handleToggleTask(task.id, 'teacher')}
-                                            onClick={() => setSelectedTask(task)}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Personal Tasks - Takes 1 column */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-teal-500">
-                                    <User className="h-5 w-5 text-white" />
-                                </div>
-                                <div>
-                                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                        My Personal Tasks
-                                    </h2>
-                                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                                        {filteredTasks.personal.length} task{filteredTasks.personal.length !== 1 ? 's' : ''}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {filteredTasks.personal.length === 0 ? (
-                                <EmptyState isDark={isDark} message="No personal tasks" />
-                            ) : (
-                                <div className="space-y-3">
-                                    {filteredTasks.personal.map(task => (
-                                        <PersonalTaskCard
-                                            key={task.id}
-                                            task={task}
-                                            isDark={isDark}
-                                            onToggle={() => handleToggleTask(task.id, 'personal')}
-                                            onDelete={() => handleDeleteTask(task.id, 'personal')}
-                                            onClick={() => setSelectedTask(task)}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {/* Personal Tasks Section */}
+                        <TaskSection
+                            isDark={isDark}
+                            title="Personal Tasks"
+                            subtitle="Your self-created tasks and goals"
+                            icon={User}
+                            iconColor="from-blue-500 to-cyan-500"
+                            tasks={filteredTasks.personal}
+                            viewMode={viewMode}
+                            type="personal"
+                            onToggle={handleToggleTask}
+                            onDelete={handleDeleteTask}
+                            onClick={setSelectedTask}
+                            showDelete
+                        />
                     </div>
                 )}
             </main>
@@ -306,10 +387,18 @@ export default function Tasks() {
                 />
             )}
 
+            {/* Add Task Modal */}
+            <AddTaskModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onAdd={handleAddTask}
+                isDark={isDark}
+            />
+
             {/* Floating Action Button (Mobile) */}
             <button
                 onClick={() => setShowAddModal(true)}
-                className="fixed bottom-6 right-6 lg:hidden p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all active:scale-95 z-40"
+                className="fixed bottom-6 right-6 lg:hidden p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-2xl shadow-blue-600/40 transition-all active:scale-95 z-40"
             >
                 <Plus className="h-6 w-6" />
             </button>
@@ -317,153 +406,239 @@ export default function Tasks() {
     );
 }
 
-// Teacher Task Card Component
-function TeacherTaskCard({ task, isDark, onToggle, onClick }) {
-    const daysUntil = getDaysUntil(task.deadline);
-    const overdue = isOverdue(task.deadline, task.completed);
-    const actualPriority = calculatePriority(task.deadline);
-
-    const priorityColors = {
-        high: isDark
-            ? 'from-red-950/40 to-rose-950/40 border-red-800/50'
-            : 'from-red-50 to-rose-50 border-red-200',
-        medium: isDark
-            ? 'from-amber-950/40 to-orange-950/40 border-amber-800/50'
-            : 'from-amber-50 to-orange-50 border-amber-200',
-        low: isDark
-            ? 'from-emerald-950/40 to-teal-950/40 border-emerald-800/50'
-            : 'from-emerald-50 to-teal-50 border-emerald-200',
+// Statistics Card Component
+function StatCard({ isDark, icon: Icon, label, value, color }) {
+    const colorClasses = {
+        blue: {
+            bg: isDark ? 'bg-blue-500/10' : 'bg-blue-50',
+            icon: 'text-blue-500',
+            border: isDark ? 'border-blue-500/20' : 'border-blue-100',
+        },
+        emerald: {
+            bg: isDark ? 'bg-emerald-500/10' : 'bg-emerald-50',
+            icon: 'text-emerald-500',
+            border: isDark ? 'border-emerald-500/20' : 'border-emerald-100',
+        },
+        red: {
+            bg: isDark ? 'bg-red-500/10' : 'bg-red-50',
+            icon: 'text-red-500',
+            border: isDark ? 'border-red-500/20' : 'border-red-100',
+        },
+        amber: {
+            bg: isDark ? 'bg-amber-500/10' : 'bg-amber-50',
+            icon: 'text-amber-500',
+            border: isDark ? 'border-amber-500/20' : 'border-amber-100',
+        },
     };
 
+    const colors = colorClasses[color];
+
     return (
-        <div
-            onClick={onClick}
-            className={`group relative rounded-xl backdrop-blur-sm transition-all duration-300 cursor-pointer
-        border-l-4 hover:shadow-xl hover:scale-102 active:scale-98 p-5
-        ${overdue ? 'border-l-red-500' : 'border-l-transparent'}
-        ring-1 bg-gradient-to-br ${priorityColors[actualPriority]}
-        ${isDark ? 'ring-slate-700/30 hover:ring-slate-600/50' : 'ring-slate-200/30 hover:ring-slate-300/50'}
-      `}
-        >
-            {/* Priority Badge */}
-            <div className="flex items-start justify-between mb-3">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
-          ${actualPriority === 'high' ? isDark ? 'bg-red-900/60 text-red-300' : 'bg-red-100 text-red-700' : ''}
-          ${actualPriority === 'medium' ? isDark ? 'bg-amber-900/60 text-amber-300' : 'bg-amber-100 text-amber-700' : ''}
-          ${actualPriority === 'low' ? isDark ? 'bg-emerald-900/60 text-emerald-300' : 'bg-emerald-100 text-emerald-700' : ''}
-        `}>
-                    <Flag className="h-3 w-3" />
-                    {actualPriority.toUpperCase()}
-                </span>
-
-                <button
-                    onClick={(e) => { e.stopPropagation(); onToggle(); }}
-                    className="transition-transform hover:scale-110"
-                >
-                    <div className={`h-6 w-6 rounded-lg border-2 flex items-center justify-center transition-all
-            ${task.completed
-                            ? 'bg-gradient-to-br from-emerald-500 to-teal-500 border-emerald-600'
-                            : isDark ? 'border-slate-600 bg-slate-700/30' : 'border-slate-300 bg-white/50'
-                        }
-          `}>
-                        {task.completed && <CheckCircle className="h-4 w-4 text-white" />}
-                    </div>
-                </button>
-            </div>
-
-            {/* Title */}
-            <h3 className={`font-bold text-base mb-2 line-clamp-2 ${task.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                {task.title}
-            </h3>
-
-            {/* Metadata */}
-            <div className="space-y-2 text-sm">
-                <div className={`flex items-center gap-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                    <BookOpen className="h-4 w-4" />
-                    <span className="font-medium">{task.subject}</span>
-                    <span className="text-xs opacity-60">• {task.classSection}</span>
+        <div className={`p-5 rounded-2xl border transition-all hover:scale-[1.02] ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-xl ${colors.bg}`}>
+                    <Icon className={`h-5 w-5 ${colors.icon}`} />
                 </div>
+                <div>
+                    <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{label}</p>
+                    <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{value}</p>
+                </div>
+            </div>
+        </div>
+    );
+}
 
-                <div className={`flex items-center gap-2 ${overdue ? 'text-red-500 font-semibold' : isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {overdue ? <AlertCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                    <span className="text-xs">
-                        {overdue ? 'Overdue' : `Due: ${task.deadline.toLocaleDateString()} • ${daysUntil}d left`}
-                    </span>
+// Task Section Component
+function TaskSection({ isDark, title, subtitle, icon: Icon, iconColor, tasks, viewMode, type, onToggle, onDelete, onClick, showDelete }) {
+    return (
+        <div>
+            <div className="flex items-center gap-3 mb-5">
+                <div className={`p-2.5 rounded-xl bg-gradient-to-br ${iconColor}`}>
+                    <Icon className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                        {title}
+                    </h2>
+                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                        {subtitle} • {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+                    </p>
                 </div>
             </div>
 
-            {/* Description Preview */}
-            {task.description && (
-                <p className={`mt-3 text-xs line-clamp-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    "{task.description}"
-                </p>
+            {tasks.length === 0 ? (
+                <EmptyState isDark={isDark} message={`No ${title.toLowerCase()}`} />
+            ) : (
+                <div className={viewMode === 'grid'
+                    ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'
+                    : 'space-y-3'
+                }>
+                    {tasks.map(task => (
+                        <TaskCard
+                            key={task.id}
+                            task={task}
+                            isDark={isDark}
+                            viewMode={viewMode}
+                            type={type}
+                            onToggle={() => onToggle(task.id, type)}
+                            onDelete={showDelete ? () => onDelete(task.id, type) : null}
+                            onClick={() => onClick(task)}
+                        />
+                    ))}
+                </div>
             )}
         </div>
     );
 }
 
-// Personal Task Card Component
-function PersonalTaskCard({ task, isDark, onToggle, onDelete, onClick }) {
+// Task Card Component
+function TaskCard({ task, isDark, viewMode, type, onToggle, onDelete, onClick }) {
     const daysUntil = getDaysUntil(task.deadline);
     const overdue = isOverdue(task.deadline, task.completed);
+    const actualPriority = calculatePriority(task.deadline);
 
-    return (
-        <div
-            onClick={onClick}
-            className={`group relative rounded-xl backdrop-blur-sm transition-all duration-300 cursor-pointer
-        border-l-4 hover:shadow-lg hover:scale-102 active:scale-98 p-4
-        ${overdue ? 'border-l-red-500' : 'border-l-blue-500'}
-        ring-1
-        ${isDark ? 'bg-slate-800/60 ring-slate-700/30 hover:ring-slate-600/50' : 'bg-white/60 ring-slate-200/30 hover:ring-slate-300/50'}
-      `}
-        >
-            <div className="flex items-start gap-3">
+    const priorityConfig = {
+        high: {
+            bg: isDark ? 'bg-red-500/10' : 'bg-red-50',
+            text: isDark ? 'text-red-400' : 'text-red-600',
+            border: isDark ? 'border-red-500/30' : 'border-red-200',
+        },
+        medium: {
+            bg: isDark ? 'bg-amber-500/10' : 'bg-amber-50',
+            text: isDark ? 'text-amber-400' : 'text-amber-600',
+            border: isDark ? 'border-amber-500/30' : 'border-amber-200',
+        },
+        low: {
+            bg: isDark ? 'bg-emerald-500/10' : 'bg-emerald-50',
+            text: isDark ? 'text-emerald-400' : 'text-emerald-600',
+            border: isDark ? 'border-emerald-500/30' : 'border-emerald-200',
+        },
+    };
+
+    const priority = priorityConfig[actualPriority];
+
+    if (viewMode === 'list') {
+        return (
+            <div
+                onClick={onClick}
+                className={`group flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md ${overdue ? 'border-l-4 border-l-red-500' : ''
+                    } ${isDark ? 'bg-slate-900/50 border-slate-800 hover:bg-slate-900' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+            >
                 <button
                     onClick={(e) => { e.stopPropagation(); onToggle(); }}
-                    className="mt-0.5 transition-transform hover:scale-110"
+                    className="flex-shrink-0"
                 >
-                    <div className={`h-5 w-5 rounded-lg border-2 flex items-center justify-center transition-all
-            ${task.completed
-                            ? 'bg-gradient-to-br from-emerald-500 to-teal-500 border-emerald-600'
-                            : isDark ? 'border-slate-600 bg-slate-700/30' : 'border-slate-300 bg-white/50'
-                        }
-          `}>
-                        {task.completed && <CheckCircle className="h-3.5 w-3.5 text-white" />}
+                    <div className={`h-6 w-6 rounded-lg border-2 flex items-center justify-center transition-all ${task.completed
+                        ? 'bg-emerald-500 border-emerald-500'
+                        : isDark ? 'border-slate-600 hover:border-slate-500' : 'border-slate-300 hover:border-slate-400'
+                        }`}>
+                        {task.completed && <CheckCircle className="h-4 w-4 text-white" />}
                     </div>
                 </button>
 
                 <div className="flex-1 min-w-0">
-                    <h3 className={`font-bold text-sm mb-2 line-clamp-2 ${task.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    <h3 className={`font-semibold truncate ${task.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-slate-900'}`}>
                         {task.title}
                     </h3>
-
-                    <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className={`px-2 py-1 rounded-full font-medium ${isDark ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
-                            {task.subject}
-                        </span>
-
-                        <span className={`flex items-center gap-1 ${overdue ? 'text-red-500' : isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                            <Clock className="h-3 w-3" />
-                            {overdue ? 'Overdue' : `${daysUntil}d`}
-                        </span>
-
-                        {task.estimatedTime && (
-                            <span className={`flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                                <Target className="h-3 w-3" />
-                                {task.estimatedTime}
-                            </span>
+                    <div className="flex items-center gap-3 mt-1">
+                        <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{task.subject}</span>
+                        {task.classSection && (
+                            <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>• {task.classSection}</span>
                         )}
                     </div>
                 </div>
 
-                <button
-                    onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                    className={`p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all
-            ${isDark ? 'hover:bg-red-900/30 text-slate-500 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-600'}
-          `}
-                >
-                    <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                <div className="flex items-center gap-3">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${priority.bg} ${priority.text}`}>
+                        {actualPriority.toUpperCase()}
+                    </span>
+
+                    <div className={`flex items-center gap-1.5 text-sm ${overdue ? 'text-red-500 font-medium' : isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                        {overdue ? <AlertCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                        <span>{overdue ? 'Overdue' : `${daysUntil}d left`}</span>
+                    </div>
+
+                    {onDelete && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                            className={`p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${isDark ? 'hover:bg-red-500/10 text-slate-500 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-600'}`}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </button>
+                    )}
+
+                    <ChevronRight className={`h-5 w-5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`} />
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div
+            onClick={onClick}
+            className={`group relative rounded-2xl border cursor-pointer transition-all hover:shadow-lg hover:scale-[1.01] ${overdue ? 'border-l-4 border-l-red-500' : ''
+                } ${isDark ? 'bg-slate-900/50 border-slate-800 hover:bg-slate-900' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+        >
+            <div className="p-5">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${priority.bg} ${priority.text}`}>
+                        <Flag className="h-3 w-3" />
+                        {actualPriority.toUpperCase()}
+                    </span>
+
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onToggle(); }}
+                        className="transition-transform hover:scale-110"
+                    >
+                        <div className={`h-6 w-6 rounded-lg border-2 flex items-center justify-center transition-all ${task.completed
+                            ? 'bg-emerald-500 border-emerald-500'
+                            : isDark ? 'border-slate-600 hover:border-emerald-500' : 'border-slate-300 hover:border-emerald-500'
+                            }`}>
+                            {task.completed && <CheckCircle className="h-4 w-4 text-white" />}
+                        </div>
+                    </button>
+                </div>
+
+                {/* Title */}
+                <h3 className={`font-bold text-base mb-3 line-clamp-2 ${task.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    {task.title}
+                </h3>
+
+                {/* Subject Badge */}
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg mb-4 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                    <BookOpen className={`h-3.5 w-3.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+                    <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{task.subject}</span>
+                    {task.classSection && (
+                        <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>• {task.classSection}</span>
+                    )}
+                </div>
+
+                {/* Description */}
+                {task.description && (
+                    <p className={`text-sm line-clamp-2 mb-4 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                        {task.description}
+                    </p>
+                )}
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-4 border-t border-dashed" style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}>
+                    <div className={`flex items-center gap-2 text-sm ${overdue ? 'text-red-500 font-semibold' : isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                        {overdue ? <AlertCircle className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
+                        <span>
+                            {overdue ? 'Overdue' : `${task.deadline.toLocaleDateString()} • ${daysUntil}d left`}
+                        </span>
+                    </div>
+
+                    {onDelete && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                            className={`p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${isDark ? 'hover:bg-red-500/10 text-slate-500 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-600'}`}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -472,38 +647,69 @@ function PersonalTaskCard({ task, isDark, onToggle, onDelete, onClick }) {
 // Empty State Component
 function EmptyState({ isDark, message }) {
     return (
-        <div className={`rounded-xl p-12 text-center ${isDark ? 'bg-slate-800/40' : 'bg-white/40'}`}>
-            <div className={`inline-flex p-4 rounded-full mb-4 ${isDark ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
+        <div className={`rounded-2xl p-12 text-center border ${isDark ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+            <div className={`inline-flex p-4 rounded-2xl mb-4 ${isDark ? 'bg-slate-800' : 'bg-white shadow-sm'}`}>
                 <Sparkles className={`h-8 w-8 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
             </div>
-            <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-base font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                 {message}
+            </p>
+            <p className={`text-sm mt-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                Tasks will appear here once they are added
             </p>
         </div>
     );
 }
 
+// Loading Skeleton
+function LoadingSkeleton({ isDark }) {
+    return (
+        <>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className={`h-24 rounded-2xl animate-pulse ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
+                ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className={`h-52 rounded-2xl animate-pulse ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
+                ))}
+            </div>
+        </>
+    );
+}
+
 // Task Detail Modal
 function TaskDetailModal({ task, isDark, onClose }) {
+    const daysUntil = getDaysUntil(task.deadline);
+    const overdue = isOverdue(task.deadline, task.completed);
+    const actualPriority = calculatePriority(task.deadline);
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md p-4 bg-black/50">
-            <div className={`w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden ${isDark ? 'bg-slate-900 border border-slate-800' : 'bg-white border border-slate-100'}`}>
-                <div className={`p-6 border-b ${isDark ? 'border-slate-800 bg-gradient-to-r from-slate-900 to-slate-950' : 'border-slate-100 bg-gradient-to-r from-slate-50 to-white'}`}>
-                    <div className="flex items-start justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4 bg-black/60">
+            <div className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+                {/* Header */}
+                <div className={`p-6 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+                    <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                            <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {task.title}
-                            </h2>
-                            <div className="flex flex-wrap gap-2">
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${isDark ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
-                                    {task.subject}
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${actualPriority === 'high'
+                                    ? isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700'
+                                    : actualPriority === 'medium'
+                                        ? isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
+                                        : isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
+                                    }`}>
+                                    {actualPriority.toUpperCase()} PRIORITY
                                 </span>
-                                {task.classSection && (
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>
-                                        {task.classSection}
+                                {task.completed && (
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
+                                        COMPLETED
                                     </span>
                                 )}
                             </div>
+                            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                {task.title}
+                            </h2>
                         </div>
                         <button
                             onClick={onClose}
@@ -514,43 +720,61 @@ function TaskDetailModal({ task, isDark, onClose }) {
                     </div>
                 </div>
 
-                <div className="p-6 space-y-6">
+                {/* Content */}
+                <div className="p-6 space-y-5">
+                    {/* Info Grid */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <p className={`text-xs font-medium mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Deadline</p>
-                            <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {task.deadline.toLocaleDateString()} {task.deadline.toLocaleTimeString()}
-                            </p>
+                        <div className={`p-4 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                            <p className={`text-xs font-medium mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Subject</p>
+                            <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{task.subject}</p>
                         </div>
-                        <div>
-                            <p className={`text-xs font-medium mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Priority</p>
-                            <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {calculatePriority(task.deadline).toUpperCase()}
+                        <div className={`p-4 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                            <p className={`text-xs font-medium mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Deadline</p>
+                            <p className={`text-sm font-semibold ${overdue ? 'text-red-500' : isDark ? 'text-white' : 'text-slate-900'}`}>
+                                {overdue ? 'Overdue' : `${daysUntil} days left`}
                             </p>
                         </div>
                     </div>
 
+                    {/* Date & Time */}
+                    <div className={`p-4 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                        <p className={`text-xs font-medium mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Due Date & Time</p>
+                        <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                            {task.deadline.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            {' at '}
+                            {task.deadline.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                    </div>
+
+                    {/* Description */}
                     {task.description && (
                         <div>
-                            <p className={`text-xs font-medium mb-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Description</p>
-                            <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                            <p className={`text-xs font-medium mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Description</p>
+                            <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                                 {task.description}
                             </p>
                         </div>
                     )}
 
+                    {/* Assigned By */}
                     {task.createdBy && (
-                        <div>
-                            <p className={`text-xs font-medium mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Assigned By</p>
-                            <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {task.createdBy}
-                            </p>
+                        <div className={`flex items-center gap-3 p-4 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                                <User className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                                <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Assigned By</p>
+                                <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{task.createdBy}</p>
+                            </div>
                         </div>
                     )}
+                </div>
 
+                {/* Footer */}
+                <div className={`p-6 border-t ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
                     <button
                         onClick={onClose}
-                        className="w-full px-4 py-3 rounded-lg font-medium text-sm bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all shadow-lg hover:shadow-xl active:scale-95"
+                        className="w-full px-4 py-3 rounded-xl font-semibold text-sm bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-lg shadow-blue-600/25 hover:shadow-xl active:scale-[0.98]"
                     >
                         Close
                     </button>
