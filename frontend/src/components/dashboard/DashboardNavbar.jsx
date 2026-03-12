@@ -1,4 +1,4 @@
-import { Bell, Menu, Moon, Search, Sun, User, X, Zap, LayoutDashboard, Clock, Brain, ShieldCheck, LogOut, Lock } from 'lucide-react';
+import { Bell, Menu, Moon, Search, Sun, User, X, Zap, LayoutDashboard, Clock, Brain, ShieldCheck, LogOut, Lock, CheckSquare } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import UserProfileModal from './UserProfileModal';
@@ -55,6 +55,7 @@ export default function DashboardNavbar({
 
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/tasks', label: 'Tasks', icon: CheckSquare },
     { to: '/deadline', label: 'Deadlines', icon: Clock },
     { to: '/ai', label: 'AI Insights', icon: Brain },
   ];

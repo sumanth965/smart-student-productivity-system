@@ -59,8 +59,8 @@ export default function TaskItem({ task, onToggle, onDelete, isDark }) {
       border-l-4 hover:shadow-lg hover:scale-102 active:scale-98
       ${overdue ? 'border-l-red-500 shadow-md' : `border-l-transparent shadow-sm`}
       ring-1 p-4
-      ${isDark 
-        ? 'bg-slate-800/40 ring-slate-700/30 hover:bg-slate-800/60 hover:ring-slate-700/50' 
+      ${isDark
+        ? 'bg-slate-800/40 ring-slate-700/30 hover:bg-slate-800/60 hover:ring-slate-700/50'
         : 'bg-white/50 ring-slate-200/30 hover:bg-slate-50/80 hover:ring-slate-200/50'
       }
     `}>
@@ -72,23 +72,23 @@ export default function TaskItem({ task, onToggle, onDelete, isDark }) {
 
       {/* Content wrapper */}
       <div className="relative flex items-start justify-between gap-3">
-        
+
         {/* Left side - Checkbox and content */}
         <div className="flex flex-1 items-start gap-3.5 min-w-0">
-          
+
           {/* Enhanced Checkbox */}
-          <button 
-            onClick={() => onToggle(task.id)} 
+          <button
+            onClick={() => onToggle(task.id)}
             className="mt-0.5 flex-shrink-0 transition-transform duration-300 hover:scale-110 active:scale-95"
             aria-label={`Toggle completion for ${task.title}`}
           >
             <div className={`
               h-6 w-6 rounded-lg border-2 transition-all duration-300 flex items-center justify-center
-              ${task.completed 
-                ? 'bg-gradient-to-br from-emerald-500 to-teal-500 border-emerald-600 shadow-lg shadow-emerald-500/30' 
+              ${task.completed
+                ? 'bg-gradient-to-br from-emerald-500 to-teal-500 border-emerald-600 shadow-lg shadow-emerald-500/30'
                 : isDark
-                ? 'border-slate-600 hover:border-slate-500 bg-slate-700/30'
-                : 'border-slate-300 hover:border-slate-400 bg-white/50'
+                  ? 'border-slate-600 hover:border-slate-500 bg-slate-700/30'
+                  : 'border-slate-300 hover:border-slate-400 bg-white/50'
               }
             `}>
               {task.completed && (
@@ -102,13 +102,13 @@ export default function TaskItem({ task, onToggle, onDelete, isDark }) {
             {/* Title */}
             <h4 className={`
               font-bold text-sm leading-tight transition-all duration-300 line-clamp-2
-              ${task.completed 
-                ? isDark 
-                  ? 'line-through text-slate-500' 
+              ${task.completed
+                ? isDark
+                  ? 'line-through text-slate-500'
                   : 'line-through text-slate-400'
-                : isDark 
-                ? 'text-white' 
-                : 'text-slate-900'
+                : isDark
+                  ? 'text-white'
+                  : 'text-slate-900'
               }
             `}>
               {task.title}
@@ -128,13 +128,13 @@ export default function TaskItem({ task, onToggle, onDelete, isDark }) {
               {/* Deadline Status */}
               <div className={`
                 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-all duration-300
-                ${overdue 
+                ${overdue
                   ? isDark
                     ? 'bg-red-900/40 text-red-300 ring-1 ring-red-700/50'
                     : 'bg-red-100/80 text-red-700 ring-1 ring-red-200/60'
                   : isDark
-                  ? 'bg-slate-700/40 text-slate-300'
-                  : 'bg-slate-200/60 text-slate-600'
+                    ? 'bg-slate-700/40 text-slate-300'
+                    : 'bg-slate-200/60 text-slate-600'
                 }
               `}>
                 {overdue ? (
@@ -154,21 +154,23 @@ export default function TaskItem({ task, onToggle, onDelete, isDark }) {
         </div>
 
         {/* Right side - Delete button */}
-        <button
-          onClick={() => onDelete(task.id)}
-          className={`
-            flex-shrink-0 rounded-lg p-2.5 transition-all duration-300 
-            hover:scale-110 active:scale-95 
-            opacity-0 group-hover:opacity-100
-            ${isDark 
-              ? 'hover:bg-red-900/30 text-slate-500 hover:text-red-400' 
-              : 'hover:bg-red-50/80 text-slate-400 hover:text-red-600'
-            }
-          `}
-          aria-label={`Delete ${task.title}`}
-        >
-          <Trash2 className="h-4.5 w-4.5" />
-        </button>
+        {onDelete && (
+          <button
+            onClick={() => onDelete(task.id)}
+            className={`
+              flex-shrink-0 rounded-lg p-2.5 transition-all duration-300 
+              hover:scale-110 active:scale-95 
+              opacity-0 group-hover:opacity-100
+              ${isDark
+                ? 'hover:bg-red-900/30 text-slate-500 hover:text-red-400'
+                : 'hover:bg-red-50/80 text-slate-400 hover:text-red-600'
+              }
+            `}
+            aria-label={`Delete ${task.title}`}
+          >
+            <Trash2 className="h-4.5 w-4.5" />
+          </button>
+        )}
       </div>
 
       {/* Optional: Completion indicator line */}

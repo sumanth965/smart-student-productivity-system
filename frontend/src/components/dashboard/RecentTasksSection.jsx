@@ -10,19 +10,24 @@ const FILTER_OPTIONS = [
   { label: 'High Priority', value: 'high-priority', icon: '🔥' },
 ];
 
-function TaskGroup({ title, tasks, isDark, handleToggleTask, handleDeleteTask, emptyMessage, index }) {
+function TaskGroup({ title, tasks, isDark, handleToggleTask, handleDeleteTask, emptyMessage, index, allowDelete = true }) {
   return (
     <div className="space-y-4 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
       <div className="flex items-center gap-2">
         <div className={`h-1.5 w-1.5 rounded-full ${index === 0 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-gradient-to-r from-amber-500 to-rose-500'}`}></div>
         <h4 className={`text-xs font-bold tracking-wide uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{title}</h4>
       </div>
-      
+
       {tasks.length > 0 ? (
         <div className="space-y-2">
           {tasks.map((task, idx) => (
             <div key={task.id} style={{ animationDelay: `${(index * 100) + (idx * 50)}ms` }} className="animate-fade-in">
-              <TaskItem task={task} onToggle={handleToggleTask} onDelete={handleDeleteTask} isDark={isDark} />
+              <TaskItem
+                task={task}
+                onToggle={handleToggleTask}
+                onDelete={allowDelete ? handleDeleteTask : undefined}
+                isDark={isDark}
+              />
             </div>
           ))}
         </div>
@@ -55,11 +60,10 @@ function FilterDropdown({ open, setOpen, filter, setFilter, isDark }) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setOpen(!open)}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ${
-          isDark
-            ? `${open ? 'bg-slate-700/50 text-blue-300' : 'bg-slate-700/20 text-slate-300 hover:bg-slate-700/30'}`
-            : `${open ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-150'}`
-        }`}
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ${isDark
+          ? `${open ? 'bg-slate-700/50 text-blue-300' : 'bg-slate-700/20 text-slate-300 hover:bg-slate-700/30'}`
+          : `${open ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-150'}`
+          }`}
       >
         <Filter className="h-4 w-4" />
         <span>{currentFilter?.icon}</span>
@@ -68,9 +72,8 @@ function FilterDropdown({ open, setOpen, filter, setFilter, isDark }) {
       </button>
 
       <div
-        className={`absolute right-0 top-full mt-2 w-56 rounded-xl shadow-2xl ring-1 z-50 overflow-hidden transition-all duration-200 origin-top ${
-          open ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'
-        } ${isDark ? 'bg-slate-800/95 ring-slate-700/50 backdrop-blur-sm' : 'bg-white/95 ring-slate-200/50 backdrop-blur-sm'}`}
+        className={`absolute right-0 top-full mt-2 w-56 rounded-xl shadow-2xl ring-1 z-50 overflow-hidden transition-all duration-200 origin-top ${open ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'
+          } ${isDark ? 'bg-slate-800/95 ring-slate-700/50 backdrop-blur-sm' : 'bg-white/95 ring-slate-200/50 backdrop-blur-sm'}`}
       >
         <div className={`px-3 py-2 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
           <p className={`text-xs font-semibold tracking-wide uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Filter By</p>
@@ -83,15 +86,14 @@ function FilterDropdown({ open, setOpen, filter, setFilter, isDark }) {
                 setFilter(option.value);
                 setOpen(false);
               }}
-              className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors duration-150 flex items-center gap-3 ${
-                filter === option.value
-                  ? isDark
-                    ? 'bg-blue-900/40 text-blue-200'
-                    : 'bg-blue-50 text-blue-700'
-                  : isDark
+              className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors duration-150 flex items-center gap-3 ${filter === option.value
+                ? isDark
+                  ? 'bg-blue-900/40 text-blue-200'
+                  : 'bg-blue-50 text-blue-700'
+                : isDark
                   ? 'text-slate-300 hover:bg-slate-700/40'
                   : 'text-slate-700 hover:bg-slate-100'
-              }`}
+                }`}
             >
               <span className="text-base">{option.icon}</span>
               <span>{option.label}</span>
@@ -106,11 +108,10 @@ function FilterDropdown({ open, setOpen, filter, setFilter, isDark }) {
 
 function SearchBar({ searchQuery, setSearchQuery, isDark }) {
   return (
-    <div className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all duration-200 ${
-      isDark
-        ? 'border-slate-700/50 bg-slate-700/20 focus-within:border-blue-500/50 focus-within:bg-slate-700/40'
-        : 'border-slate-300/50 bg-slate-50 focus-within:border-blue-400/50 focus-within:bg-white'
-    }`}>
+    <div className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all duration-200 ${isDark
+      ? 'border-slate-700/50 bg-slate-700/20 focus-within:border-blue-500/50 focus-within:bg-slate-700/40'
+      : 'border-slate-300/50 bg-slate-50 focus-within:border-blue-400/50 focus-within:bg-white'
+      }`}>
       <Search className={`h-4 w-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
       <input
         type="text"
@@ -171,12 +172,11 @@ export default function RecentTasksSection({
         }
       `}</style>
 
-      <div className={`rounded-2xl backdrop-blur-sm p-8 shadow-lg ring-1 transition-all duration-300 ${
-        isDark
-          ? 'bg-slate-800/50 ring-slate-700/30 hover:shadow-xl hover:ring-slate-700/50'
-          : 'bg-white/60 ring-slate-200/40 hover:shadow-xl hover:ring-slate-200/60'
-      }`}>
-        
+      <div className={`rounded-2xl backdrop-blur-sm p-8 shadow-lg ring-1 transition-all duration-300 ${isDark
+        ? 'bg-slate-800/50 ring-slate-700/30 hover:shadow-xl hover:ring-slate-700/50'
+        : 'bg-white/60 ring-slate-200/40 hover:shadow-xl hover:ring-slate-200/60'
+        }`}>
+
         {/* Header Section */}
         <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -217,6 +217,7 @@ export default function RecentTasksSection({
               handleDeleteTask={handleDeleteTask}
               emptyMessage="No teacher-assigned tasks"
               index={0}
+              allowDelete={false}
             />
             <TaskGroup
               title="My Tasks"
@@ -226,6 +227,7 @@ export default function RecentTasksSection({
               handleDeleteTask={handleDeleteTask}
               emptyMessage="No self-created tasks"
               index={1}
+              allowDelete={true}
             />
           </div>
         ) : (

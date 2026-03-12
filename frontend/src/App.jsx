@@ -8,6 +8,7 @@ import Dashboard from './pages/Dasboard'
 import DeadlineReminder from './pages/Deadlinereminder'
 import AIModule from './pages/Aimodule '
 import AdminTeacher from './pages/AdminTeacher'
+import Tasks from './pages/Tasks'
 
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         {/* <Route path="/register" element={<RegisterPage />} /> */}
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/tasks" element={<Tasks />} />
         <Route path="/deadline" element={<DeadlineReminder />} />
         <Route path="/ai" element={<AIModule />} />
         <Route path="/admin" element={<AdminTeacher />} />
