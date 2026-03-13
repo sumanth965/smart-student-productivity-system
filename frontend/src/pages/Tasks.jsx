@@ -1,835 +1,1324 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
-    Plus, Search, Calendar, Clock, Flag, BookOpen, User,
-    CheckCircle, Trash2, AlertCircle, X, Sparkles, Target,
-    ListFilter, LayoutGrid, LayoutList, ChevronRight, TrendingUp,
-    CalendarDays, CheckCheck, AlertTriangle, Timer
-} from 'lucide-react';
-import DashboardNavbar from '../components/dashboard/DashboardNavbar';
-import AddTaskModal from '../components/dashboard/AddTaskModal';
-import { calculatePriority, getDaysUntil, isOverdue } from '../components/dashboard/dashboardUtils';
-import axios from '../lib/axios';
+  Plus, Search, Calendar, Clock, Flag, BookOpen, User,
+  CheckCircle, Trash2, AlertCircle, X, Sparkles, Target,
+  LayoutGrid, LayoutList, ChevronRight, GraduationCap,
+  ClipboardList, SlidersHorizontal, ChevronDown,
+  AlertTriangle, Timer, CalendarDays, CheckCheck,
+} from "lucide-react";
+import DashboardNavbar from "../components/dashboard/DashboardNavbar";
+import AddTaskModal from "../components/dashboard/AddTaskModal";
+import { calculatePriority, getDaysUntil, isOverdue } from "../components/dashboard/dashboardUtils";
+import axios from "../lib/axios";
 
-export default function Tasks() {
-    const [isDark, setIsDark] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [showMobileMenu, setShowMobileMenu] = useState(false);
-    const [tasks, setTasks] = useState({ teacher: [], personal: [] });
-    const [filterType, setFilterType] = useState('all');
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [selectedTask, setSelectedTask] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [studentId, setStudentId] = useState('');
-    const [viewMode, setViewMode] = useState('grid');
-    const [activeTab, setActiveTab] = useState('all');
+/* ─── Color maps ─────────────────────────────────────────────── */
+const SUBJECT_COLORS = {
+  Science: { text: "#e74c3c", bg: "#ffeaea" },
+  Math: { text: "#e74c3c", bg: "#ffeaea" },
+  History: { text: "#e67e22", bg: "#fff3e0" },
+  English: { text: "#2980b9", bg: "#e8f4fd" },
+  Art: { text: "#8e44ad", bg: "#f5eef8" },
+  Physics: { text: "#9b59b6", bg: "#f3e5f5" },
+  Chemistry: { text: "#16a085", bg: "#e8f8f5" },
+  Biology: { text: "#27ae60", bg: "#eafaf1" },
+  Default: { text: "#7f8c8d", bg: "#f2f3f4" },
+};
 
-    // Load dark mode preference
-    useEffect(() => {
-        const savedMode = localStorage.getItem('darkMode');
-        if (savedMode !== null) setIsDark(JSON.parse(savedMode));
-    }, []);
+const PRIORITY_CONFIG = {
+  high: {
+    gradient: "linear-gradient(180deg,#e74c3c 0%,#c0392b 100%)",
+    bg: "#e74c3c",
+    pill: { color: "#c0392b", background: "#fde8e8" },
+  },
+  medium: {
+    gradient: "linear-gradient(180deg,#f39c12 0%,#e67e22 100%)",
+    bg: "#f39c12",
+    pill: { color: "#9a6700", background: "#fff3cd" },
+  },
+  low: {
+    gradient: "linear-gradient(180deg,#27ae60 0%,#229954 100%)",
+    bg: "#27ae60",
+    pill: { color: "#1a6b3c", background: "#d4edda" },
+  },
+};
 
-    useEffect(() => {
-        localStorage.setItem('darkMode', JSON.stringify(isDark));
-        document.documentElement.classList.toggle('dark', isDark);
-    }, [isDark]);
+/* ─── Stat cards (top row) ───────────────────────────────────── */
+const STAT_GRADIENTS = [
+  "linear-gradient(135deg,#667eea 0%,#764ba2 100%)",
+  "linear-gradient(135deg,#11998e 0%,#38ef7d 100%)",
+  "linear-gradient(135deg,#f7971e 0%,#ffd200 100%)",
+  "linear-gradient(135deg,#f7971e 0%,#ff4e50 100%)",
+];
 
-    // Load tasks from API
-    const loadTasks = useCallback(async () => {
-        try {
-            setLoading(true);
-            const persistedUser = localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
+/* ══════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+══════════════════════════════════════════════════════════════ */
+export default function StudyFlowTasks() {
+  /* ─── state ─────────────────────────────────── */
+  const [isDark, setIsDark] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [tasks, setTasks] = useState({ teacher: [], personal: [] });
+  const [filterType, setFilterType] = useState("all");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [studentId, setStudentId] = useState("");
+  const [viewMode, setViewMode] = useState("grid");
+  const [activeTab, setActiveTab] = useState("teacher");
+  const [showFilters, setShowFilters] = useState(false);
 
-            if (!persistedUser) {
-                setLoading(false);
-                return;
-            }
+  /* ─── dark mode persistence ─────────────────── */
+  useEffect(() => {
+    const saved = localStorage.getItem("darkMode");
+    if (saved !== null) setIsDark(JSON.parse(saved));
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("darkMode", JSON.stringify(isDark));
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [isDark]);
 
-            const parsedUser = JSON.parse(persistedUser);
-            const userId = parsedUser?._id || parsedUser?.id || '';
-            setStudentId(userId);
+  /* ─── load tasks from API ────────────────────── */
+  const loadTasks = useCallback(async () => {
+    try {
+      setLoading(true);
+      const persisted =
+        localStorage.getItem("student_user") ||
+        sessionStorage.getItem("student_user");
+      if (!persisted) { setLoading(false); return; }
 
-            const response = await axios.get(`/api/students/${userId}/tasks`);
-            const allTasks = Array.isArray(response.data?.data) ? response.data.data : [];
+      const parsed = JSON.parse(persisted);
+      const userId = parsed?._id || parsed?.id || "";
+      setStudentId(userId);
 
-            const teacherTasks = allTasks
-                .filter(task => task.createdBy?._id !== userId)
-                .map(task => ({
-                    id: task._id,
-                    title: task.title,
-                    subject: task.subject,
-                    deadline: new Date(task.dueDate),
-                    priority: task.priority?.toLowerCase() || calculatePriority(new Date(task.dueDate)),
-                    completed: task.status === 'Completed',
-                    description: task.description,
-                    createdBy: task.createdBy?.name || 'Teacher',
-                    classSection: task.classSection || 'General',
-                }));
+      const res = await axios.get(`/api/students/${userId}/tasks`);
+      const all = Array.isArray(res.data?.data) ? res.data.data : [];
 
-            const personalTasks = allTasks
-                .filter(task => task.createdBy?._id === userId)
-                .map(task => ({
-                    id: task._id,
-                    title: task.title,
-                    subject: task.subject,
-                    deadline: new Date(task.dueDate),
-                    priority: task.priority?.toLowerCase() || calculatePriority(new Date(task.dueDate)),
-                    completed: task.status === 'Completed',
-                    description: task.description,
-                    estimatedTime: '2h',
-                }));
+      const mapTask = (task) => ({
+        id: task._id,
+        title: task.title,
+        subject: task.subject,
+        deadline: new Date(task.dueDate),
+        priority:
+          task.priority?.toLowerCase() ||
+          calculatePriority(new Date(task.dueDate)),
+        completed: task.status === "Completed",
+        description: task.description,
+        createdBy: task.createdBy?.name || "Teacher",
+        classSection: task.classSection || "General",
+      });
 
-            setTasks({ teacher: teacherTasks, personal: personalTasks });
-        } catch (error) {
-            console.error('Failed to load tasks:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        loadTasks();
-    }, [loadTasks]);
-
-    // Filter tasks
-    const filteredTasks = useMemo(() => {
-        const filterTask = (task) => {
-            const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                task.subject.toLowerCase().includes(searchQuery.toLowerCase());
-
-            if (!matchesSearch) return false;
-
-            switch (filterType) {
-                case 'overdue':
-                    return isOverdue(task.deadline, task.completed);
-                case 'today':
-                    return getDaysUntil(task.deadline) === 0 && !task.completed;
-                case 'upcoming':
-                    return getDaysUntil(task.deadline) > 0 && getDaysUntil(task.deadline) <= 7 && !task.completed;
-                case 'completed':
-                    return task.completed;
-                default:
-                    return true;
-            }
-        };
-
-        return {
-            teacher: tasks.teacher.filter(filterTask),
-            personal: tasks.personal.filter(filterTask),
-        };
-    }, [tasks, searchQuery, filterType]);
-
-    // Calculate statistics
-    const stats = useMemo(() => {
-        const allTasks = [...tasks.teacher, ...tasks.personal];
-        const total = allTasks.length;
-        const completed = allTasks.filter(t => t.completed).length;
-        const overdue = allTasks.filter(t => isOverdue(t.deadline, t.completed)).length;
-        const dueToday = allTasks.filter(t => getDaysUntil(t.deadline) === 0 && !t.completed).length;
-        const upcoming = allTasks.filter(t => getDaysUntil(t.deadline) > 0 && getDaysUntil(t.deadline) <= 7 && !t.completed).length;
-
-        return { total, completed, overdue, dueToday, upcoming, pending: total - completed };
-    }, [tasks]);
-
-    const handleToggleTask = async (taskId, type) => {
-        const taskList = type === 'teacher' ? tasks.teacher : tasks.personal;
-        const task = taskList.find(t => t.id === taskId);
-        if (!task) return;
-
-        const nextCompleted = !task.completed;
-
-        setTasks(prev => ({
-            ...prev,
-            [type]: prev[type].map(t => t.id === taskId ? { ...t, completed: nextCompleted } : t)
-        }));
-
-        try {
-            await axios.put(`/api/tasks/${taskId}`, {
-                status: nextCompleted ? 'Completed' : 'Pending',
-                ...(nextCompleted && studentId ? { completedBy: studentId } : {}),
-            });
-        } catch (error) {
-            console.error('Failed to update task:', error);
-            setTasks(prev => ({
-                ...prev,
-                [type]: prev[type].map(t => t.id === taskId ? { ...t, completed: !nextCompleted } : t)
-            }));
-        }
-    };
-
-    const handleDeleteTask = (taskId, type) => {
-        if (window.confirm('Are you sure you want to delete this task?')) {
-            setTasks(prev => ({
-                ...prev,
-                [type]: prev[type].filter(t => t.id !== taskId)
-            }));
-        }
-    };
-
-    const handleAddTask = async (newTask) => {
-        if (!studentId) {
-            alert('Unable to identify the current student. Please log in again.');
-            return false;
-        }
-
-        try {
-            const response = await axios.post(`/api/students/${studentId}/tasks`, {
-                title: newTask.title,
-                description: newTask.description || 'Self assigned task',
-                subject: newTask.subject,
-                dueDate: newTask.deadline,
-                priority: (newTask.priority || 'medium').charAt(0).toUpperCase() + (newTask.priority || 'medium').slice(1),
-            });
-
-            if (response.data?.data) {
-                loadTasks();
-            }
-
-            setShowAddModal(false);
-            return true;
-        } catch (error) {
-            console.error('Failed to save task:', error);
-            alert('Unable to save task. Please try again.');
-            return false;
-        }
-    };
-
-    const filterOptions = [
-        { id: 'all', label: 'All Tasks', icon: LayoutGrid, count: stats.total },
-        { id: 'today', label: 'Due Today', icon: CalendarDays, count: stats.dueToday },
-        { id: 'upcoming', label: 'Upcoming', icon: Timer, count: stats.upcoming },
-        { id: 'overdue', label: 'Overdue', icon: AlertTriangle, count: stats.overdue },
-        { id: 'completed', label: 'Completed', icon: CheckCheck, count: stats.completed },
-    ];
-
-    return (
-        <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
-            <DashboardNavbar
-                isDark={isDark}
-                setIsDark={setIsDark}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                showMobileMenu={showMobileMenu}
-                setShowMobileMenu={setShowMobileMenu}
-            />
-
-            <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                {/* Page Header */}
-                <div className="mb-8">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                        <div>
-                            <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                Task Manager
-                            </h1>
-                            <p className={`mt-2 text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                                Organize and track your assignments and personal tasks
-                            </p>
-                        </div>
-
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="inline-flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/30 transition-all active:scale-[0.98]"
-                        >
-                            <Plus className="h-5 w-5" />
-                            <span>New Task</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <StatCard
-                        isDark={isDark}
-                        icon={Target}
-                        label="Total Tasks"
-                        value={stats.total}
-                        color="blue"
-                    />
-                    <StatCard
-                        isDark={isDark}
-                        icon={CheckCircle}
-                        label="Completed"
-                        value={stats.completed}
-                        color="emerald"
-                    />
-                    <StatCard
-                        isDark={isDark}
-                        icon={AlertTriangle}
-                        label="Overdue"
-                        value={stats.overdue}
-                        color="red"
-                    />
-                    <StatCard
-                        isDark={isDark}
-                        icon={TrendingUp}
-                        label="Progress"
-                        value={stats.total > 0 ? `${Math.round((stats.completed / stats.total) * 100)}%` : '0%'}
-                        color="amber"
-                    />
-                </div>
-
-                {/* Filter Tabs & Search */}
-                <div className={`mb-6 p-4 rounded-2xl border ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'}`}>
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                        {/* Filter Tabs */}
-                        <div className="flex-1 flex flex-wrap gap-2">
-                            {filterOptions.map((option) => {
-                                const Icon = option.icon;
-                                const isActive = filterType === option.id;
-                                return (
-                                    <button
-                                        key={option.id}
-                                        onClick={() => setFilterType(option.id)}
-                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : isDark
-                                                ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                            }`}
-                                    >
-                                        <Icon className="h-4 w-4" />
-                                        <span className="hidden sm:inline">{option.label}</span>
-                                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive
-                                            ? 'bg-white/20 text-white'
-                                            : isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-600'
-                                            }`}>
-                                            {option.count}
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* Search & View Toggle */}
-                        <div className="flex items-center gap-3">
-                            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg flex-1 lg:flex-initial lg:w-64 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                                <Search className={`h-4 w-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
-                                <input
-                                    type="text"
-                                    placeholder="Search tasks..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className={`flex-1 bg-transparent border-none outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
-                                />
-                            </div>
-
-                            <div className={`flex items-center gap-1 p-1 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                                <button
-                                    onClick={() => setViewMode('grid')}
-                                    className={`p-2 rounded-md transition-all ${viewMode === 'grid'
-                                        ? isDark ? 'bg-slate-700 text-white' : 'bg-white text-slate-900 shadow-sm'
-                                        : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'
-                                        }`}
-                                >
-                                    <LayoutGrid className="h-4 w-4" />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className={`p-2 rounded-md transition-all ${viewMode === 'list'
-                                        ? isDark ? 'bg-slate-700 text-white' : 'bg-white text-slate-900 shadow-sm'
-                                        : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'
-                                        }`}
-                                >
-                                    <LayoutList className="h-4 w-4" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Loading State */}
-                {loading ? (
-                    <div className="space-y-6">
-                        <LoadingSkeleton isDark={isDark} />
-                    </div>
-                ) : (
-                    <div className="space-y-8">
-                        {/* Teacher Assigned Tasks Section */}
-                        <TaskSection
-                            isDark={isDark}
-                            title="Teacher Assigned Tasks"
-                            subtitle="Assignments from your instructors"
-                            icon={BookOpen}
-                            iconColor="from-rose-500 to-orange-500"
-                            tasks={filteredTasks.teacher}
-                            viewMode={viewMode}
-                            type="teacher"
-                            onToggle={handleToggleTask}
-                            onDelete={handleDeleteTask}
-                            onClick={setSelectedTask}
-                        />
-
-                        {/* Personal Tasks Section */}
-                        <TaskSection
-                            isDark={isDark}
-                            title="Personal Tasks"
-                            subtitle="Your self-created tasks and goals"
-                            icon={User}
-                            iconColor="from-blue-500 to-cyan-500"
-                            tasks={filteredTasks.personal}
-                            viewMode={viewMode}
-                            type="personal"
-                            onToggle={handleToggleTask}
-                            onDelete={handleDeleteTask}
-                            onClick={setSelectedTask}
-                            showDelete
-                        />
-                    </div>
-                )}
-            </main>
-
-            {/* Task Detail Modal */}
-            {selectedTask && (
-                <TaskDetailModal
-                    task={selectedTask}
-                    isDark={isDark}
-                    onClose={() => setSelectedTask(null)}
-                />
-            )}
-
-            {/* Add Task Modal */}
-            <AddTaskModal
-                isOpen={showAddModal}
-                onClose={() => setShowAddModal(false)}
-                onAdd={handleAddTask}
-                isDark={isDark}
-            />
-
-            {/* Floating Action Button (Mobile) */}
-            <button
-                onClick={() => setShowAddModal(true)}
-                className="fixed bottom-6 right-6 lg:hidden p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-2xl shadow-blue-600/40 transition-all active:scale-95 z-40"
-            >
-                <Plus className="h-6 w-6" />
-            </button>
-        </div>
-    );
-}
-
-// Statistics Card Component
-function StatCard({ isDark, icon: Icon, label, value, color }) {
-    const colorClasses = {
-        blue: {
-            bg: isDark ? 'bg-blue-500/10' : 'bg-blue-50',
-            icon: 'text-blue-500',
-            border: isDark ? 'border-blue-500/20' : 'border-blue-100',
-        },
-        emerald: {
-            bg: isDark ? 'bg-emerald-500/10' : 'bg-emerald-50',
-            icon: 'text-emerald-500',
-            border: isDark ? 'border-emerald-500/20' : 'border-emerald-100',
-        },
-        red: {
-            bg: isDark ? 'bg-red-500/10' : 'bg-red-50',
-            icon: 'text-red-500',
-            border: isDark ? 'border-red-500/20' : 'border-red-100',
-        },
-        amber: {
-            bg: isDark ? 'bg-amber-500/10' : 'bg-amber-50',
-            icon: 'text-amber-500',
-            border: isDark ? 'border-amber-500/20' : 'border-amber-100',
-        },
-    };
-
-    const colors = colorClasses[color];
-
-    return (
-        <div className={`p-5 rounded-2xl border transition-all hover:scale-[1.02] ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'}`}>
-            <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-xl ${colors.bg}`}>
-                    <Icon className={`h-5 w-5 ${colors.icon}`} />
-                </div>
-                <div>
-                    <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{label}</p>
-                    <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{value}</p>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// Task Section Component
-function TaskSection({ isDark, title, subtitle, icon: Icon, iconColor, tasks, viewMode, type, onToggle, onDelete, onClick, showDelete }) {
-    return (
-        <div>
-            <div className="flex items-center gap-3 mb-5">
-                <div className={`p-2.5 rounded-xl bg-gradient-to-br ${iconColor}`}>
-                    <Icon className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        {title}
-                    </h2>
-                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                        {subtitle} • {tasks.length} task{tasks.length !== 1 ? 's' : ''}
-                    </p>
-                </div>
-            </div>
-
-            {tasks.length === 0 ? (
-                <EmptyState isDark={isDark} message={`No ${title.toLowerCase()}`} />
-            ) : (
-                <div className={viewMode === 'grid'
-                    ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'
-                    : 'space-y-3'
-                }>
-                    {tasks.map(task => (
-                        <TaskCard
-                            key={task.id}
-                            task={task}
-                            isDark={isDark}
-                            viewMode={viewMode}
-                            type={type}
-                            onToggle={() => onToggle(task.id, type)}
-                            onDelete={showDelete ? () => onDelete(task.id, type) : null}
-                            onClick={() => onClick(task)}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
-// Task Card Component
-function TaskCard({ task, isDark, viewMode, type, onToggle, onDelete, onClick }) {
-    const daysUntil = getDaysUntil(task.deadline);
-    const overdue = isOverdue(task.deadline, task.completed);
-    const actualPriority = calculatePriority(task.deadline);
-
-    const priorityConfig = {
-        high: {
-            light: {
-                bg: 'bg-gradient-to-r from-red-50 to-rose-50',
-                border: 'border-red-200/60 ring-red-200/40',
-                text: 'text-red-700',
-                badge: 'bg-red-100/80 text-red-700 border-red-200/60',
-            },
-            dark: {
-                bg: 'bg-gradient-to-r from-red-950/20 to-rose-950/20',
-                border: 'border-red-800/40 ring-red-700/30',
-                text: 'text-red-400',
-                badge: 'bg-red-900/40 text-red-300 border-red-700/50',
-            }
-        },
-        medium: {
-            light: {
-                bg: 'bg-gradient-to-r from-amber-50 to-orange-50',
-                border: 'border-amber-200/60 ring-amber-200/40',
-                text: 'text-amber-700',
-                badge: 'bg-amber-100/80 text-amber-700 border-amber-200/60',
-            },
-            dark: {
-                bg: 'bg-gradient-to-r from-amber-950/20 to-orange-950/20',
-                border: 'border-amber-800/40 ring-amber-700/30',
-                text: 'text-amber-400',
-                badge: 'bg-amber-900/40 text-amber-300 border-amber-700/50',
-            }
-        },
-        low: {
-            light: {
-                bg: 'bg-gradient-to-r from-emerald-50 to-teal-50',
-                border: 'border-emerald-200/60 ring-emerald-200/40',
-                text: 'text-emerald-700',
-                badge: 'bg-emerald-100/80 text-emerald-700 border-emerald-200/60',
-            },
-            dark: {
-                bg: 'bg-gradient-to-r from-emerald-950/20 to-teal-950/20',
-                border: 'border-emerald-800/40 ring-emerald-700/30',
-                text: 'text-emerald-400',
-                badge: 'bg-emerald-900/40 text-emerald-300 border-emerald-700/50',
-            }
-        },
-    };
-
-    const config = isDark ? priorityConfig[actualPriority].dark : priorityConfig[actualPriority].light;
-
-    if (viewMode === 'list') {
-        return (
-            <div
-                onClick={onClick}
-                className={`group relative flex items-center gap-4 p-4 rounded-xl backdrop-blur-sm cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] active:scale-98
-                    ${overdue ? 'border-l-4 border-l-red-500 shadow-lg' : 'border-l-4 border-l-transparent shadow-lg'}
-                    ring-1
-                    ${isDark
-                        ? 'bg-slate-800/40 ring-slate-700/30 hover:ring-slate-700/50'
-                        : 'bg-white/80 ring-slate-200/40 hover:ring-slate-300/50'
-                    }
-                `}
-            >
-                {/* Background gradient - always visible */}
-                <div className={`absolute inset-0 rounded-xl transition-opacity duration-300 pointer-events-none ${config.bg}`}></div>
-
-                <button
-                    onClick={(e) => { e.stopPropagation(); onToggle(); }}
-                    className="relative flex-shrink-0 z-10"
-                >
-                    <div className={`h-6 w-6 rounded-lg border-2 flex items-center justify-center transition-all ${task.completed
-                        ? 'bg-gradient-to-br from-emerald-500 to-teal-500 border-emerald-600 shadow-lg shadow-emerald-500/30'
-                        : isDark ? 'border-slate-600 hover:border-slate-500 bg-slate-700/30' : 'border-slate-300 hover:border-slate-400 bg-white/50'
-                        }`}>
-                        {task.completed && <CheckCircle className="h-4 w-4 text-white drop-shadow-md" />}
-                    </div>
-                </button>
-
-                <div className="relative flex-1 min-w-0 z-10">
-                    <h3 className={`font-semibold truncate transition-all duration-300 ${task.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        {task.title}
-                    </h3>
-                    <div className="flex items-center gap-3 mt-1">
-                        <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{task.subject}</span>
-                        {task.classSection && (
-                            <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>• {task.classSection}</span>
-                        )}
-                    </div>
-                </div>
-
-                <div className="relative flex items-center gap-3 z-10">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${config.badge}`}>
-                        {actualPriority.toUpperCase()}
-                    </span>
-
-                    <div className={`flex items-center gap-1.5 text-sm ${overdue ? 'text-red-500 font-medium' : isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                        {overdue ? <AlertCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                        <span>{overdue ? 'Overdue' : `${daysUntil}d left`}</span>
-                    </div>
-
-                    {onDelete && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                            className={`p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${isDark ? 'hover:bg-red-500/10 text-slate-500 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-600'}`}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </button>
-                    )}
-
-                    <ChevronRight className={`h-5 w-5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`} />
-                </div>
-            </div>
-        );
+      setTasks({
+        teacher: all.filter((t) => t.createdBy?._id !== userId).map(mapTask),
+        personal: all.filter((t) => t.createdBy?._id === userId).map(mapTask),
+      });
+    } catch (err) {
+      console.error("Failed to load tasks:", err);
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    return (
+  useEffect(() => { loadTasks(); }, [loadTasks]);
+
+  /* ─── derived data ───────────────────────────── */
+  const filteredTasks = useMemo(() => {
+    const keep = (task) => {
+      const q = searchQuery.toLowerCase();
+      if (
+        !task.title.toLowerCase().includes(q) &&
+        !task.subject.toLowerCase().includes(q)
+      )
+        return false;
+      switch (filterType) {
+        case "overdue": return isOverdue(task.deadline, task.completed);
+        case "today": return getDaysUntil(task.deadline) === 0 && !task.completed;
+        case "upcoming":
+          return (
+            getDaysUntil(task.deadline) > 0 &&
+            getDaysUntil(task.deadline) <= 7 &&
+            !task.completed
+          );
+        case "completed": return task.completed;
+        default: return true;
+      }
+    };
+    return {
+      teacher: tasks.teacher.filter(keep),
+      personal: tasks.personal.filter(keep),
+    };
+  }, [tasks, searchQuery, filterType]);
+
+  const stats = useMemo(() => {
+    const calc = (list) => ({
+      total: list.length,
+      completed: list.filter((t) => t.completed).length,
+      overdue: list.filter((t) => isOverdue(t.deadline, t.completed)).length,
+      pending: list.filter((t) => !t.completed).length,
+    });
+    return {
+      teacher: calc(tasks.teacher),
+      personal: calc(tasks.personal),
+    };
+  }, [tasks]);
+
+  const currentStats = activeTab === "teacher" ? stats.teacher : stats.personal;
+  const currentTasks =
+    activeTab === "teacher" ? filteredTasks.teacher : filteredTasks.personal;
+
+  /* ─── handlers ───────────────────────────────── */
+  const handleToggleTask = async (taskId, type) => {
+    const list = type === "teacher" ? tasks.teacher : tasks.personal;
+    const task = list.find((t) => t.id === taskId);
+    if (!task) return;
+    const next = !task.completed;
+    setTasks((prev) => ({
+      ...prev,
+      [type]: prev[type].map((t) =>
+        t.id === taskId ? { ...t, completed: next } : t
+      ),
+    }));
+    try {
+      await axios.put(`/api/tasks/${taskId}`, {
+        status: next ? "Completed" : "Pending",
+        ...(next && studentId ? { completedBy: studentId } : {}),
+      });
+    } catch {
+      setTasks((prev) => ({
+        ...prev,
+        [type]: prev[type].map((t) =>
+          t.id === taskId ? { ...t, completed: !next } : t
+        ),
+      }));
+    }
+  };
+
+  const handleDeleteTask = (taskId, type) => {
+    if (!window.confirm("Delete this task?")) return;
+    setTasks((prev) => ({
+      ...prev,
+      [type]: prev[type].filter((t) => t.id !== taskId),
+    }));
+  };
+
+  const handleAddTask = async (newTask) => {
+    if (!studentId) {
+      alert("Unable to identify current student. Please log in again.");
+      return false;
+    }
+    try {
+      const res = await axios.post(`/api/students/${studentId}/tasks`, {
+        title: newTask.title,
+        description: newTask.description || "Self assigned task",
+        subject: newTask.subject,
+        dueDate: newTask.deadline,
+        priority:
+          (newTask.priority || "medium").charAt(0).toUpperCase() +
+          (newTask.priority || "medium").slice(1),
+      });
+      if (res.data?.data) loadTasks();
+      setShowAddModal(false);
+      return true;
+    } catch {
+      alert("Unable to save task. Please try again.");
+      return false;
+    }
+  };
+
+  /* ─── filter options ─────────────────────────── */
+  const filterOptions = [
+    { id: "all", label: "All", icon: LayoutGrid },
+    { id: "today", label: "Today", icon: CalendarDays },
+    { id: "upcoming", label: "Upcoming", icon: Timer },
+    { id: "overdue", label: "Overdue", icon: AlertTriangle },
+    { id: "completed", label: "Done", icon: CheckCheck },
+  ];
+
+  /* ─── dark mode helpers ──────────────────────── */
+  const bg = isDark ? "#0a0f1e" : "#f5f6fa";
+  const cardBg = isDark ? "#111827" : "#fff";
+  const border = isDark ? "#1e293b" : "#ececec";
+  const textPrimary = isDark ? "#f1f5f9" : "#1a1a2e";
+  const textMuted = isDark ? "#64748b" : "#888";
+
+  /* ══════════════════════════════════════════════
+     RENDER
+  ══════════════════════════════════════════════ */
+  return (
+    <div
+      style={{
+        fontFamily: "'DM Sans','Segoe UI',sans-serif",
+        minHeight: "100vh",
+        background: bg,
+        color: textPrimary,
+        transition: "background 0.3s,color 0.3s",
+      }}
+    >
+      {/* ── DASHBOARD NAVBAR ── */}
+      <DashboardNavbar
+        isDark={isDark}
+        setIsDark={setIsDark}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        showMobileMenu={showMobileMenu}
+        setShowMobileMenu={setShowMobileMenu}
+      />
+
+      {/* ── TAB BAR ── */}
+      <div
+        style={{
+          background: isDark ? "rgba(13,20,38,0.97)" : "rgba(255,255,255,0.97)",
+          borderBottom: `1px solid ${border}`,
+          backdropFilter: "blur(12px)",
+          position: "sticky",
+          top: 0,
+          zIndex: 90,
+        }}
+      >
         <div
-            onClick={onClick}
-            className={`group relative rounded-xl backdrop-blur-sm cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] active:scale-98
-                ${overdue ? 'border-l-4 border-l-red-500 shadow-lg' : 'border-l-4 border-l-transparent shadow-lg'}
-                ring-1
-                ${isDark
-                    ? 'bg-slate-800/40 ring-slate-700/30 hover:ring-slate-700/50'
-                    : 'bg-white/80 ring-slate-200/40 hover:ring-slate-300/50'
-                }
-            `}
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "0 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
-            {/* Background gradient - always visible */}
-            <div className={`absolute inset-0 rounded-xl transition-opacity duration-300 pointer-events-none ${config.bg}`}></div>
+          {/* Tabs */}
+          <div style={{ display: "flex" }}>
+            {[
+              {
+                key: "teacher",
+                label: "Teacher Assigned",
+                accent: "#e74c3c",
+                Icon: GraduationCap,
+                count: stats.teacher.total,
+              },
+              {
+                key: "personal",
+                label: "My Tasks",
+                accent: "#3498db",
+                Icon: ClipboardList,
+                count: stats.personal.total,
+              },
+            ].map((tab) => {
+              const active = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "16px 24px",
+                    background: "none",
+                    border: "none",
+                    borderBottom: active
+                      ? `3px solid ${tab.accent}`
+                      : "3px solid transparent",
+                    color: active ? tab.accent : textMuted,
+                    fontWeight: active ? 700 : 500,
+                    fontSize: 15,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <tab.Icon size={16} />
+                  <span>{tab.label}</span>
+                  <span
+                    style={{
+                      background: active ? tab.accent + "20" : isDark ? "#1e293b" : "#f1f5f9",
+                      color: active ? tab.accent : textMuted,
+                      borderRadius: 20,
+                      padding: "1px 8px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-            <div className="relative p-5">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all duration-300 ${config.badge}`}>
-                        <Flag className="h-3 w-3" />
-                        {actualPriority.toUpperCase()}
-                    </span>
+          {/* New Task – desktop */}
+          <button
+            onClick={() => setShowAddModal(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              background: "#1a1a2e",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              padding: "9px 20px",
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            <Plus size={14} />
+            New Task
+          </button>
+        </div>
+      </div>
 
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onToggle(); }}
-                        className="transition-transform hover:scale-110 active:scale-95"
-                    >
-                        <div className={`h-6 w-6 rounded-lg border-2 flex items-center justify-center transition-all ${task.completed
-                            ? 'bg-gradient-to-br from-emerald-500 to-teal-500 border-emerald-600 shadow-lg shadow-emerald-500/30'
-                            : isDark ? 'border-slate-600 hover:border-slate-500 bg-slate-700/30' : 'border-slate-300 hover:border-slate-400 bg-white/50'
-                            }`}>
-                            {task.completed && <CheckCircle className="h-4 w-4 text-white drop-shadow-md" />}
-                        </div>
-                    </button>
-                </div>
+      {/* ── MAIN ── */}
+      <main
+        style={{ maxWidth: 1200, margin: "0 auto", padding: "24px" }}
+      >
+        {/* STAT CARDS */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4,1fr)",
+            gap: 16,
+            marginBottom: 24,
+          }}
+        >
+          {[
+            { label: "Total Tasks:", value: currentStats.total, gradient: STAT_GRADIENTS[0] },
+            { label: "Completed:", value: currentStats.completed, gradient: STAT_GRADIENTS[1] },
+            { label: "Pending:", value: currentStats.pending, gradient: STAT_GRADIENTS[2] },
+            { label: "Overdue:", value: currentStats.overdue, gradient: STAT_GRADIENTS[3] },
+          ].map((s) => (
+            <div
+              key={s.label}
+              style={{
+                background: s.gradient,
+                borderRadius: 16,
+                padding: "20px 24px",
+                color: "#fff",
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 500, opacity: 0.9, marginBottom: 6 }}>
+                {s.label}
+              </div>
+              <div style={{ fontSize: 42, fontWeight: 800, lineHeight: 1 }}>{s.value}</div>
+            </div>
+          ))}
+        </div>
 
-                {/* Title */}
-                <h3 className={`font-bold text-base mb-3 line-clamp-2 transition-all duration-300 ${task.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                    {task.title}
-                </h3>
+        {/* TOOLBAR */}
+        <div
+          style={{
+            background: cardBg,
+            borderRadius: 16,
+            padding: "12px 16px",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 20,
+            boxShadow: isDark ? "none" : "0 1px 4px rgba(0,0,0,.06)",
+            border: `1px solid ${border}`,
+          }}
+        >
+          {/* Search */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              background: isDark ? "#1e293b" : "#f5f6fa",
+              borderRadius: 10,
+              padding: "8px 14px",
+              flex: 1,
+              maxWidth: 280,
+              minWidth: 160,
+            }}
+          >
+            <Search size={16} color={textMuted} />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tasks..."
+              style={{
+                background: "none",
+                border: "none",
+                outline: "none",
+                fontSize: 14,
+                color: textPrimary,
+                fontFamily: "inherit",
+                flex: 1,
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                <X size={14} color={textMuted} />
+              </button>
+            )}
+          </div>
 
-                {/* Subject Badge */}
-                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg mb-4 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                    <BookOpen className={`h-3.5 w-3.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
-                    <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{task.subject}</span>
-                    {task.classSection && (
-                        <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>• {task.classSection}</span>
-                    )}
-                </div>
+          {/* Mobile filter toggle */}
+          <button
+            onClick={() => setShowFilters((v) => !v)}
+            style={{
+              display: "none",
+              alignItems: "center",
+              gap: 6,
+              background: isDark ? "#1e293b" : "#f5f6fa",
+              border: `1px solid ${border}`,
+              borderRadius: 10,
+              padding: "8px 14px",
+              fontSize: 13,
+              fontWeight: 500,
+              color: textPrimary,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+            className="mobile-filter-btn"
+          >
+            <SlidersHorizontal size={14} />
+            Filter
+            <ChevronDown
+              size={13}
+              style={{ transform: showFilters ? "rotate(180deg)" : "none", transition: "0.2s" }}
+            />
+          </button>
 
-                {/* Description */}
-                {task.description && (
-                    <p className={`text-sm line-clamp-2 mb-4 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                        {task.description}
-                    </p>
-                )}
+          {/* Filter chips */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            {filterOptions.map((opt) => {
+              const Icon = opt.icon;
+              const active = filterType === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setFilterType(opt.id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    background: active ? "#1a1a2e" : "none",
+                    color: active ? "#fff" : isDark ? "#94a3b8" : "#555",
+                    border: `1.5px solid ${active ? "#1a1a2e" : border}`,
+                    borderRadius: 20,
+                    padding: "6px 16px",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <Icon size={12} />
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-4 border-t border-dashed" style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}>
-                    <div className={`flex items-center gap-2 text-sm ${overdue ? 'text-red-500 font-semibold' : isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                        {overdue ? <AlertCircle className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
-                        <span>
-                            {overdue ? 'Overdue' : `${task.deadline.toLocaleDateString()} • ${daysUntil}d left`}
-                        </span>
-                    </div>
+          <div style={{ flex: 1 }} />
 
-                    {onDelete && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                            className={`p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 ${isDark ? 'hover:bg-red-900/30 text-slate-500 hover:text-red-400' : 'hover:bg-red-50/80 text-slate-400 hover:text-red-600'}`}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </button>
-                    )}
-                </div>
+          {/* View toggle */}
+          <div
+            style={{
+              display: "flex",
+              background: isDark ? "#1e293b" : "#f5f6fa",
+              borderRadius: 10,
+              padding: 3,
+              gap: 2,
+            }}
+          >
+            {[
+              { mode: "grid", Icon: LayoutGrid },
+              { mode: "list", Icon: LayoutList },
+            ].map(({ mode, Icon }) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                style={{
+                  background: viewMode === mode
+                    ? isDark ? "#334155" : "#1a1a2e"
+                    : "none",
+                  color: viewMode === mode ? "#fff" : textMuted,
+                  border: "none",
+                  borderRadius: 7,
+                  padding: "6px 10px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  transition: "all 0.15s",
+                }}
+              >
+                <Icon size={16} />
+              </button>
+            ))}
+          </div>
+        </div>
 
-                {/* Optional: Completion indicator line */}
+        {/* Section header */}
+        {!loading && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background:
+                  activeTab === "teacher"
+                    ? "linear-gradient(135deg,#e74c3c,#f39c12)"
+                    : "linear-gradient(135deg,#3498db,#2ecc71)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {activeTab === "teacher"
+                ? <GraduationCap size={16} color="#fff" />
+                : <ClipboardList size={16} color="#fff" />
+              }
+            </div>
+            <div>
+              <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>
+                {activeTab === "teacher" ? "Teacher Assigned Tasks" : "My Personal Tasks"}
+              </p>
+              <p style={{ fontSize: 12, color: textMuted, margin: 0 }}>
+                {currentTasks.length} task{currentTasks.length !== 1 ? "s" : ""}
+                {filterType !== "all" ? ` · ${filterType}` : ""}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* CONTENT */}
+        {loading ? (
+          <LoadingSkeleton isDark={isDark} cardBg={cardBg} />
+        ) : currentTasks.length === 0 ? (
+          <EmptyState isDark={isDark} tab={activeTab} filter={filterType} cardBg={cardBg} textPrimary={textPrimary} textMuted={textMuted} />
+        ) : (
+          <div
+            style={
+              viewMode === "grid"
+                ? {
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3,1fr)",
+                    gap: 16,
+                  }
+                : { display: "flex", flexDirection: "column", gap: 10 }
+            }
+          >
+            {currentTasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                isDark={isDark}
+                viewMode={viewMode}
+                type={activeTab}
+                onToggle={() => handleToggleTask(task.id, activeTab)}
+                onDelete={
+                  activeTab === "personal"
+                    ? () => handleDeleteTask(task.id, "personal")
+                    : null
+                }
+                onClick={() => setSelectedTask(task)}
+                textPrimary={textPrimary}
+                textMuted={textMuted}
+                cardBg={cardBg}
+                border={border}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          isDark={isDark}
+          onClose={() => setSelectedTask(null)}
+          textPrimary={textPrimary}
+          textMuted={textMuted}
+          cardBg={cardBg}
+          border={border}
+        />
+      )}
+
+      {/* Add Task Modal */}
+      <AddTaskModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdd={handleAddTask}
+        isDark={isDark}
+      />
+
+      {/* FAB – mobile */}
+      <button
+        onClick={() => setShowAddModal(true)}
+        style={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          width: 56,
+          height: 56,
+          borderRadius: 16,
+          background: "linear-gradient(135deg,#667eea,#764ba2)",
+          color: "#fff",
+          border: "none",
+          boxShadow: "0 8px 24px rgba(102,126,234,.45)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          zIndex: 40,
+        }}
+        className="mobile-fab"
+      >
+        <Plus size={24} />
+      </button>
+
+      {/* Responsive overrides */}
+      <style>{`
+        @media (max-width: 900px) {
+          .stat-grid { grid-template-columns: repeat(2,1fr) !important; }
+          .task-grid  { grid-template-columns: repeat(2,1fr) !important; }
+        }
+        @media (max-width: 600px) {
+          .stat-grid { grid-template-columns: repeat(2,1fr) !important; }
+          .task-grid  { grid-template-columns: 1fr !important; }
+          .mobile-filter-btn { display: flex !important; }
+          .filter-chips-row  { display: none !important; }
+          .tab-label { display: none !important; }
+          .mobile-fab { display: flex !important; }
+          .desktop-new-task { display: none !important; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TASK CARD
+══════════════════════════════════════════════════════════════ */
+function TaskCard({ task, isDark, viewMode, type, onToggle, onDelete, onClick, textPrimary, textMuted, cardBg, border }) {
+  const priority = (calculatePriority(task.deadline) || task.priority || "medium").toLowerCase();
+  const pc = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
+  const sc = SUBJECT_COLORS[task.subject] || SUBJECT_COLORS.Default;
+  const daysUntil = getDaysUntil(task.deadline);
+  const overdue = isOverdue(task.deadline, task.completed);
+
+  const Checkbox = () => (
+    <button
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      style={{
+        width: 22,
+        height: 22,
+        borderRadius: 6,
+        border: task.completed ? "none" : `2px solid ${isDark ? "#475569" : "#ccc"}`,
+        background: task.completed ? "#27ae60" : cardBg,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        transition: "all 0.15s",
+      }}
+    >
+      {task.completed && <CheckCircle size={13} color="#fff" />}
+    </button>
+  );
+
+  const DeadlineBadge = () => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        fontSize: 12,
+        fontWeight: 500,
+        color: overdue ? "#e74c3c" : textMuted,
+      }}
+    >
+      {overdue ? <AlertCircle size={13} /> : <Clock size={13} />}
+      {overdue
+        ? "Overdue"
+        : daysUntil === 0
+        ? "Due today"
+        : `${task.deadline.toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${daysUntil}d`}
+    </div>
+  );
+
+  /* LIST ROW */
+  if (viewMode === "list") {
+    return (
+      <div
+        onClick={onClick}
+        style={{
+          background: cardBg,
+          borderRadius: 14,
+          padding: "14px 20px",
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          boxShadow: isDark ? "none" : "0 1px 4px rgba(0,0,0,.06)",
+          borderLeft: `4px solid ${pc.bg}`,
+          border: `1px solid ${border}`,
+          borderLeftWidth: 4,
+          opacity: task.completed ? 0.65 : 1,
+          cursor: "pointer",
+          transition: "box-shadow 0.2s",
+        }}
+      >
+        <div
+          style={{
+            writingMode: "vertical-rl",
+            textOrientation: "mixed",
+            transform: "rotate(180deg)",
+            fontSize: 10,
+            fontWeight: 700,
+            color: pc.bg,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            minWidth: 16,
+          }}
+        >
+          {priority} Priority
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: 15,
+              marginBottom: 4,
+              textDecoration: task.completed ? "line-through" : "none",
+              color: textPrimary,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {task.title}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                background: sc.bg,
+                color: sc.text,
+                borderRadius: 20,
+                padding: "2px 10px",
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {task.subject}
+            </span>
+            <DeadlineBadge />
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#e74c3c",
+                display: "flex",
+                alignItems: "center",
+                opacity: 0.6,
+                padding: 4,
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+          <Checkbox />
+        </div>
+      </div>
+    );
+  }
+
+  /* GRID CARD */
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: cardBg,
+        borderRadius: 16,
+        overflow: "hidden",
+        boxShadow: isDark ? "none" : "0 1px 6px rgba(0,0,0,.07)",
+        display: "flex",
+        opacity: task.completed ? 0.7 : 1,
+        border: `1px solid ${border}`,
+        transition: "box-shadow 0.2s, transform 0.15s",
+        cursor: "pointer",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,.12)";
+        e.currentTarget.style.transform = "translateY(-2px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = isDark ? "none" : "0 1px 6px rgba(0,0,0,.07)";
+        e.currentTarget.style.transform = "none";
+      }}
+    >
+      {/* Priority sidebar */}
+      <div
+        style={{
+          width: 42,
+          background: pc.gradient,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            writingMode: "vertical-rl",
+            textOrientation: "mixed",
+            transform: "rotate(180deg)",
+            color: "#fff",
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: 1.5,
+            textTransform: "uppercase",
+          }}
+        >
+          {priority} Priority
+        </span>
+      </div>
+
+      {/* Card body */}
+      <div style={{ flex: 1, padding: "18px 18px 16px", display: "flex", flexDirection: "column" }}>
+        {/* Priority pill + checkbox */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <span
+            style={{
+              ...pc.pill,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              borderRadius: 8,
+              padding: "3px 10px",
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: "uppercase",
+            }}
+          >
+            <Flag size={10} />
+            {priority}
+          </span>
+          <Checkbox />
+        </div>
+
+        {/* Title */}
+        <h3
+          style={{
+            fontWeight: 700,
+            fontSize: 15,
+            marginBottom: 10,
+            lineHeight: 1.35,
+            flex: 1,
+            textDecoration: task.completed ? "line-through" : "none",
+            color: textPrimary,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {task.title}
+        </h3>
+
+        {/* Subject */}
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: sc.bg,
+            borderRadius: 20,
+            padding: "3px 12px",
+            marginBottom: 8,
+            width: "fit-content",
+          }}
+        >
+          <BookOpen size={11} color={sc.text} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: sc.text }}>{task.subject}</span>
+          {task.classSection && task.classSection !== "General" && (
+            <span style={{ fontSize: 11, color: sc.text, opacity: 0.7 }}>· {task.classSection}</span>
+          )}
+        </div>
+
+        {/* Description */}
+        {task.description && (
+          <p
+            style={{
+              fontSize: 12,
+              color: textMuted,
+              marginBottom: 8,
+              lineHeight: 1.5,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {task.description}
+          </p>
+        )}
+
+        {/* Footer */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderTop: `1px solid ${border}`,
+            paddingTop: 12,
+            marginTop: "auto",
+          }}
+        >
+          <DeadlineBadge />
+          {onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#e74c3c",
+                opacity: 0.6,
+                display: "flex",
+                alignItems: "center",
+                padding: 4,
+              }}
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TASK DETAIL MODAL
+══════════════════════════════════════════════════════════════ */
+function TaskDetailModal({ task, isDark, onClose, textPrimary, textMuted, cardBg, border }) {
+  const daysUntil = getDaysUntil(task.deadline);
+  const overdue = isOverdue(task.deadline, task.completed);
+  const priority = (calculatePriority(task.deadline) || task.priority || "medium").toLowerCase();
+  const pc = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        background: "rgba(0,0,0,.6)",
+        backdropFilter: "blur(4px)",
+        padding: "0 0 0 0",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 480,
+          background: cardBg,
+          borderRadius: "24px 24px 0 0",
+          overflow: "hidden",
+          boxShadow: "0 -8px 40px rgba(0,0,0,.25)",
+        }}
+      >
+        {/* drag handle */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
+          <div
+            style={{
+              width: 40,
+              height: 4,
+              borderRadius: 2,
+              background: isDark ? "#334155" : "#e2e8f0",
+            }}
+          />
+        </div>
+
+        {/* Header */}
+        <div style={{ padding: "12px 24px 20px", borderBottom: `1px solid ${border}` }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+                <span
+                  style={{
+                    ...pc.pill,
+                    borderRadius: 8,
+                    padding: "3px 12px",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {priority} priority
+                </span>
                 {task.completed && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-transparent rounded-b-xl opacity-60"></div>
+                  <span
+                    style={{
+                      background: "#d4edda",
+                      color: "#155724",
+                      borderRadius: 8,
+                      padding: "3px 12px",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Completed
+                  </span>
                 )}
+              </div>
+              <h2
+                style={{
+                  fontSize: 18,
+                  fontWeight: 800,
+                  lineHeight: 1.3,
+                  color: textPrimary,
+                  margin: 0,
+                }}
+              >
+                {task.title}
+              </h2>
             </div>
+            <button
+              onClick={onClose}
+              style={{
+                background: isDark ? "#1e293b" : "#f1f5f9",
+                border: "none",
+                borderRadius: 10,
+                padding: 8,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                flexShrink: 0,
+              }}
+            >
+              <X size={18} color={textMuted} />
+            </button>
+          </div>
         </div>
-    );
+
+        {/* Body */}
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <InfoBlock label="Subject" value={task.subject} isDark={isDark} textPrimary={textPrimary} textMuted={textMuted} />
+            <InfoBlock
+              label="Status"
+              value={overdue ? "Overdue" : `${daysUntil}d left`}
+              isDark={isDark}
+              textPrimary={textPrimary}
+              textMuted={textMuted}
+              valueColor={overdue ? "#e74c3c" : undefined}
+            />
+          </div>
+          <InfoBlock
+            label="Due Date"
+            value={`${task.deadline.toLocaleDateString("en-US", {
+              weekday: "short",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })} at ${task.deadline.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}`}
+            isDark={isDark}
+            textPrimary={textPrimary}
+            textMuted={textMuted}
+          />
+          {task.description && (
+            <div>
+              <p
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                  color: textMuted,
+                  marginBottom: 6,
+                }}
+              >
+                Description
+              </p>
+              <p style={{ fontSize: 14, color: textPrimary, lineHeight: 1.6, margin: 0 }}>
+                {task.description}
+              </p>
+            </div>
+          )}
+          {task.createdBy && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "12px 14px",
+                background: isDark ? "#1e293b" : "#f8fafc",
+                borderRadius: 12,
+              }}
+            >
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg,#3498db,#2ecc71)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <User size={16} color="#fff" />
+              </div>
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: textMuted, margin: 0 }}>
+                  Assigned By
+                </p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: textPrimary, margin: 0 }}>
+                  {task.createdBy}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "0 24px 28px" }}>
+          <button
+            onClick={onClose}
+            style={{
+              width: "100%",
+              padding: "14px",
+              borderRadius: 14,
+              background: "linear-gradient(135deg,#667eea,#764ba2)",
+              color: "#fff",
+              border: "none",
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              boxShadow: "0 4px 16px rgba(102,126,234,.35)",
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-// Empty State Component
-function EmptyState({ isDark, message }) {
-    return (
-        <div className={`rounded-2xl p-12 text-center border ${isDark ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-            <div className={`inline-flex p-4 rounded-2xl mb-4 ${isDark ? 'bg-slate-800' : 'bg-white shadow-sm'}`}>
-                <Sparkles className={`h-8 w-8 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
-            </div>
-            <p className={`text-base font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                {message}
-            </p>
-            <p className={`text-sm mt-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                Tasks will appear here once they are added
-            </p>
-        </div>
-    );
+/* ══════════════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════════════ */
+function InfoBlock({ label, value, isDark, textPrimary, textMuted, valueColor }) {
+  return (
+    <div
+      style={{
+        padding: "12px 14px",
+        background: isDark ? "#1e293b" : "#f8fafc",
+        borderRadius: 12,
+      }}
+    >
+      <p
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: 1,
+          color: textMuted,
+          margin: "0 0 4px",
+        }}
+      >
+        {label}
+      </p>
+      <p
+        style={{
+          fontSize: 14,
+          fontWeight: 700,
+          color: valueColor || textPrimary,
+          margin: 0,
+        }}
+      >
+        {value}
+      </p>
+    </div>
+  );
 }
 
-// Loading Skeleton
-function LoadingSkeleton({ isDark }) {
-    return (
-        <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                {[1, 2, 3, 4].map(i => (
-                    <div key={i} className={`h-24 rounded-2xl animate-pulse ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
-                ))}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                    <div key={i} className={`h-52 rounded-2xl animate-pulse ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
-                ))}
-            </div>
-        </>
-    );
+function EmptyState({ isDark, tab, filter, cardBg, textPrimary, textMuted }) {
+  const filtered = filter !== "all";
+  return (
+    <div
+      style={{
+        background: cardBg,
+        borderRadius: 20,
+        padding: "64px 32px",
+        textAlign: "center",
+        border: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
+      }}
+    >
+      <div
+        style={{
+          display: "inline-flex",
+          padding: 20,
+          background: isDark ? "#1e293b" : "#f1f5f9",
+          borderRadius: 20,
+          marginBottom: 16,
+        }}
+      >
+        <Sparkles size={32} color={isDark ? "#475569" : "#94a3b8"} />
+      </div>
+      <p style={{ fontSize: 16, fontWeight: 700, color: textPrimary, margin: "0 0 6px" }}>
+        {filtered
+          ? `No ${filter} tasks`
+          : tab === "teacher"
+          ? "No teacher tasks yet"
+          : "No personal tasks yet"}
+      </p>
+      <p style={{ fontSize: 14, color: textMuted, margin: 0 }}>
+        {filtered
+          ? "Try changing the filter to see more tasks."
+          : tab === "personal"
+          ? "Create a personal task using the + button."
+          : "Tasks assigned by your teachers will appear here."}
+      </p>
+    </div>
+  );
 }
 
-// Task Detail Modal
-function TaskDetailModal({ task, isDark, onClose }) {
-    const daysUntil = getDaysUntil(task.deadline);
-    const overdue = isOverdue(task.deadline, task.completed);
-    const actualPriority = calculatePriority(task.deadline);
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4 bg-black/60">
-            <div className={`w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
-                {/* Header */}
-                <div className={`p-6 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-3">
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${actualPriority === 'high'
-                                    ? isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700'
-                                    : actualPriority === 'medium'
-                                        ? isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
-                                        : isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
-                                    }`}>
-                                    {actualPriority.toUpperCase()} PRIORITY
-                                </span>
-                                {task.completed && (
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}>
-                                        COMPLETED
-                                    </span>
-                                )}
-                            </div>
-                            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {task.title}
-                            </h2>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
-                        >
-                            <X className="h-5 w-5" />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-6 space-y-5">
-                    {/* Info Grid */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className={`p-4 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                            <p className={`text-xs font-medium mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Subject</p>
-                            <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{task.subject}</p>
-                        </div>
-                        <div className={`p-4 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                            <p className={`text-xs font-medium mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Deadline</p>
-                            <p className={`text-sm font-semibold ${overdue ? 'text-red-500' : isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {overdue ? 'Overdue' : `${daysUntil} days left`}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Date & Time */}
-                    <div className={`p-4 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                        <p className={`text-xs font-medium mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Due Date & Time</p>
-                        <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            {task.deadline.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                            {' at '}
-                            {task.deadline.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                    </div>
-
-                    {/* Description */}
-                    {task.description && (
-                        <div>
-                            <p className={`text-xs font-medium mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Description</p>
-                            <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                                {task.description}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Assigned By */}
-                    {task.createdBy && (
-                        <div className={`flex items-center gap-3 p-4 rounded-xl ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                                <User className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
-                                <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Assigned By</p>
-                                <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{task.createdBy}</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className={`p-6 border-t ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-                    <button
-                        onClick={onClose}
-                        className="w-full px-4 py-3 rounded-xl font-semibold text-sm bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-lg shadow-blue-600/25 hover:shadow-xl active:scale-[0.98]"
-                    >
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
+function LoadingSkeleton({ isDark, cardBg }) {
+  const pulse = isDark ? "#1e293b" : "#e2e8f0";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} style={{ height: 80, background: pulse, borderRadius: 16, animation: "pulse 1.5s infinite" }} />
+        ))}
+      </div>
+      <div style={{ height: 56, background: pulse, borderRadius: 16, animation: "pulse 1.5s infinite" }} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} style={{ height: 180, background: pulse, borderRadius: 16, animation: "pulse 1.5s infinite" }} />
+        ))}
+      </div>
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}`}</style>
+    </div>
+  );
 }
