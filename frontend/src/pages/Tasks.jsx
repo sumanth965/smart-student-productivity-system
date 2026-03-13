@@ -499,45 +499,81 @@ function TaskCard({ task, isDark, viewMode, type, onToggle, onDelete, onClick })
 
     const priorityConfig = {
         high: {
-            bg: isDark ? 'bg-red-500/10' : 'bg-red-50',
-            text: isDark ? 'text-red-400' : 'text-red-600',
-            border: isDark ? 'border-red-500/30' : 'border-red-200',
+            light: {
+                bg: 'bg-gradient-to-r from-red-50 to-rose-50',
+                border: 'border-red-200/60 ring-red-200/40',
+                text: 'text-red-700',
+                badge: 'bg-red-100/80 text-red-700 border-red-200/60',
+            },
+            dark: {
+                bg: 'bg-gradient-to-r from-red-950/20 to-rose-950/20',
+                border: 'border-red-800/40 ring-red-700/30',
+                text: 'text-red-400',
+                badge: 'bg-red-900/40 text-red-300 border-red-700/50',
+            }
         },
         medium: {
-            bg: isDark ? 'bg-amber-500/10' : 'bg-amber-50',
-            text: isDark ? 'text-amber-400' : 'text-amber-600',
-            border: isDark ? 'border-amber-500/30' : 'border-amber-200',
+            light: {
+                bg: 'bg-gradient-to-r from-amber-50 to-orange-50',
+                border: 'border-amber-200/60 ring-amber-200/40',
+                text: 'text-amber-700',
+                badge: 'bg-amber-100/80 text-amber-700 border-amber-200/60',
+            },
+            dark: {
+                bg: 'bg-gradient-to-r from-amber-950/20 to-orange-950/20',
+                border: 'border-amber-800/40 ring-amber-700/30',
+                text: 'text-amber-400',
+                badge: 'bg-amber-900/40 text-amber-300 border-amber-700/50',
+            }
         },
         low: {
-            bg: isDark ? 'bg-emerald-500/10' : 'bg-emerald-50',
-            text: isDark ? 'text-emerald-400' : 'text-emerald-600',
-            border: isDark ? 'border-emerald-500/30' : 'border-emerald-200',
+            light: {
+                bg: 'bg-gradient-to-r from-emerald-50 to-teal-50',
+                border: 'border-emerald-200/60 ring-emerald-200/40',
+                text: 'text-emerald-700',
+                badge: 'bg-emerald-100/80 text-emerald-700 border-emerald-200/60',
+            },
+            dark: {
+                bg: 'bg-gradient-to-r from-emerald-950/20 to-teal-950/20',
+                border: 'border-emerald-800/40 ring-emerald-700/30',
+                text: 'text-emerald-400',
+                badge: 'bg-emerald-900/40 text-emerald-300 border-emerald-700/50',
+            }
         },
     };
 
-    const priority = priorityConfig[actualPriority];
+    const config = isDark ? priorityConfig[actualPriority].dark : priorityConfig[actualPriority].light;
 
     if (viewMode === 'list') {
         return (
             <div
                 onClick={onClick}
-                className={`group flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all hover:shadow-md ${overdue ? 'border-l-4 border-l-red-500' : ''
-                    } ${isDark ? 'bg-slate-900/50 border-slate-800 hover:bg-slate-900' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                className={`group relative flex items-center gap-4 p-4 rounded-xl backdrop-blur-sm cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] active:scale-98
+                    ${overdue ? 'border-l-4 border-l-red-500 shadow-lg' : 'border-l-4 border-l-transparent shadow-lg'}
+                    ring-1
+                    ${isDark
+                        ? 'bg-slate-800/40 ring-slate-700/30 hover:ring-slate-700/50'
+                        : 'bg-white/80 ring-slate-200/40 hover:ring-slate-300/50'
+                    }
+                `}
             >
+                {/* Background gradient - always visible */}
+                <div className={`absolute inset-0 rounded-xl transition-opacity duration-300 pointer-events-none ${config.bg}`}></div>
+
                 <button
                     onClick={(e) => { e.stopPropagation(); onToggle(); }}
-                    className="flex-shrink-0"
+                    className="relative flex-shrink-0 z-10"
                 >
                     <div className={`h-6 w-6 rounded-lg border-2 flex items-center justify-center transition-all ${task.completed
-                        ? 'bg-emerald-500 border-emerald-500'
-                        : isDark ? 'border-slate-600 hover:border-slate-500' : 'border-slate-300 hover:border-slate-400'
+                        ? 'bg-gradient-to-br from-emerald-500 to-teal-500 border-emerald-600 shadow-lg shadow-emerald-500/30'
+                        : isDark ? 'border-slate-600 hover:border-slate-500 bg-slate-700/30' : 'border-slate-300 hover:border-slate-400 bg-white/50'
                         }`}>
-                        {task.completed && <CheckCircle className="h-4 w-4 text-white" />}
+                        {task.completed && <CheckCircle className="h-4 w-4 text-white drop-shadow-md" />}
                     </div>
                 </button>
 
-                <div className="flex-1 min-w-0">
-                    <h3 className={`font-semibold truncate ${task.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <div className="relative flex-1 min-w-0 z-10">
+                    <h3 className={`font-semibold truncate transition-all duration-300 ${task.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-slate-900'}`}>
                         {task.title}
                     </h3>
                     <div className="flex items-center gap-3 mt-1">
@@ -548,8 +584,8 @@ function TaskCard({ task, isDark, viewMode, type, onToggle, onDelete, onClick })
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${priority.bg} ${priority.text}`}>
+                <div className="relative flex items-center gap-3 z-10">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${config.badge}`}>
                         {actualPriority.toUpperCase()}
                     </span>
 
@@ -576,32 +612,41 @@ function TaskCard({ task, isDark, viewMode, type, onToggle, onDelete, onClick })
     return (
         <div
             onClick={onClick}
-            className={`group relative rounded-2xl border cursor-pointer transition-all hover:shadow-lg hover:scale-[1.01] ${overdue ? 'border-l-4 border-l-red-500' : ''
-                } ${isDark ? 'bg-slate-900/50 border-slate-800 hover:bg-slate-900' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+            className={`group relative rounded-xl backdrop-blur-sm cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] active:scale-98
+                ${overdue ? 'border-l-4 border-l-red-500 shadow-lg' : 'border-l-4 border-l-transparent shadow-lg'}
+                ring-1
+                ${isDark
+                    ? 'bg-slate-800/40 ring-slate-700/30 hover:ring-slate-700/50'
+                    : 'bg-white/80 ring-slate-200/40 hover:ring-slate-300/50'
+                }
+            `}
         >
-            <div className="p-5">
+            {/* Background gradient - always visible */}
+            <div className={`absolute inset-0 rounded-xl transition-opacity duration-300 pointer-events-none ${config.bg}`}></div>
+
+            <div className="relative p-5">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${priority.bg} ${priority.text}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all duration-300 ${config.badge}`}>
                         <Flag className="h-3 w-3" />
                         {actualPriority.toUpperCase()}
                     </span>
 
                     <button
                         onClick={(e) => { e.stopPropagation(); onToggle(); }}
-                        className="transition-transform hover:scale-110"
+                        className="transition-transform hover:scale-110 active:scale-95"
                     >
                         <div className={`h-6 w-6 rounded-lg border-2 flex items-center justify-center transition-all ${task.completed
-                            ? 'bg-emerald-500 border-emerald-500'
-                            : isDark ? 'border-slate-600 hover:border-emerald-500' : 'border-slate-300 hover:border-emerald-500'
+                            ? 'bg-gradient-to-br from-emerald-500 to-teal-500 border-emerald-600 shadow-lg shadow-emerald-500/30'
+                            : isDark ? 'border-slate-600 hover:border-slate-500 bg-slate-700/30' : 'border-slate-300 hover:border-slate-400 bg-white/50'
                             }`}>
-                            {task.completed && <CheckCircle className="h-4 w-4 text-white" />}
+                            {task.completed && <CheckCircle className="h-4 w-4 text-white drop-shadow-md" />}
                         </div>
                     </button>
                 </div>
 
                 {/* Title */}
-                <h3 className={`font-bold text-base mb-3 line-clamp-2 ${task.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className={`font-bold text-base mb-3 line-clamp-2 transition-all duration-300 ${task.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {task.title}
                 </h3>
 
@@ -633,12 +678,17 @@ function TaskCard({ task, isDark, viewMode, type, onToggle, onDelete, onClick })
                     {onDelete && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                            className={`p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${isDark ? 'hover:bg-red-500/10 text-slate-500 hover:text-red-400' : 'hover:bg-red-50 text-slate-400 hover:text-red-600'}`}
+                            className={`p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 ${isDark ? 'hover:bg-red-900/30 text-slate-500 hover:text-red-400' : 'hover:bg-red-50/80 text-slate-400 hover:text-red-600'}`}
                         >
                             <Trash2 className="h-4 w-4" />
                         </button>
                     )}
                 </div>
+
+                {/* Optional: Completion indicator line */}
+                {task.completed && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-transparent rounded-b-xl opacity-60"></div>
+                )}
             </div>
         </div>
     );
