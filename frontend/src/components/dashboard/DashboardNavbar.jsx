@@ -278,7 +278,7 @@ export default function DashboardNavbar({
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className={`absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl shadow-2xl ring-1 z-50 max-h-[32rem] overflow-hidden ${isDark ? 'bg-slate-800/95 ring-slate-700/50 backdrop-blur-sm' : 'bg-white/95 ring-slate-200/50 backdrop-blur-sm'
+                <div className={`absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl shadow-2xl ring-1 z-[70] max-h-[32rem] overflow-hidden responsive-floating-panel ${isDark ? 'bg-slate-800/95 ring-slate-700/50 backdrop-blur-sm' : 'bg-white/95 ring-slate-200/50 backdrop-blur-sm'
                   }`}>
                   {/* Header */}
                   <div className={`px-4 py-3 border-b flex items-center justify-between ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
@@ -485,7 +485,7 @@ export default function DashboardNavbar({
 
       {/* Admin Authentication Modal */}
       {showAdminAuth && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen bg-black/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center min-h-screen bg-black/50 backdrop-blur-sm p-4">
           <div className={`w-full max-w-md rounded-2xl shadow-2xl p-6 ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
             <div className="flex items-center gap-2 mb-4">
               <Lock className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />

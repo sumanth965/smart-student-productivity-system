@@ -1259,7 +1259,7 @@ export default function AdminTeacher() {
                         {/* Table */}
                         <div className="backdrop-blur-xl bg-white/80 shadow-xl ring-1 ring-slate-200/40 rounded-2xl overflow-hidden">
                             <div className="overflow-x-auto max-h-[65vh] overflow-y-auto">
-                                <table className="w-full text-xs sm:text-sm min-w-[600px] md:min-w-[800px]">
+                                <table className="w-full text-xs sm:text-sm min-w-[520px] md:min-w-[800px]">
                                     <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur border-b border-slate-100">
                                         <tr>
                                             {['#', 'Student', 'USN', 'Class', 'Phone', 'Status', 'Login', 'Actions'].map(h => (
