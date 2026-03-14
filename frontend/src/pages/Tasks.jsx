@@ -276,6 +276,7 @@ export default function StudyFlowTasks() {
         }}
       >
         <div
+          className="tasks-tabbar-inner"
           style={{
             maxWidth: 1200,
             margin: "0 auto",
@@ -286,7 +287,7 @@ export default function StudyFlowTasks() {
           }}
         >
           {/* Tabs */}
-          <div style={{ display: "flex" }}>
+          <div className="tasks-tab-list" style={{ display: "flex" }}>
             {[
               {
                 key: "teacher",
@@ -306,6 +307,7 @@ export default function StudyFlowTasks() {
               const active = activeTab === tab.key;
               return (
                 <button
+                  className="tasks-tab-button"
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   style={{
@@ -327,7 +329,7 @@ export default function StudyFlowTasks() {
                   }}
                 >
                   <tab.Icon size={16} />
-                  <span>{tab.label}</span>
+                  <span className="tab-label">{tab.label}</span>
                   <span
                     style={{
                       background: active ? tab.accent + "20" : isDark ? "#1e293b" : "#f1f5f9",
@@ -347,6 +349,7 @@ export default function StudyFlowTasks() {
 
           {/* New Task – desktop */}
           <button
+            className="desktop-new-task"
             onClick={() => setShowAddModal(true)}
             style={{
               display: "flex",
@@ -371,10 +374,12 @@ export default function StudyFlowTasks() {
 
       {/* ── MAIN ── */}
       <main
+        className="tasks-main"
         style={{ maxWidth: 1200, margin: "0 auto", padding: "24px" }}
       >
         {/* STAT CARDS */}
         <div
+          className="stat-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4,1fr)",
@@ -487,7 +492,10 @@ export default function StudyFlowTasks() {
           </button>
 
           {/* Filter chips */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <div
+            className={`filter-chips-row ${showFilters ? "open" : ""}`}
+            style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+          >
             {filterOptions.map((opt) => {
               const Icon = opt.icon;
               const active = filterType === opt.id;
@@ -598,6 +606,7 @@ export default function StudyFlowTasks() {
           <EmptyState isDark={isDark} tab={activeTab} filter={filterType} cardBg={cardBg} textPrimary={textPrimary} textMuted={textMuted} />
         ) : (
           <div
+            className={viewMode === "grid" ? "task-grid" : "task-list"}
             style={
               viewMode === "grid"
                 ? {
@@ -680,15 +689,45 @@ export default function StudyFlowTasks() {
 
       {/* Responsive overrides */}
       <style>{`
+        .mobile-fab { display: none !important; }
         @media (max-width: 900px) {
+          .tasks-main,
+          .tasks-tabbar-inner {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+          .tasks-tab-button { padding: 14px 16px !important; }
           .stat-grid { grid-template-columns: repeat(2,1fr) !important; }
           .task-grid  { grid-template-columns: repeat(2,1fr) !important; }
         }
         @media (max-width: 600px) {
+          .tasks-tabbar-inner {
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-top: 8px;
+            padding-bottom: 6px;
+          }
+          .tasks-tab-list {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .tasks-tab-button {
+            flex: 1;
+            justify-content: center;
+            padding: 12px 10px !important;
+          }
+          .tasks-main {
+            padding-top: 16px !important;
+            padding-bottom: 90px !important;
+          }
           .stat-grid { grid-template-columns: repeat(2,1fr) !important; }
+          .stat-grid > div { padding: 16px !important; }
+          .stat-grid > div > div:last-child { font-size: 30px !important; }
           .task-grid  { grid-template-columns: 1fr !important; }
           .mobile-filter-btn { display: flex !important; }
-          .filter-chips-row  { display: none !important; }
+          .filter-chips-row  { display: none !important; width: 100%; }
+          .filter-chips-row.open  { display: flex !important; }
+          .filter-chips-row button { flex: 1; justify-content: center; }
           .tab-label { display: none !important; }
           .mobile-fab { display: flex !important; }
           .desktop-new-task { display: none !important; }
