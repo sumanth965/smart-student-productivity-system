@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../lib/axios';
 import { calculatePriority, getDaysUntil, isOverdue } from '../components/dashboard/dashboardUtils';
 import AIChatBox from '../components/AIChatBox';
+import { useTheme } from '../contexts/ThemeContext';
 
 // ============================================================================
 // SAMPLE DATA - 25 academic tasks with importance & complexity
@@ -302,7 +303,8 @@ const RiskCard = ({ task, index }) => (
 // ============================================================================
 // MAIN AI MODULE COMPONENT
 // ============================================================================
-export default function AIModule({ isDark = false }) {
+export default function AIModule() {
+    const { isDark } = useTheme();
     const navigate = useNavigate();
     const onNavigateBack = () => navigate('/dashboard');
     const [tasks, setTasks] = useState([]);

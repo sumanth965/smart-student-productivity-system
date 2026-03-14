@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardNavbar from '../components/dashboard/DashboardNavbar';
 import axios from '../lib/axios';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   TrendingUp,
   Calendar as CalendarIcon,
@@ -31,8 +32,8 @@ function StatCard({ icon: Icon, label, value, change, bgGradient, iconColor, isD
   return (
     <div
       className={`relative overflow-hidden rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 transition-all duration-300 hover:scale-[1.03] hover:shadow-blue-500/20 cursor-default ${isDark
-          ? 'bg-slate-800/80 ring-slate-700/50 hover:bg-slate-800/90'
-          : 'bg-white/80 ring-slate-200/50 hover:bg-white/90'
+        ? 'bg-slate-800/80 ring-slate-700/50 hover:bg-slate-800/90'
+        : 'bg-white/80 ring-slate-200/50 hover:bg-white/90'
         }`}
     >
       {/* background tint */}
@@ -89,8 +90,8 @@ function GlassCard({ isDark, className = '', children }) {
   return (
     <div
       className={`relative overflow-hidden rounded-2xl backdrop-blur-md ring-1 shadow-xl transition-all duration-200 ${isDark
-          ? 'bg-slate-800/80 ring-slate-700/50'
-          : 'bg-white/80 ring-slate-200/50'
+        ? 'bg-slate-800/80 ring-slate-700/50'
+        : 'bg-white/80 ring-slate-200/50'
         } ${className}`}
     >
       {children}
@@ -103,14 +104,7 @@ function GlassCard({ isDark, className = '', children }) {
 ═══════════════════════════════════════ */
 export default function CalendarPage() {
   const navigate = useNavigate();
-  const [isDark, setIsDark] = useState(() => {
-    const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode !== null) {
-      return JSON.parse(savedDarkMode);
-    }
-
-    return localStorage.getItem('theme') === 'dark';
-  });
+  const { isDark, setIsDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -163,12 +157,6 @@ export default function CalendarPage() {
     const token = localStorage.getItem('student_token') || sessionStorage.getItem('student_token');
     if (!token) navigate('/login');
   }, [navigate]);
-
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(isDark));
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark', isDark);
-  }, [isDark]);
 
   const loadCalendarEvents = async () => {
     try {
@@ -485,8 +473,8 @@ export default function CalendarPage() {
                     key={key}
                     onClick={() => setFilterType(key)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterType === key
-                        ? active
-                        : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      ? active
+                      : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                       }`}
                   >
                     {label}
@@ -506,8 +494,8 @@ export default function CalendarPage() {
                     title={title}
                     onClick={() => setViewMode(mode)}
                     className={`p-2 rounded-lg transition-all ${viewMode === mode
-                        ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm'
-                        : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm'
+                      : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'
                       }`}
                   >
                     <Ico className="h-4 w-4" />
@@ -540,8 +528,8 @@ export default function CalendarPage() {
                         key={event.id}
                         onClick={() => { setSelectedEvent(event); setShowEventModal(true); }}
                         className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer ring-1 transition-all hover:scale-[1.01] hover:shadow-lg ${isDark
-                            ? 'bg-slate-700/50 ring-slate-600/50 hover:bg-slate-700'
-                            : 'bg-slate-50 ring-slate-200/70 hover:bg-white'
+                          ? 'bg-slate-700/50 ring-slate-600/50 hover:bg-slate-700'
+                          : 'bg-slate-50 ring-slate-200/70 hover:bg-white'
                           } ${event.completed ? 'opacity-50' : ''}`}
                       >
                         <div className={`p-3 rounded-2xl ${event.type === 'teacher' ? 'bg-rose-500/15' : 'bg-blue-500/15'}`}>
@@ -595,17 +583,17 @@ export default function CalendarPage() {
                         key={idx}
                         onClick={() => setSelectedDate(day.date)}
                         className={`min-h-[76px] sm:min-h-[96px] p-1.5 rounded-xl cursor-pointer transition-all border ${isSelected
-                            ? isDark
-                              ? 'border-blue-500/60 bg-blue-600/15 shadow-inner shadow-blue-500/10'
-                              : 'border-blue-400/60 bg-blue-50 shadow-inner shadow-blue-400/10'
-                            : isDark
-                              ? 'border-slate-700/60 hover:border-slate-600 hover:bg-slate-700/30'
-                              : 'border-slate-200/70 hover:border-slate-300 hover:bg-slate-50'
+                          ? isDark
+                            ? 'border-blue-500/60 bg-blue-600/15 shadow-inner shadow-blue-500/10'
+                            : 'border-blue-400/60 bg-blue-50 shadow-inner shadow-blue-400/10'
+                          : isDark
+                            ? 'border-slate-700/60 hover:border-slate-600 hover:bg-slate-700/30'
+                            : 'border-slate-200/70 hover:border-slate-300 hover:bg-slate-50'
                           } ${!day.isCurrentMonth ? 'opacity-30' : ''}`}
                       >
                         <div className={`text-[13px] font-bold mb-1 w-7 h-7 flex items-center justify-center rounded-full mx-auto sm:mx-0 ${todayDate
-                            ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md'
-                            : isDark ? 'text-slate-300' : 'text-slate-700'
+                          ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md'
+                          : isDark ? 'text-slate-300' : 'text-slate-700'
                           }`}>
                           {day.date.getDate()}
                         </div>
@@ -615,8 +603,8 @@ export default function CalendarPage() {
                               key={evt.id}
                               onClick={(e) => { e.stopPropagation(); setSelectedEvent(evt); setShowEventModal(true); }}
                               className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold truncate cursor-pointer hover:opacity-80 transition-opacity ${evt.type === 'teacher'
-                                  ? 'bg-rose-500/20 text-rose-500'
-                                  : 'bg-blue-500/20 text-blue-400'
+                                ? 'bg-rose-500/20 text-rose-500'
+                                : 'bg-blue-500/20 text-blue-400'
                                 } ${evt.completed ? 'line-through opacity-50' : ''}`}
                             >
                               {evt.title}
@@ -675,8 +663,8 @@ export default function CalendarPage() {
                       key={evt.id}
                       onClick={() => { setSelectedEvent(evt); setShowEventModal(true); }}
                       className={`p-3.5 rounded-2xl cursor-pointer ring-1 transition-all hover:scale-[1.02] ${isDark
-                          ? 'bg-slate-700/50 ring-slate-600/50 hover:bg-slate-700'
-                          : 'bg-slate-50 ring-slate-200/60 hover:bg-white'
+                        ? 'bg-slate-700/50 ring-slate-600/50 hover:bg-slate-700'
+                        : 'bg-slate-50 ring-slate-200/60 hover:bg-white'
                         } ${evt.completed ? 'opacity-50' : ''}`}
                     >
                       <div className="flex items-start gap-3">
@@ -699,8 +687,8 @@ export default function CalendarPage() {
                         <button
                           onClick={(e) => { e.stopPropagation(); handleToggleComplete(evt.id); }}
                           className={`p-1.5 rounded-xl transition-all flex-shrink-0 ${evt.completed
-                              ? 'bg-emerald-500/20 text-emerald-500'
-                              : isDark ? 'hover:bg-slate-600 text-slate-500' : 'hover:bg-slate-200 text-slate-400'
+                            ? 'bg-emerald-500/20 text-emerald-500'
+                            : isDark ? 'hover:bg-slate-600 text-slate-500' : 'hover:bg-slate-200 text-slate-400'
                             }`}
                         >
                           <CheckCircle2 className="h-4 w-4" />
@@ -746,8 +734,8 @@ export default function CalendarPage() {
                     {(() => { const I = getCategoryIcon(selectedEvent.category); return <I className={`h-6 w-6 ${selectedEvent.type === 'teacher' ? 'text-rose-500' : 'text-blue-500'}`} />; })()}
                   </div>
                   <span className={`text-xs font-bold px-3 py-1 rounded-full ring-1 ${selectedEvent.type === 'teacher'
-                      ? 'bg-rose-500/15 text-rose-500 ring-rose-500/30'
-                      : 'bg-blue-500/15 text-blue-500 ring-blue-500/30'
+                    ? 'bg-rose-500/15 text-rose-500 ring-rose-500/30'
+                    : 'bg-blue-500/15 text-blue-500 ring-blue-500/30'
                     }`}>
                     {selectedEvent.type === 'teacher' ? 'Teacher Assigned' : 'Personal'}
                   </span>
@@ -790,8 +778,8 @@ export default function CalendarPage() {
                 <button
                   onClick={() => handleToggleComplete(selectedEvent.id)}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold transition-all shadow-lg ${selectedEvent.completed
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/30 hover:shadow-amber-500/50'
-                      : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/30 hover:shadow-emerald-500/50'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/30 hover:shadow-amber-500/50'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/30 hover:shadow-emerald-500/50'
                     }`}
                 >
                   <CheckCircle2 className="h-5 w-5" />
@@ -893,8 +881,8 @@ export default function CalendarPage() {
                         key={key}
                         onClick={() => setEventForm((p) => ({ ...p, priority: key }))}
                         className={`flex-1 py-2.5 rounded-xl text-sm font-bold capitalize transition-all ${eventForm.priority === key
-                            ? active
-                            : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                          ? active
+                          : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                           }`}
                       >
                         {key}
@@ -912,8 +900,8 @@ export default function CalendarPage() {
                         key={cat}
                         onClick={() => setEventForm((p) => ({ ...p, category: cat }))}
                         className={`px-4 py-2 rounded-xl text-sm font-semibold capitalize transition-all ${eventForm.category === cat
-                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/30'
-                            : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/30'
+                          : isDark ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                           }`}
                       >
                         {cat}

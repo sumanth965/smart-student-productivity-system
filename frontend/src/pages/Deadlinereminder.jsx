@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardNavbar from '../components/dashboard/DashboardNavbar';
 import axios from '../lib/axios';
+import { useTheme } from '../contexts/ThemeContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const resolveUserId = (u) => u?._id || u?.id || '';
@@ -52,16 +53,16 @@ const fmtCountdown = (dueDate) => {
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const PRIORITY_CFG = {
-  high:   { label: 'HIGH',   color: '#EF4444', softBg: 'bg-red-50',     softText: 'text-red-600',    darkBg: 'bg-red-500/15',    darkText: 'text-red-400',    dot: 'bg-red-500'    },
-  medium: { label: 'MED',    color: '#F59E0B', softBg: 'bg-amber-50',   softText: 'text-amber-700',  darkBg: 'bg-amber-500/15',  darkText: 'text-amber-400',  dot: 'bg-amber-500'  },
-  low:    { label: 'LOW',    color: '#10B981', softBg: 'bg-emerald-50', softText: 'text-emerald-700',darkBg: 'bg-emerald-500/15',darkText: 'text-emerald-400',dot: 'bg-emerald-500'},
+  high: { label: 'HIGH', color: '#EF4444', softBg: 'bg-red-50', softText: 'text-red-600', darkBg: 'bg-red-500/15', darkText: 'text-red-400', dot: 'bg-red-500' },
+  medium: { label: 'MED', color: '#F59E0B', softBg: 'bg-amber-50', softText: 'text-amber-700', darkBg: 'bg-amber-500/15', darkText: 'text-amber-400', dot: 'bg-amber-500' },
+  low: { label: 'LOW', color: '#10B981', softBg: 'bg-emerald-50', softText: 'text-emerald-700', darkBg: 'bg-emerald-500/15', darkText: 'text-emerald-400', dot: 'bg-emerald-500' },
 };
 
 const STATE_CFG = {
-  overdue:   { label: 'Overdue',  Icon: AlertCircle,  softBg: 'bg-red-50',     softText: 'text-red-600',    darkBg: 'bg-red-500/15',    darkText: 'text-red-400'    },
-  upcoming:  { label: 'Upcoming', Icon: Clock,        softBg: 'bg-amber-50',   softText: 'text-amber-700',  darkBg: 'bg-amber-500/15',  darkText: 'text-amber-400'  },
-  later:     { label: 'Later',    Icon: Calendar,     softBg: 'bg-blue-50',    softText: 'text-blue-700',   darkBg: 'bg-blue-500/15',   darkText: 'text-blue-400'   },
-  completed: { label: 'Done',     Icon: CheckCircle2, softBg: 'bg-emerald-50', softText: 'text-emerald-700',darkBg: 'bg-emerald-500/15',darkText: 'text-emerald-400'},
+  overdue: { label: 'Overdue', Icon: AlertCircle, softBg: 'bg-red-50', softText: 'text-red-600', darkBg: 'bg-red-500/15', darkText: 'text-red-400' },
+  upcoming: { label: 'Upcoming', Icon: Clock, softBg: 'bg-amber-50', softText: 'text-amber-700', darkBg: 'bg-amber-500/15', darkText: 'text-amber-400' },
+  later: { label: 'Later', Icon: Calendar, softBg: 'bg-blue-50', softText: 'text-blue-700', darkBg: 'bg-blue-500/15', darkText: 'text-blue-400' },
+  completed: { label: 'Done', Icon: CheckCircle2, softBg: 'bg-emerald-50', softText: 'text-emerald-700', darkBg: 'bg-emerald-500/15', darkText: 'text-emerald-400' },
 };
 
 const SUBJECT_COLORS = {
@@ -120,11 +121,11 @@ const StatCard = ({ icon: Icon, label, value, change, bgGradient, isDark, delay 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 const Sidebar = ({ collapsed, setCollapsed, activeTab, setActiveTab, stats, isDark }) => {
   const items = [
-    { key: 'all',       label: 'All Tasks',  Icon: BookOpen,     badge: stats.total     },
-    { key: 'overdue',   label: 'Overdue',    Icon: AlertCircle,  badge: stats.overdue   },
-    { key: 'upcoming',  label: 'Upcoming',   Icon: Clock,        badge: stats.upcoming  },
-    { key: 'later',     label: 'Later',      Icon: Calendar,     badge: null            },
-    { key: 'completed', label: 'Completed',  Icon: CheckCircle2, badge: stats.completed },
+    { key: 'all', label: 'All Tasks', Icon: BookOpen, badge: stats.total },
+    { key: 'overdue', label: 'Overdue', Icon: AlertCircle, badge: stats.overdue },
+    { key: 'upcoming', label: 'Upcoming', Icon: Clock, badge: stats.upcoming },
+    { key: 'later', label: 'Later', Icon: Calendar, badge: null },
+    { key: 'completed', label: 'Completed', Icon: CheckCircle2, badge: stats.completed },
   ];
 
   return (
@@ -212,9 +213,8 @@ const AddTaskModal = ({ onClose, onAdd, isDark }) => {
     onClose();
   };
 
-  const inputClass = `w-full px-4 py-2.5 rounded-xl text-sm outline-none ring-1 focus:ring-2 focus:ring-blue-500 transition-all ${
-    isDark ? 'bg-slate-700/60 ring-slate-600/60 text-white placeholder-slate-500' : 'bg-slate-50 ring-slate-200 text-slate-900 placeholder-slate-400'
-  }`;
+  const inputClass = `w-full px-4 py-2.5 rounded-xl text-sm outline-none ring-1 focus:ring-2 focus:ring-blue-500 transition-all ${isDark ? 'bg-slate-700/60 ring-slate-600/60 text-white placeholder-slate-500' : 'bg-slate-50 ring-slate-200 text-slate-900 placeholder-slate-400'
+    }`;
 
   return (
     <motion.div
@@ -228,9 +228,8 @@ const AddTaskModal = ({ onClose, onAdd, isDark }) => {
         exit={{ scale: 0.95, opacity: 0 }}
         transition={{ type: 'spring', damping: 28, stiffness: 340 }}
         onClick={e => e.stopPropagation()}
-        className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border ${
-          isDark ? 'bg-slate-900 border-slate-700/60' : 'bg-white border-slate-200'
-        }`}
+        className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border ${isDark ? 'bg-slate-900 border-slate-700/60' : 'bg-white border-slate-200'
+          }`}
       >
         {/* Accent bar */}
         <div className="h-1 bg-gradient-to-r from-blue-600 to-cyan-400" />
@@ -281,13 +280,12 @@ const AddTaskModal = ({ onClose, onAdd, isDark }) => {
                   const isActive = form.priority === p;
                   return (
                     <button key={p} onClick={() => set('priority', p)}
-                      className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
-                        isActive
-                          ? p === 'high' ? 'bg-red-500 text-white shadow-lg shadow-red-500/25'
-                            : p === 'medium' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
+                      className={`py-2.5 rounded-xl text-xs font-bold transition-all ${isActive
+                        ? p === 'high' ? 'bg-red-500 text-white shadow-lg shadow-red-500/25'
+                          : p === 'medium' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
                             : 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
-                          : isDark ? `${cfg.darkBg} ${cfg.darkText}` : `${cfg.softBg} ${cfg.softText}`
-                      }`}>
+                        : isDark ? `${cfg.darkBg} ${cfg.darkText}` : `${cfg.softBg} ${cfg.softText}`
+                        }`}>
                       {cfg.label}
                     </button>
                   );
@@ -325,9 +323,8 @@ const TaskDetailPanel = ({ task, onClose, onToggleComplete, onSnooze, onDelete, 
     <motion.div
       initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '100%', opacity: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-      className={`fixed right-0 top-0 h-full w-full sm:w-[380px] z-40 overflow-y-auto border-l shadow-2xl transition-colors ${
-        isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-      }`}
+      className={`fixed right-0 top-0 h-full w-full sm:w-[380px] z-40 overflow-y-auto border-l shadow-2xl transition-colors ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        }`}
     >
       <div className="h-1 bg-gradient-to-r from-blue-600 to-cyan-400" />
 
@@ -394,11 +391,10 @@ const TaskDetailPanel = ({ task, onClose, onToggleComplete, onSnooze, onDelete, 
         </div>
 
         {/* Countdown */}
-        <div className={`rounded-xl p-4 flex items-center gap-3.5 border ${
-          state === 'overdue'
-            ? isDark ? 'bg-red-500/10 border-red-500/25' : 'bg-red-50 border-red-100'
-            : isDark ? 'bg-sky-500/10 border-sky-500/25' : 'bg-sky-50 border-sky-100'
-        }`}>
+        <div className={`rounded-xl p-4 flex items-center gap-3.5 border ${state === 'overdue'
+          ? isDark ? 'bg-red-500/10 border-red-500/25' : 'bg-red-50 border-red-100'
+          : isDark ? 'bg-sky-500/10 border-sky-500/25' : 'bg-sky-50 border-sky-100'
+          }`}>
           <div className={`rounded-xl p-2 ${state === 'overdue' ? 'bg-red-500/15' : 'bg-sky-500/15'}`}>
             <Clock className={`h-4 w-4 ${state === 'overdue' ? 'text-red-500' : 'text-sky-500'}`} />
           </div>
@@ -411,28 +407,25 @@ const TaskDetailPanel = ({ task, onClose, onToggleComplete, onSnooze, onDelete, 
         {/* Actions */}
         <div className="space-y-2 pt-1">
           <button onClick={() => { onToggleComplete(task.id); onClose(); }}
-            className={`w-full py-3 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] ${
-              task.completed
-                ? 'bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 shadow-slate-500/20'
-                : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/25'
-            }`}>
+            className={`w-full py-3 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] ${task.completed
+              ? 'bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 shadow-slate-500/20'
+              : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/25'
+              }`}>
             <CheckCircle2 className="h-4 w-4" />
             {task.completed ? 'Mark as Pending' : 'Mark as Complete'}
           </button>
 
           {!task.completed && (
             <button onClick={() => { onSnooze(task.id); onClose(); }}
-              className={`w-full py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 border transition-all active:scale-[0.98] ${
-                isDark ? 'bg-slate-800/70 border-slate-700/60 text-slate-300 hover:bg-slate-700/80' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-              }`}>
+              className={`w-full py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 border transition-all active:scale-[0.98] ${isDark ? 'bg-slate-800/70 border-slate-700/60 text-slate-300 hover:bg-slate-700/80' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}>
               <Wind className="h-4 w-4" /> Snooze 1 Hour
             </button>
           )}
 
           <button onClick={() => { onDelete(task.id); onClose(); }}
-            className={`w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border transition-all active:scale-[0.98] ${
-              isDark ? 'border-red-500/25 text-red-400 hover:bg-red-500/10' : 'border-red-100 text-red-500 hover:bg-red-50'
-            }`}>
+            className={`w-full py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border transition-all active:scale-[0.98] ${isDark ? 'border-red-500/25 text-red-400 hover:bg-red-500/10' : 'border-red-100 text-red-500 hover:bg-red-50'
+              }`}>
             <X className="h-3.5 w-3.5" /> Delete Task
           </button>
         </div>
@@ -456,16 +449,14 @@ const TaskCard = ({ task, onClick, onToggleComplete, onSnooze, isDark, viewMode 
       <motion.li
         layout initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
         onClick={() => onClick(task)}
-        className={`flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer group transition-all border ${
-          isDark
-            ? 'bg-slate-800/60 border-slate-700/50 hover:bg-slate-800/90 hover:border-slate-600/60'
-            : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'
-        }`}
+        className={`flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer group transition-all border ${isDark
+          ? 'bg-slate-800/60 border-slate-700/50 hover:bg-slate-800/90 hover:border-slate-600/60'
+          : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'
+          }`}
       >
         <button onClick={e => { e.stopPropagation(); onToggleComplete(task.id); }}
-          className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center transition-all border-2 ${
-            isDone ? 'bg-emerald-500 border-emerald-500' : isDark ? 'border-slate-600 hover:border-slate-400' : 'border-slate-300 hover:border-slate-400'
-          }`}>
+          className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center transition-all border-2 ${isDone ? 'bg-emerald-500 border-emerald-500' : isDark ? 'border-slate-600 hover:border-slate-400' : 'border-slate-300 hover:border-slate-400'
+            }`}>
           {isDone && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
         </button>
 
@@ -492,13 +483,11 @@ const TaskCard = ({ task, onClick, onToggleComplete, onSnooze, isDark, viewMode 
       whileHover={{ y: -2, boxShadow: isDark ? '0 16px 40px rgba(0,0,0,0.35)' : '0 16px 40px rgba(0,0,0,0.08)' }}
       transition={{ duration: 0.18 }}
       onClick={() => onClick(task)}
-      className={`relative rounded-2xl cursor-pointer overflow-hidden transition-all border group ${
-        isDone ? 'opacity-65' : ''
-      } ${
-        isOverdue && !isDone
+      className={`relative rounded-2xl cursor-pointer overflow-hidden transition-all border group ${isDone ? 'opacity-65' : ''
+        } ${isOverdue && !isDone
           ? isDark ? 'bg-slate-800/80 border-red-500/30' : 'bg-white border-red-200/80'
           : isDark ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white border-slate-100'
-      }`}
+        }`}
     >
       {/* Priority color stripe */}
       <div className="h-0.5" style={{ background: `linear-gradient(to right, ${PRIORITY_CFG[task.priority]?.color || '#64748B'}, ${sCol})` }} />
@@ -556,17 +545,15 @@ const TaskCard = ({ task, onClick, onToggleComplete, onSnooze, isDark, viewMode 
               <Check className="h-3 w-3" strokeWidth={2.5} /> Done
             </button>
             <button onClick={e => { e.stopPropagation(); onSnooze(task.id); }}
-              className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all border active:scale-95 ${
-                isDark ? 'bg-sky-500/10 border-sky-500/25 text-sky-400 hover:bg-sky-500/20' : 'bg-sky-50 border-sky-100 text-sky-600 hover:bg-sky-100'
-              }`}>
+              className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all border active:scale-95 ${isDark ? 'bg-sky-500/10 border-sky-500/25 text-sky-400 hover:bg-sky-500/20' : 'bg-sky-50 border-sky-100 text-sky-600 hover:bg-sky-100'
+                }`}>
               <Wind className="h-3 w-3" /> Snooze
             </button>
           </div>
         ) : (
           <button onClick={e => { e.stopPropagation(); onToggleComplete(task.id); }}
-            className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all border active:scale-95 ${
-              isDark ? 'bg-slate-700/50 border-slate-600/50 text-slate-300 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-            }`}>
+            className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all border active:scale-95 ${isDark ? 'bg-slate-700/50 border-slate-600/50 text-slate-300 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+              }`}>
             ↩ Mark Pending
           </button>
         )}
@@ -596,14 +583,13 @@ const Toast = ({ toast }) => (
         initial={{ opacity: 0, y: 20, scale: 0.92 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.94 }}
-        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 rounded-2xl text-sm font-semibold text-white shadow-2xl pointer-events-none flex items-center gap-2.5 whitespace-nowrap ${
-          toast.type === 'success' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/25'
-            : toast.type === 'error' ? 'bg-gradient-to-r from-red-500 to-rose-500 shadow-red-500/25'
+        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 rounded-2xl text-sm font-semibold text-white shadow-2xl pointer-events-none flex items-center gap-2.5 whitespace-nowrap ${toast.type === 'success' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/25'
+          : toast.type === 'error' ? 'bg-gradient-to-r from-red-500 to-rose-500 shadow-red-500/25'
             : 'bg-gradient-to-r from-sky-500 to-blue-500 shadow-sky-500/25'
-        }`}>
+          }`}>
         {toast.type === 'success' ? <CheckCircle2 className="h-4 w-4" />
           : toast.type === 'error' ? <X className="h-4 w-4" />
-          : <Wind className="h-4 w-4" />}
+            : <Wind className="h-4 w-4" />}
         {toast.msg}
       </motion.div>
     )}
@@ -620,9 +606,8 @@ const SectionHeader = ({ label, Icon, gradient, count, isOverdue, isDark }) => (
       <h3 className={`text-sm font-bold uppercase tracking-widest ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{label}</h3>
       {isOverdue && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
     </div>
-    <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${
-      isDark ? 'bg-slate-800 border-slate-700/60 text-slate-400' : 'bg-white border-slate-200 text-slate-500'
-    }`}>
+    <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${isDark ? 'bg-slate-800 border-slate-700/60 text-slate-400' : 'bg-white border-slate-200 text-slate-500'
+      }`}>
       {count} {count === 1 ? 'task' : 'tasks'}
     </span>
   </div>
@@ -630,11 +615,11 @@ const SectionHeader = ({ label, Icon, gradient, count, isOverdue, isDark }) => (
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function DeadlineReminder() {
+  const { isDark, setIsDark } = useTheme();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [isDark, setIsDark] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -693,9 +678,9 @@ export default function DeadlineReminder() {
   }, [isDark]);
 
   const summary = useMemo(() => ({
-    total:     tasks.length,
-    overdue:   tasks.filter(t => getTaskState(t) === 'overdue').length,
-    upcoming:  tasks.filter(t => getTaskState(t) === 'upcoming').length,
+    total: tasks.length,
+    overdue: tasks.filter(t => getTaskState(t) === 'overdue').length,
+    upcoming: tasks.filter(t => getTaskState(t) === 'upcoming').length,
     completed: tasks.filter(t => t.completed).length,
   }), [tasks]);
 
@@ -750,10 +735,10 @@ export default function DeadlineReminder() {
   }, [tasks, fireToast]);
 
   const sectionMeta = [
-    { key: 'overdue',   label: 'Overdue',   Icon: AlertCircle,  gradient: 'from-red-500 to-rose-500'       },
-    { key: 'upcoming',  label: 'Upcoming',  Icon: Clock,        gradient: 'from-amber-500 to-orange-500'   },
-    { key: 'later',     label: 'Later',     Icon: Calendar,     gradient: 'from-blue-600 to-cyan-500'      },
-    { key: 'completed', label: 'Completed', Icon: CheckCircle2, gradient: 'from-emerald-500 to-teal-500'   },
+    { key: 'overdue', label: 'Overdue', Icon: AlertCircle, gradient: 'from-red-500 to-rose-500' },
+    { key: 'upcoming', label: 'Upcoming', Icon: Clock, gradient: 'from-amber-500 to-orange-500' },
+    { key: 'later', label: 'Later', Icon: Calendar, gradient: 'from-blue-600 to-cyan-500' },
+    { key: 'completed', label: 'Completed', Icon: CheckCircle2, gradient: 'from-emerald-500 to-teal-500' },
   ];
 
   const gridClass = viewMode === 'list'
@@ -804,7 +789,7 @@ export default function DeadlineReminder() {
             <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               className="fixed left-0 top-0 h-full z-50 w-60 sm:hidden">
-              <Sidebar collapsed={false} setCollapsed={() => {}}
+              <Sidebar collapsed={false} setCollapsed={() => { }}
                 activeTab={activeTab} setActiveTab={t => { setActiveTab(t); setMobileSidebar(false); }}
                 stats={summary} isDark={isDark} />
             </motion.div>
@@ -815,9 +800,8 @@ export default function DeadlineReminder() {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
           {/* Sub-topbar */}
-          <div className={`flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 h-14 border-b transition-colors ${
-            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200/70'
-          } backdrop-blur-md`}>
+          <div className={`flex-shrink-0 flex items-center gap-3 px-4 sm:px-6 h-14 border-b transition-colors ${isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200/70'
+            } backdrop-blur-md`}>
 
             <button onClick={() => setMobileSidebar(true)}
               className={`sm:hidden p-2 rounded-xl ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
@@ -837,25 +821,22 @@ export default function DeadlineReminder() {
             <div className="flex-1" />
 
             {/* Search */}
-            <div className={`items-center gap-2 rounded-xl px-3 py-2 border hidden md:flex ${
-              isDark ? 'bg-slate-800/70 border-slate-700/60' : 'bg-slate-50 border-slate-200'
-            }`}>
+            <div className={`items-center gap-2 rounded-xl px-3 py-2 border hidden md:flex ${isDark ? 'bg-slate-800/70 border-slate-700/60' : 'bg-slate-50 border-slate-200'
+              }`}>
               <Search className={`h-3.5 w-3.5 flex-shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
               <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search tasks…"
                 className={`bg-transparent border-none outline-none text-xs w-28 ${isDark ? 'text-white placeholder-slate-600' : 'text-slate-900 placeholder-slate-400'}`} />
             </div>
 
             {/* View toggle */}
-            <div className={`hidden sm:flex items-center rounded-xl p-1 gap-0.5 border ${
-              isDark ? 'bg-slate-800/70 border-slate-700/60' : 'bg-slate-50 border-slate-200'
-            }`}>
+            <div className={`hidden sm:flex items-center rounded-xl p-1 gap-0.5 border ${isDark ? 'bg-slate-800/70 border-slate-700/60' : 'bg-slate-50 border-slate-200'
+              }`}>
               {[{ mode: 'grid', Ic: LayoutGrid }, { mode: 'list', Ic: List }].map(({ mode, Ic }) => (
                 <button key={mode} onClick={() => setViewMode(mode)}
-                  className={`p-1.5 rounded-lg transition-all ${
-                    viewMode === mode
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-blue-500/20'
-                      : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
-                  }`}>
+                  className={`p-1.5 rounded-lg transition-all ${viewMode === mode
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-md shadow-blue-500/20'
+                    : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
+                    }`}>
                   <Ic className="h-3.5 w-3.5" />
                 </button>
               ))}
@@ -892,18 +873,17 @@ export default function DeadlineReminder() {
 
             {/* Stat Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <StatCard icon={BookOpen}     label="Total Tasks"      value={summary.total}     bgGradient="bg-gradient-to-r from-blue-600 to-cyan-500"     isDark={isDark} delay={0}    />
-              <StatCard icon={AlertCircle}  label="Overdue"          value={summary.overdue}   bgGradient="bg-gradient-to-r from-red-500 to-rose-500"       isDark={isDark} delay={0.07} />
-              <StatCard icon={Clock}        label="Due in 3 Days"    value={summary.upcoming}  bgGradient="bg-gradient-to-r from-amber-500 to-orange-500"   isDark={isDark} delay={0.14} />
-              <StatCard icon={CheckCircle2} label="Completed"        value={summary.completed} bgGradient="bg-gradient-to-r from-emerald-500 to-teal-500"   isDark={isDark} delay={0.21} />
+              <StatCard icon={BookOpen} label="Total Tasks" value={summary.total} bgGradient="bg-gradient-to-r from-blue-600 to-cyan-500" isDark={isDark} delay={0} />
+              <StatCard icon={AlertCircle} label="Overdue" value={summary.overdue} bgGradient="bg-gradient-to-r from-red-500 to-rose-500" isDark={isDark} delay={0.07} />
+              <StatCard icon={Clock} label="Due in 3 Days" value={summary.upcoming} bgGradient="bg-gradient-to-r from-amber-500 to-orange-500" isDark={isDark} delay={0.14} />
+              <StatCard icon={CheckCircle2} label="Completed" value={summary.completed} bgGradient="bg-gradient-to-r from-emerald-500 to-teal-500" isDark={isDark} delay={0.21} />
             </div>
 
             {/* Overdue alert banner */}
             {summary.overdue > 0 && (
               <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                className={`rounded-2xl p-4 flex items-center gap-3 border ${
-                  isDark ? 'bg-red-500/8 border-red-500/20 text-red-400' : 'bg-red-50 border-red-100 text-red-700'
-                }`}>
+                className={`rounded-2xl p-4 flex items-center gap-3 border ${isDark ? 'bg-red-500/8 border-red-500/20 text-red-400' : 'bg-red-50 border-red-100 text-red-700'
+                  }`}>
                 <div className="bg-red-500/15 rounded-xl p-2 flex-shrink-0">
                   <AlertCircle className="h-4 w-4 text-red-500" />
                 </div>
@@ -915,9 +895,8 @@ export default function DeadlineReminder() {
                     Use the sidebar to filter overdue tasks and prioritize accordingly.
                   </p>
                 </div>
-                <span className={`text-xs font-bold px-3 py-1.5 rounded-xl border cursor-default ${
-                  isDark ? 'bg-red-500/15 border-red-500/25 text-red-400' : 'bg-red-100 border-red-200 text-red-600'
-                }`}>
+                <span className={`text-xs font-bold px-3 py-1.5 rounded-xl border cursor-default ${isDark ? 'bg-red-500/15 border-red-500/25 text-red-400' : 'bg-red-100 border-red-200 text-red-600'
+                  }`}>
                   {summary.overdue} overdue
                 </span>
               </motion.div>
@@ -955,11 +934,10 @@ export default function DeadlineReminder() {
 
                       {key === 'overdue' && sec.length > 1 && (
                         <button onClick={handleCompleteAllOverdue}
-                          className={`mt-4 w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 border transition-all active:scale-[0.99] ${
-                            isDark
-                              ? 'bg-emerald-500/8 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/15'
-                              : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100'
-                          }`}>
+                          className={`mt-4 w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 border transition-all active:scale-[0.99] ${isDark
+                            ? 'bg-emerald-500/8 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/15'
+                            : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100'
+                            }`}>
                           <CheckCircle2 className="h-4 w-4" />
                           Mark All Overdue as Complete ({sec.length})
                         </button>

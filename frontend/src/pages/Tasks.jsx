@@ -10,6 +10,7 @@ import DashboardNavbar from "../components/dashboard/DashboardNavbar";
 import AddTaskModal from "../components/dashboard/AddTaskModal";
 import { calculatePriority, getDaysUntil, isOverdue } from "../components/dashboard/dashboardUtils";
 import axios from "../lib/axios";
+import { useTheme } from "../contexts/ThemeContext";
 
 /* ─── Color maps ─────────────────────────────────────────────── */
 const SUBJECT_COLORS = {
@@ -55,7 +56,7 @@ const STAT_GRADIENTS = [
 ══════════════════════════════════════════════════════════════ */
 export default function StudyFlowTasks() {
   /* ─── state ─────────────────────────────────── */
-  const [isDark, setIsDark] = useState(false);
+  const { isDark, setIsDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [tasks, setTasks] = useState({ teacher: [], personal: [] });
@@ -67,16 +68,6 @@ export default function StudyFlowTasks() {
   const [viewMode, setViewMode] = useState("grid");
   const [activeTab, setActiveTab] = useState("teacher");
   const [showFilters, setShowFilters] = useState(false);
-
-  /* ─── dark mode persistence ─────────────────── */
-  useEffect(() => {
-    const saved = localStorage.getItem("darkMode");
-    if (saved !== null) setIsDark(JSON.parse(saved));
-  }, []);
-  useEffect(() => {
-    localStorage.setItem("darkMode", JSON.stringify(isDark));
-    document.documentElement.classList.toggle("dark", isDark);
-  }, [isDark]);
 
   /* ─── load tasks from API ────────────────────── */
   const loadTasks = useCallback(async () => {

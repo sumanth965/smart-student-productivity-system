@@ -5,10 +5,11 @@ import DashboardOverview from '../components/dashboard/DashboardOverview';
 import RecentTasksSection from '../components/dashboard/RecentTasksSection';
 import { calculatePriority, getDaysUntil, isOverdue } from '../components/dashboard/dashboardUtils';
 import axios from '../lib/axios';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function Dashboard() {
+  const { isDark, setIsDark } = useTheme();
   const [open, setOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [studentId, setStudentId] = useState('');
   const [filter, setFilter] = useState('all');
@@ -53,16 +54,6 @@ export default function Dashboard() {
       console.error('Failed to load assigned tasks for dashboard:', error);
     }
   }, [mapApiTaskToDashboardTask, resolveUserId]);
-
-  useEffect(() => {
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null) setIsDark(JSON.parse(savedMode));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(isDark));
-    document.documentElement.classList.toggle('dark', isDark);
-  }, [isDark]);
 
   useEffect(() => {
     loadAssignedTasks();

@@ -10,23 +10,26 @@ import AIModule from './pages/Aimodule '
 import AdminTeacher from './pages/AdminTeacher'
 import Tasks from './pages/Tasks'
 import CalendarPage from './pages/Calendar'
+import { ThemeProvider } from './contexts/ThemeContext'
 
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        {/* <Route path="/register" element={<RegisterPage />} /> */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/calendar" element={<CalendarPage />} />
-        <Route path="/deadline" element={<DeadlineReminder />} />
-        <Route path="/ai" element={<AIModule />} />
-        <Route path="/admin" element={<AdminTeacher />} />
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          {/* <Route path="/register" element={<RegisterPage />} /> */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/deadline" element={<DeadlineReminder />} />
+          <Route path="/ai" element={<AIModule />} />
+          <Route path="/admin" element={<AdminTeacher />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 

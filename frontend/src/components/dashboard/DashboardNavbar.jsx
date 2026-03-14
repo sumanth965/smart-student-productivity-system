@@ -319,19 +319,19 @@ export default function DashboardNavbar({
                           key={notification.id}
                           onClick={() => markAsRead(notification.id)}
                           className={`px-4 py-3 border-b cursor-pointer transition-colors ${notification.read
-                              ? isDark ? 'bg-transparent hover:bg-slate-700/30' : 'bg-transparent hover:bg-slate-50'
-                              : isDark ? 'bg-blue-500/10 hover:bg-blue-500/20' : 'bg-blue-50/50 hover:bg-blue-50'
+                            ? isDark ? 'bg-transparent hover:bg-slate-700/30' : 'bg-transparent hover:bg-slate-50'
+                            : isDark ? 'bg-blue-500/10 hover:bg-blue-500/20' : 'bg-blue-50/50 hover:bg-blue-50'
                             } ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}
                         >
                           <div className="flex items-start gap-3">
                             {/* Icon */}
                             <div className={`flex-shrink-0 p-2 rounded-lg ${notification.type === 'overdue'
-                                ? 'bg-red-100 dark:bg-red-500/20'
-                                : notification.type === 'due-today'
-                                  ? 'bg-orange-100 dark:bg-orange-500/20'
-                                  : notification.type === 'due-soon'
-                                    ? 'bg-amber-100 dark:bg-amber-500/20'
-                                    : 'bg-blue-100 dark:bg-blue-500/20'
+                              ? 'bg-red-100 dark:bg-red-500/20'
+                              : notification.type === 'due-today'
+                                ? 'bg-orange-100 dark:bg-orange-500/20'
+                                : notification.type === 'due-soon'
+                                  ? 'bg-amber-100 dark:bg-amber-500/20'
+                                  : 'bg-blue-100 dark:bg-blue-500/20'
                               }`}>
                               {notification.type === 'overdue' ? (
                                 <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
