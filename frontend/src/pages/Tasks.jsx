@@ -601,10 +601,10 @@ export default function StudyFlowTasks() {
             style={
               viewMode === "grid"
                 ? {
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3,1fr)",
-                    gap: 16,
-                  }
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3,1fr)",
+                  gap: 16,
+                }
                 : { display: "flex", flexDirection: "column", gap: 10 }
             }
           >
@@ -744,8 +744,8 @@ function TaskCard({ task, isDark, viewMode, type, onToggle, onDelete, onClick, t
       {overdue
         ? "Overdue"
         : daysUntil === 0
-        ? "Due today"
-        : `${task.deadline.toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${daysUntil}d`}
+          ? "Due today"
+          : `${task.deadline.toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${daysUntil}d`}
     </div>
   );
 
@@ -1289,15 +1289,15 @@ function EmptyState({ isDark, tab, filter, cardBg, textPrimary, textMuted }) {
         {filtered
           ? `No ${filter} tasks`
           : tab === "teacher"
-          ? "No teacher tasks yet"
-          : "No personal tasks yet"}
+            ? "No teacher tasks yet"
+            : "No personal tasks yet"}
       </p>
       <p style={{ fontSize: 14, color: textMuted, margin: 0 }}>
         {filtered
           ? "Try changing the filter to see more tasks."
           : tab === "personal"
-          ? "Create a personal task using the + button."
-          : "Tasks assigned by your teachers will appear here."}
+            ? "Create a personal task using the + button."
+            : "Tasks assigned by your teachers will appear here."}
       </p>
     </div>
   );
