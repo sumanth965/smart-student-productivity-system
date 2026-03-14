@@ -103,7 +103,14 @@ function GlassCard({ isDark, className = '', children }) {
 ═══════════════════════════════════════ */
 export default function CalendarPage() {
   const navigate = useNavigate();
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [isDark, setIsDark] = useState(() => {
+    const savedDarkMode = localStorage.getItem('darkMode');
+    if (savedDarkMode !== null) {
+      return JSON.parse(savedDarkMode);
+    }
+
+    return localStorage.getItem('theme') === 'dark';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -158,6 +165,7 @@ export default function CalendarPage() {
   }, [navigate]);
 
   useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(isDark));
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
