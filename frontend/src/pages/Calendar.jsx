@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardNavbar from '../components/dashboard/DashboardNavbar';
+import axios from '../lib/axios';
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -58,6 +59,8 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [filterType, setFilterType] = useState('all'); // 'all', 'teacher', 'personal'
   const [showConfetti, setShowConfetti] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [studentId, setStudentId] = useState('');
   
   // Form state for new/edit event
   const [eventForm, setEventForm] = useState({
@@ -70,75 +73,27 @@ export default function CalendarPage() {
     category: 'study'
   });
 
-  // Sample events data - in real app, fetch from backend
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: 'Math Assignment Due',
-      description: 'Complete chapters 5-7 problems',
-      date: new Date(2026, 2, 15),
-      time: '23:59',
-      type: 'teacher',
-      priority: 'high',
+  const [events, setEvents] = useState([]);
+
+  const mapTaskToCalendarEvent = (task, currentStudentId) => {
+    const dueDate = new Date(task.dueDate);
+    const hasValidTime = !Number.isNaN(dueDate.getTime());
+
+    return {
+      id: task._id,
+      title: task.title,
+      description: task.description,
+      date: hasValidTime ? dueDate : new Date(),
+      time: hasValidTime
+        ? `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`
+        : '12:00',
+      type: (task.createdBy?._id === currentStudentId || task.createdBy === currentStudentId) ? 'personal' : 'teacher',
+      priority: task.priority?.toLowerCase() || 'medium',
       category: 'assignment',
-      completed: false
-    },
-    {
-      id: 2,
-      title: 'Physics Lab Report',
-      description: 'Submit lab report for experiment #4',
-      date: new Date(2026, 2, 18),
-      time: '17:00',
-      type: 'teacher',
-      priority: 'high',
-      category: 'assignment',
-      completed: false
-    },
-    {
-      id: 3,
-      title: 'Study Group - Chemistry',
-      description: 'Meet at library for organic chemistry review',
-      date: new Date(2026, 2, 13),
-      time: '14:00',
-      type: 'personal',
-      priority: 'medium',
-      category: 'study',
-      completed: false
-    },
-    {
-      id: 4,
-      title: 'Project Presentation',
-      description: 'Final presentation for CS101 group project',
-      date: new Date(2026, 2, 20),
-      time: '10:00',
-      type: 'teacher',
-      priority: 'high',
-      category: 'presentation',
-      completed: false
-    },
-    {
-      id: 5,
-      title: 'Review Notes',
-      description: 'Review biology lecture notes',
-      date: new Date(2026, 2, 13),
-      time: '19:00',
-      type: 'personal',
-      priority: 'low',
-      category: 'study',
-      completed: true
-    },
-    {
-      id: 6,
-      title: 'Online Quiz',
-      description: 'History chapter 8 quiz',
-      date: new Date(2026, 2, 16),
-      time: '12:00',
-      type: 'teacher',
-      priority: 'medium',
-      category: 'quiz',
-      completed: false
-    }
-  ]);
+      completed: task.status === 'Completed',
+      subject: task.subject,
+    };
+  };
 
   // Auth check
   useEffect(() => {
@@ -153,6 +108,34 @@ export default function CalendarPage() {
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
+
+
+  const loadCalendarEvents = async () => {
+    try {
+      setLoadingEvents(true);
+      const persistedUser = localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
+      if (!persistedUser) {
+        setEvents([]);
+        return;
+      }
+
+      const parsedUser = JSON.parse(persistedUser);
+      const resolvedStudentId = parsedUser?._id || parsedUser?.id || '';
+      if (!resolvedStudentId) {
+        setEvents([]);
+        return;
+      }
+
+      setStudentId(resolvedStudentId);
+      const response = await axios.get(`/api/students/${resolvedStudentId}/tasks`);
+      const incomingTasks = Array.isArray(response.data?.data) ? response.data.data : [];
+      setEvents(incomingTasks.map((task) => mapTaskToCalendarEvent(task, resolvedStudentId)));
+    } catch (error) {
+      console.error('Failed to load calendar events:', error);
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
 
   // Calendar helpers
   const getDaysInMonth = (date) => {
@@ -237,6 +220,21 @@ export default function CalendarPage() {
     return checkDate < today;
   };
 
+  useEffect(() => {
+    loadCalendarEvents();
+
+    const handleRefresh = () => loadCalendarEvents();
+    const handleFocus = () => loadCalendarEvents();
+
+    window.addEventListener('tasks:refresh', handleRefresh);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('tasks:refresh', handleRefresh);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
   // Get events for a specific date
   const getEventsForDate = (date) => {
     return events.filter(event => {
@@ -312,41 +310,79 @@ export default function CalendarPage() {
     setShowAddModal(true);
   };
 
-  const handleSaveEvent = () => {
-    if (!eventForm.title.trim()) return;
-    
-    const newEvent = {
-      id: Date.now(),
-      title: eventForm.title,
-      description: eventForm.description,
-      date: new Date(eventForm.date),
-      time: eventForm.time,
-      type: eventForm.type,
-      priority: eventForm.priority,
-      category: eventForm.category,
-      completed: false
-    };
-    
-    setEvents(prev => [...prev, newEvent]);
-    setShowAddModal(false);
+  const handleSaveEvent = async () => {
+    if (!eventForm.title.trim() || !studentId) return;
+
+    const dueDate = new Date(`${eventForm.date}T${eventForm.time || '12:00'}`);
+
+    try {
+      const response = await axios.post(`/api/students/${studentId}/tasks`, {
+        title: eventForm.title,
+        description: eventForm.description || 'Self assigned task',
+        subject: eventForm.category || 'General',
+        dueDate,
+        priority: eventForm.priority.charAt(0).toUpperCase() + eventForm.priority.slice(1),
+      });
+
+      const savedTask = response.data?.data;
+      if (savedTask) {
+        setEvents((prev) => [mapTaskToCalendarEvent(savedTask, studentId), ...prev]);
+      }
+      setShowAddModal(false);
+      window.dispatchEvent(new Event('tasks:refresh'));
+    } catch (error) {
+      console.error('Failed to save event:', error);
+      alert('Unable to save event. Please try again.');
+    }
   };
 
-  const handleToggleComplete = (eventId) => {
-    setEvents(prev => prev.map(event => {
-      if (event.id === eventId) {
-        if (!event.completed) {
-          setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 3000);
-        }
-        return { ...event, completed: !event.completed };
-      }
-      return event;
-    }));
+  const handleToggleComplete = async (eventId) => {
+    const targetEvent = events.find((event) => event.id === eventId);
+    if (!targetEvent) return;
+
+    const nextCompleted = !targetEvent.completed;
+
+    setEvents((prev) => prev.map((event) => (
+      event.id === eventId ? { ...event, completed: nextCompleted } : event
+    )));
+
+    if (nextCompleted) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+    }
+
+    try {
+      await axios.put(`/api/tasks/${eventId}`, {
+        status: nextCompleted ? 'Completed' : 'Pending',
+        ...(nextCompleted && studentId ? { completedBy: studentId } : {}),
+      });
+      window.dispatchEvent(new Event('tasks:refresh'));
+    } catch (error) {
+      console.error('Failed to update event status:', error);
+      setEvents((prev) => prev.map((event) => (
+        event.id === eventId ? { ...event, completed: !nextCompleted } : event
+      )));
+      alert('Unable to update event status. Please try again.');
+    }
+
     setShowEventModal(false);
   };
 
-  const handleDeleteEvent = (eventId) => {
-    setEvents(prev => prev.filter(e => e.id !== eventId));
+  const handleDeleteEvent = async (eventId) => {
+    if (!window.confirm('Are you sure you want to delete this event?')) return;
+
+    const previousEvents = events;
+    setEvents((prev) => prev.filter((event) => event.id !== eventId));
+
+    try {
+      await axios.delete(`/api/tasks/${eventId}`);
+      window.dispatchEvent(new Event('tasks:refresh'));
+    } catch (error) {
+      console.error('Failed to delete event:', error);
+      setEvents(previousEvents);
+      alert('Unable to delete event. Please try again.');
+    }
+
     setShowEventModal(false);
   };
 
@@ -421,6 +457,7 @@ export default function CalendarPage() {
             </h1>
             <p className={`mt-1 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Manage your schedule and deadlines
+              {loadingEvents && ' • syncing tasks...'}
             </p>
           </div>
           
