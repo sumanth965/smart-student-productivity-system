@@ -341,14 +341,31 @@ exports.getStudentTasks = async (req, res) => {
     }
 };
 
-// UPDATE task status
+// UPDATE task
 exports.updateTask = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, completedBy } = req.body;
+        const {
+            status,
+            completedBy,
+            title,
+            description,
+            subject,
+            class: cls,
+            section,
+            dueDate,
+            priority,
+        } = req.body;
 
         const updates = {};
         if (status) updates.status = status;
+        if (title !== undefined) updates.title = title;
+        if (description !== undefined) updates.description = description;
+        if (subject !== undefined) updates.subject = subject;
+        if (cls !== undefined) updates.class = cls;
+        if (section !== undefined) updates.section = section;
+        if (priority !== undefined) updates.priority = priority;
+        if (dueDate !== undefined) updates.dueDate = new Date(dueDate);
         if (completedBy) {
             updates.$addToSet = { completedBy };
         }
