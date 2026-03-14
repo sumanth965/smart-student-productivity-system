@@ -72,7 +72,7 @@ function FilterDropdown({ open, setOpen, filter, setFilter, isDark }) {
       </button>
 
       <div
-        className={`absolute right-0 top-full mt-2 w-56 rounded-xl shadow-2xl ring-1 z-50 overflow-hidden transition-all duration-200 origin-top ${open ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'
+        className={`absolute right-0 top-full mt-2 w-56 rounded-xl shadow-2xl ring-1 z-[60] overflow-hidden transition-all duration-200 origin-top responsive-floating-panel ${open ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'
           } ${isDark ? 'bg-slate-800/95 ring-slate-700/50 backdrop-blur-sm' : 'bg-white/95 ring-slate-200/50 backdrop-blur-sm'}`}
       >
         <div className={`px-3 py-2 border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
