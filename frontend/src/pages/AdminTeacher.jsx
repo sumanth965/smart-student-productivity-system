@@ -263,6 +263,24 @@ function ViewTasksModal({ student, onClose }) {
     );
 }
 
+function TaskDeleteModal({ task, onCancel, onConfirm, loading }) {
+    if (!task) return null;
+    return (
+        <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full border border-red-100">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Delete assigned task?</h3>
+                <p className="text-sm text-slate-600 mb-6">This will remove <strong>{task.title}</strong> for all assigned students.</p>
+                <div className="flex gap-3">
+                    <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm">Cancel</button>
+                    <button disabled={loading} onClick={() => onConfirm(task.id)} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-pink-600 text-white font-semibold text-sm disabled:opacity-60">
+                        {loading ? 'Deleting...' : 'Delete'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // CSV Import Modal
 function CSVImportModal({ onClose, onImport }) {
     const [step, setStep] = useState('upload');
@@ -598,6 +616,11 @@ export default function AdminTeacher() {
     });
     const [taskErrors, setTaskErrors] = useState({});
     const [assigningTask, setAssigningTask] = useState(false);
+    const [assignedTasks, setAssignedTasks] = useState([]);
+    const [tasksLoading, setTasksLoading] = useState(false);
+    const [editTask, setEditTask] = useState(null);
+    const [deleteTaskModal, setDeleteTaskModal] = useState(null);
+    const [taskActionLoading, setTaskActionLoading] = useState(false);
 
     // ── Toast helpers ──────────────────────────────────────────────────────────
     const addToast = useCallback((type, title, message) => {
@@ -634,6 +657,25 @@ export default function AdminTeacher() {
         };
         fetchStudents();
     }, []);
+
+    const fetchAssignedTasks = useCallback(async () => {
+        setTasksLoading(true);
+        try {
+            const resp = await axios.get('/api/tasks');
+            const data = Array.isArray(resp.data) ? resp.data : Array.isArray(resp.data?.data) ? resp.data.data : [];
+            const mapped = data.map((task) => ({ ...task, id: task._id || task.id }));
+            setAssignedTasks(mapped);
+        } catch (error) {
+            console.error('Error loading tasks', error);
+            addToast('error', 'Task Load Error ❌', 'Could not fetch assigned tasks');
+        } finally {
+            setTasksLoading(false);
+        }
+    }, [addToast]);
+
+    useEffect(() => {
+        fetchAssignedTasks();
+    }, [fetchAssignedTasks]);
 
     // ── Derived state ──────────────────────────────────────────────────────────
     const filteredStudents = useMemo(() => {
@@ -789,6 +831,10 @@ export default function AdminTeacher() {
 
             console.log('📌 POST /api/tasks', taskPayload);
             const resp = await axios.post('/api/tasks', taskPayload);
+            const newTask = resp?.data?.data;
+            if (newTask) {
+                setAssignedTasks(prev => [{ ...newTask, id: newTask._id || newTask.id }, ...prev]);
+            }
 
             addToast('success', `Task Assigned! 📝`, `${taskForm.title} assigned to ${targetStudents.length} students`);
 
@@ -811,6 +857,53 @@ export default function AdminTeacher() {
             console.error('Task assignment error:', error);
         } finally {
             setAssigningTask(false);
+        }
+    };
+
+    const handleTaskFieldChange = (e) => {
+        const { name, value } = e.target;
+        setEditTask(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleUpdateTask = async () => {
+        if (!editTask?.id) return;
+        setTaskActionLoading(true);
+        try {
+            const payload = {
+                title: editTask.title,
+                description: editTask.description,
+                subject: editTask.subject,
+                class: editTask.class,
+                section: editTask.section,
+                dueDate: editTask.dueDate,
+                priority: editTask.priority,
+                status: editTask.status,
+            };
+            const resp = await axios.put(`/api/tasks/${editTask.id}`, payload);
+            const updatedTask = resp?.data?.data;
+            setAssignedTasks(prev => prev.map(t => (t.id === editTask.id ? { ...updatedTask, id: updatedTask._id || updatedTask.id } : t)));
+            addToast('success', 'Task Updated ✓', 'Assigned task updated successfully.');
+            setEditTask(null);
+        } catch (error) {
+            const errMsg = error.response?.data?.message || error.message || 'Could not update task';
+            addToast('error', 'Update Error ❌', errMsg);
+        } finally {
+            setTaskActionLoading(false);
+        }
+    };
+
+    const handleDeleteTask = async (id) => {
+        setTaskActionLoading(true);
+        try {
+            await axios.delete(`/api/tasks/${id}`);
+            setAssignedTasks(prev => prev.filter(t => t.id !== id));
+            addToast('success', 'Task Deleted ✓', 'Assigned task removed successfully.');
+            setDeleteTaskModal(null);
+        } catch (error) {
+            const errMsg = error.response?.data?.message || error.message || 'Could not delete task';
+            addToast('error', 'Delete Error ❌', errMsg);
+        } finally {
+            setTaskActionLoading(false);
         }
     };
 
@@ -843,6 +936,12 @@ export default function AdminTeacher() {
             <DeleteModal student={deleteModal} onConfirm={handleDelete} onCancel={() => setDeleteModal(null)} />
             {viewTasksModal && <ViewTasksModal student={viewTasksModal} onClose={() => setViewTasksModal(null)} />}
             {showCSVModal && <CSVImportModal onClose={() => setShowCSVModal(false)} onImport={handleCSVImport} />}
+            <TaskDeleteModal
+                task={deleteTaskModal}
+                onCancel={() => setDeleteTaskModal(null)}
+                onConfirm={handleDeleteTask}
+                loading={taskActionLoading}
+            />
             <Toast toasts={toasts} dismiss={dismissToast} />
 
             {/* ── Navbar ─────────────────────────────────────────────────────────── */}
@@ -1278,6 +1377,70 @@ export default function AdminTeacher() {
                                 </p>
                             </div>
                         )}
+
+                        <div className="mt-6 md:mt-8 rounded-2xl md:rounded-3xl border border-slate-200/60 bg-white/90 shadow-xl shadow-slate-200/40 overflow-hidden">
+                            <div className="px-4 md:px-5 py-3.5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-blue-50">
+                                <h3 className="text-sm md:text-base font-bold text-slate-900">Assigned Tasks</h3>
+                                <p className="text-xs text-slate-500 mt-0.5">Tasks assigned by admin/teacher with quick edit and delete controls.</p>
+                            </div>
+
+                            {tasksLoading ? (
+                                <div className="p-5 text-sm text-slate-500">Loading tasks...</div>
+                            ) : assignedTasks.length === 0 ? (
+                                <div className="p-5 text-sm text-slate-500">No assigned tasks found.</div>
+                            ) : (
+                                <>
+                                    <div className="hidden md:block overflow-x-auto">
+                                        <table className="min-w-full text-sm">
+                                            <thead className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
+                                                <tr>
+                                                    <th className="px-4 py-3 text-left">Task</th>
+                                                    <th className="px-4 py-3 text-left">Class</th>
+                                                    <th className="px-4 py-3 text-left">Due</th>
+                                                    <th className="px-4 py-3 text-left">Priority</th>
+                                                    <th className="px-4 py-3 text-left">Assigned</th>
+                                                    <th className="px-4 py-3 text-left">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {assignedTasks.map(task => (
+                                                    <tr key={task.id} className="border-t border-slate-100">
+                                                        <td className="px-4 py-3">
+                                                            <p className="font-semibold text-slate-800">{task.title}</p>
+                                                            <p className="text-xs text-slate-500">{task.subject}</p>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-slate-600">{task.class}-{task.section}</td>
+                                                        <td className="px-4 py-3 text-slate-600">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'}</td>
+                                                        <td className="px-4 py-3 text-slate-600">{task.priority}</td>
+                                                        <td className="px-4 py-3 text-slate-600">{task.assignedCount || task.assignedTo?.length || 0}</td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <button onClick={() => setEditTask({ ...task, dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '' })} className="p-2 rounded-lg hover:bg-blue-50 text-slate-500 hover:text-blue-600"><Edit3 className="w-4 h-4" /></button>
+                                                                <button onClick={() => setDeleteTaskModal(task)} className="p-2 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div className="md:hidden p-3 space-y-3">
+                                        {assignedTasks.map(task => (
+                                            <div key={task.id} className="rounded-xl border border-slate-200 p-3 bg-white">
+                                                <p className="font-semibold text-slate-800 text-sm">{task.title}</p>
+                                                <p className="text-xs text-slate-500">{task.subject} • {task.class}-{task.section}</p>
+                                                <p className="text-xs text-slate-500 mt-1">Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '—'} • {task.priority}</p>
+                                                <div className="mt-2 flex gap-2">
+                                                    <button onClick={() => setEditTask({ ...task, dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '' })} className="flex-1 py-2 rounded-lg border border-blue-200 text-blue-700 text-xs font-semibold">Edit</button>
+                                                    <button onClick={() => setDeleteTaskModal(task)} className="flex-1 py-2 rounded-lg border border-red-200 text-red-700 text-xs font-semibold">Delete</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </main>
@@ -1298,6 +1461,58 @@ export default function AdminTeacher() {
                     errors={taskErrors}
                     assigning={assigningTask}
                 />
+            )}
+
+            {editTask && (
+                <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl p-5 md:p-6 max-w-2xl w-full border border-blue-100 max-h-[85vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-slate-900">Edit Assigned Task</h3>
+                            <button onClick={() => setEditTask(null)} className="p-2 rounded-lg hover:bg-slate-100"><X className="w-4 h-4" /></button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <Field label="Task Title" required>
+                                <Input name="title" value={editTask.title || ''} onChange={handleTaskFieldChange} />
+                            </Field>
+                            <Field label="Subject" required>
+                                <Select name="subject" value={editTask.subject || ''} onChange={handleTaskFieldChange}>
+                                    {SUBJECT_OPTIONS.map(sub => <option key={sub}>{sub}</option>)}
+                                </Select>
+                            </Field>
+                            <Field label="Class" required>
+                                <Select name="class" value={editTask.class || 'All'} onChange={handleTaskFieldChange}>
+                                    <option value="All">All</option>
+                                    {CLASS_OPTIONS.map(c => <option key={c}>{c}</option>)}
+                                </Select>
+                            </Field>
+                            <Field label="Section" required>
+                                <Select name="section" value={editTask.section || 'All'} onChange={handleTaskFieldChange}>
+                                    <option value="All">All</option>
+                                    {SECTION_OPTIONS.map(s => <option key={s}>{s}</option>)}
+                                </Select>
+                            </Field>
+                            <Field label="Due Date" required>
+                                <Input type="date" name="dueDate" value={editTask.dueDate || ''} onChange={handleTaskFieldChange} />
+                            </Field>
+                            <Field label="Priority" required>
+                                <Select name="priority" value={editTask.priority || 'Medium'} onChange={handleTaskFieldChange}>
+                                    <option>Low</option><option>Medium</option><option>High</option>
+                                </Select>
+                            </Field>
+                        </div>
+                        <div className="mt-3">
+                            <Field label="Description" required>
+                                <textarea name="description" value={editTask.description || ''} onChange={handleTaskFieldChange} rows={4} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+                            </Field>
+                        </div>
+                        <div className="mt-4 flex gap-3">
+                            <button onClick={() => setEditTask(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold">Cancel</button>
+                            <button disabled={taskActionLoading} onClick={handleUpdateTask} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold disabled:opacity-60">
+                                {taskActionLoading ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
