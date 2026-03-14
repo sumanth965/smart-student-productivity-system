@@ -1,7 +1,9 @@
-import { Bell, Menu, Moon, Search, Sun, User, X, Zap, LayoutDashboard, Clock, Brain, ShieldCheck, LogOut, Lock, CheckSquare, Calendar } from 'lucide-react';
+import { Bell, Menu, Moon, Search, Sun, User, X, Zap, LayoutDashboard, Clock, Brain, ShieldCheck, LogOut, Lock, CheckSquare, Calendar, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import UserProfileModal from './UserProfileModal';
+import axios from '../../lib/axios';
+import { getDaysUntil, isOverdue } from './dashboardUtils';
 
 export default function DashboardNavbar({
   isDark,
@@ -15,9 +17,140 @@ export default function DashboardNavbar({
   const location = useLocation();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showAdminAuth, setShowAdminAuth] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [adminName, setAdminName] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
+  const notificationRef = useRef(null);
+
+  // Close notifications dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    }
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showNotifications]);
+
+  // Load notifications
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const persistedUser = localStorage.getItem('student_user') || sessionStorage.getItem('student_user');
+        if (!persistedUser) return;
+
+        const parsedUser = JSON.parse(persistedUser);
+        const userId = parsedUser?._id || parsedUser?.id || '';
+        if (!userId) return;
+
+        const response = await axios.get(`/api/students/${userId}/tasks`);
+        const allTasks = Array.isArray(response.data?.data) ? response.data.data : [];
+
+        // Generate notifications from tasks
+        const taskNotifications = [];
+        const now = new Date();
+
+        allTasks.forEach(task => {
+          if (task.status === 'Completed') return;
+
+          const deadline = new Date(task.dueDate);
+          const daysUntil = getDaysUntil(deadline);
+          const overdue = isOverdue(deadline, false);
+
+          if (overdue) {
+            taskNotifications.push({
+              id: `overdue-${task._id}`,
+              type: 'overdue',
+              title: 'Task Overdue',
+              message: `"${task.title}" is overdue`,
+              task: task.title,
+              time: deadline,
+              read: false,
+              priority: 'high'
+            });
+          } else if (daysUntil === 0) {
+            taskNotifications.push({
+              id: `today-${task._id}`,
+              type: 'due-today',
+              title: 'Due Today',
+              message: `"${task.title}" is due today`,
+              task: task.title,
+              time: deadline,
+              read: false,
+              priority: 'high'
+            });
+          } else if (daysUntil === 1) {
+            taskNotifications.push({
+              id: `tomorrow-${task._id}`,
+              type: 'due-soon',
+              title: 'Due Tomorrow',
+              message: `"${task.title}" is due tomorrow`,
+              task: task.title,
+              time: deadline,
+              read: false,
+              priority: 'medium'
+            });
+          } else if (daysUntil <= 3) {
+            taskNotifications.push({
+              id: `upcoming-${task._id}`,
+              type: 'upcoming',
+              title: 'Upcoming Deadline',
+              message: `"${task.title}" is due in ${daysUntil} days`,
+              task: task.title,
+              time: deadline,
+              read: false,
+              priority: 'low'
+            });
+          }
+        });
+
+        // Sort by priority and time
+        taskNotifications.sort((a, b) => {
+          const priorityOrder = { high: 0, medium: 1, low: 2 };
+          if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+          }
+          return a.time - b.time;
+        });
+
+        setNotifications(taskNotifications);
+        setUnreadCount(taskNotifications.filter(n => !n.read).length);
+      } catch (error) {
+        console.error('Failed to load notifications:', error);
+      }
+    };
+
+    loadNotifications();
+    // Refresh notifications every 5 minutes
+    const interval = setInterval(loadNotifications, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const markAsRead = (notificationId) => {
+    setNotifications(prev =>
+      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+  };
+
+  const clearNotification = (notificationId) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    setUnreadCount(prev => {
+      const notification = notifications.find(n => n.id === notificationId);
+      return notification && !notification.read ? Math.max(0, prev - 1) : prev;
+    });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('student_token');
@@ -126,13 +259,142 @@ export default function DashboardNavbar({
             </div>
 
             {/* Notifications */}
-            <button
-              className={`relative rounded-lg p-2 ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
-            </button>
+            <div className="relative" ref={notificationRef}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`relative rounded-lg p-2 ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <>
+                    <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  </>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className={`absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl shadow-2xl ring-1 z-50 max-h-[32rem] overflow-hidden ${isDark ? 'bg-slate-800/95 ring-slate-700/50 backdrop-blur-sm' : 'bg-white/95 ring-slate-200/50 backdrop-blur-sm'
+                  }`}>
+                  {/* Header */}
+                  <div className={`px-4 py-3 border-b flex items-center justify-between ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+                    <div>
+                      <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>Notifications</h3>
+                      <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
+                      </p>
+                    </div>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className={`text-xs font-semibold px-3 py-1 rounded-lg transition-colors ${isDark ? 'text-blue-400 hover:bg-blue-500/10' : 'text-blue-600 hover:bg-blue-50'
+                          }`}
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Notifications List */}
+                  <div className="overflow-y-auto max-h-96">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <div className={`inline-flex p-3 rounded-full mb-3 ${isDark ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
+                          <CheckCircle2 className={`h-8 w-8 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
+                        </div>
+                        <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                          No notifications
+                        </p>
+                        <p className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                          You're all caught up!
+                        </p>
+                      </div>
+                    ) : (
+                      notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          onClick={() => markAsRead(notification.id)}
+                          className={`px-4 py-3 border-b cursor-pointer transition-colors ${notification.read
+                              ? isDark ? 'bg-transparent hover:bg-slate-700/30' : 'bg-transparent hover:bg-slate-50'
+                              : isDark ? 'bg-blue-500/10 hover:bg-blue-500/20' : 'bg-blue-50/50 hover:bg-blue-50'
+                            } ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Icon */}
+                            <div className={`flex-shrink-0 p-2 rounded-lg ${notification.type === 'overdue'
+                                ? 'bg-red-100 dark:bg-red-500/20'
+                                : notification.type === 'due-today'
+                                  ? 'bg-orange-100 dark:bg-orange-500/20'
+                                  : notification.type === 'due-soon'
+                                    ? 'bg-amber-100 dark:bg-amber-500/20'
+                                    : 'bg-blue-100 dark:bg-blue-500/20'
+                              }`}>
+                              {notification.type === 'overdue' ? (
+                                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                              ) : notification.type === 'due-today' ? (
+                                <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                              ) : notification.type === 'due-soon' ? (
+                                <Calendar className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                              ) : (
+                                <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              )}
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                  {notification.title}
+                                </p>
+                                {!notification.read && (
+                                  <span className="flex-shrink-0 h-2 w-2 rounded-full bg-blue-500" />
+                                )}
+                              </div>
+                              <p className={`text-xs mt-0.5 line-clamp-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                                {notification.message}
+                              </p>
+                              <p className={`text-xs mt-1 ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                                {notification.time.toLocaleDateString()} at {notification.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+
+                            {/* Clear button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                clearNotification(notification.id);
+                              }}
+                              className={`flex-shrink-0 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? 'hover:bg-slate-700 text-slate-500' : 'hover:bg-slate-200 text-slate-400'
+                                }`}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  {notifications.length > 0 && (
+                    <div className={`px-4 py-3 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200/50'}`}>
+                      <Link
+                        to="/tasks"
+                        onClick={() => setShowNotifications(false)}
+                        className={`block text-center text-sm font-semibold py-2 rounded-lg transition-colors ${isDark ? 'text-blue-400 hover:bg-blue-500/10' : 'text-blue-600 hover:bg-blue-50'
+                          }`}
+                      >
+                        View all tasks
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Dark mode toggle */}
             <button
