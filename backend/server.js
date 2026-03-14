@@ -50,13 +50,17 @@ const envAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
 
 const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envAllowedOrigins])];
 const renderDomainPattern = /^https:\/\/[a-z0-9-]+\.onrender\.com$/i;
+const vercelDomainPattern = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
 
 const isAllowedOrigin = (origin) => {
   if (!origin) return true;
   if (allowedOrigins.includes(origin)) return true;
 
-  // Support Render preview/production URLs without requiring redeploy-time env edits.
+  // Support Render preview/production URLs
   if (renderDomainPattern.test(origin)) return true;
+
+  // Support Vercel preview/production URLs
+  if (vercelDomainPattern.test(origin)) return true;
 
   return false;
 };
