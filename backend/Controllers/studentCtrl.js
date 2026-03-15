@@ -355,7 +355,13 @@ exports.updateTask = async (req, res) => {
             section,
             dueDate,
             priority,
+            assignedTo,
         } = req.body;
+
+        const existingTask = await Task.findById(id);
+        if (!existingTask) {
+            return res.status(404).json({ success: false, message: 'Task not found' });
+        }
 
         const updates = {};
         if (status) updates.status = status;
@@ -370,6 +376,30 @@ exports.updateTask = async (req, res) => {
             updates.$addToSet = { completedBy };
         }
 
+        const hasExplicitAssignment = Array.isArray(assignedTo);
+        const hasClassOrSectionUpdate = cls !== undefined || section !== undefined;
+
+        if (hasExplicitAssignment || hasClassOrSectionUpdate) {
+            let nextAssignedIds = [];
+
+            if (hasExplicitAssignment) {
+                nextAssignedIds = assignedTo;
+            } else {
+                const targetClass = cls !== undefined ? cls : existingTask.class;
+                const targetSection = section !== undefined ? section : existingTask.section;
+
+                const query = { role: 'student', status: 'Active' };
+                if (targetClass && targetClass !== 'All') query.class = targetClass;
+                if (targetSection && targetSection !== 'All') query.section = targetSection;
+
+                const students = await User.find(query).select('_id');
+                nextAssignedIds = students.map((student) => student._id);
+            }
+
+            updates.assignedTo = nextAssignedIds;
+            updates.assignedCount = nextAssignedIds.length;
+        }
+
         const updatedTask = await Task.findByIdAndUpdate(id, updates, {
             new: true,
             runValidators: true,
@@ -377,8 +407,26 @@ exports.updateTask = async (req, res) => {
             .populate('assignedTo', 'name email usn class section')
             .populate('createdBy', 'name email role');
 
-        if (!updatedTask) {
-            return res.status(404).json({ success: false, message: 'Task not found' });
+        if (updates.assignedTo) {
+            const previousAssigneeIds = existingTask.assignedTo.map((assigneeId) => assigneeId.toString());
+            const nextAssigneeIds = updates.assignedTo.map((assigneeId) => assigneeId.toString());
+
+            const removedAssignees = previousAssigneeIds.filter((assigneeId) => !nextAssigneeIds.includes(assigneeId));
+            const addedAssignees = nextAssigneeIds.filter((assigneeId) => !previousAssigneeIds.includes(assigneeId));
+
+            if (removedAssignees.length > 0) {
+                await User.updateMany(
+                    { _id: { $in: removedAssignees } },
+                    { $pull: { assignedTasks: id } }
+                );
+            }
+
+            if (addedAssignees.length > 0) {
+                await User.updateMany(
+                    { _id: { $in: addedAssignees } },
+                    { $addToSet: { assignedTasks: id } }
+                );
+            }
         }
 
         return res.status(200).json({
