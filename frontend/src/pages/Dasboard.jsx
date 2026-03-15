@@ -3,7 +3,7 @@ import AddTaskModal from '../components/dashboard/AddTaskModal';
 import DashboardNavbar from '../components/dashboard/DashboardNavbar';
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import RecentTasksSection from '../components/dashboard/RecentTasksSection';
-import { calculatePriority, getDaysUntil, isOverdue } from '../components/dashboard/dashboardUtils';
+import { getDaysUntil, isOverdue, resolveTaskPriority } from '../components/dashboard/dashboardUtils';
 import axios from '../lib/axios';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -24,7 +24,7 @@ export default function Dashboard() {
     title: task.title,
     subject: task.subject,
     deadline: new Date(task.dueDate),
-    priority: task.priority?.toLowerCase() || calculatePriority(new Date(task.dueDate)),
+    priority: resolveTaskPriority(task.priority, new Date(task.dueDate)),
     completed: task.status === 'Completed',
     description: task.description,
     createdAt: new Date(task.createdAt),
@@ -139,7 +139,7 @@ export default function Dashboard() {
       if (filter === 'pending') return !task.completed;
       if (filter === 'completed') return task.completed;
       if (filter === 'overdue') return isOverdue(task.deadline, task.completed);
-      if (filter === 'high-priority') return !task.completed && calculatePriority(task.deadline) === 'high';
+      if (filter === 'high-priority') return !task.completed && resolveTaskPriority(task.priority, task.deadline) === 'high';
       return true;
     })
     .filter(

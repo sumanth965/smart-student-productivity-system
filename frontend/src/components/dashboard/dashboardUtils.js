@@ -88,6 +88,15 @@ export const calculatePriority = (deadline) => {
   return 'low';
 };
 
+
+const TASK_PRIORITY_LEVELS = new Set(['high', 'medium', 'low']);
+
+export const resolveTaskPriority = (priority, deadline) => {
+  const normalizedPriority = typeof priority === 'string' ? priority.toLowerCase() : '';
+  if (TASK_PRIORITY_LEVELS.has(normalizedPriority)) return normalizedPriority;
+  return calculatePriority(deadline);
+};
+
 export const isOverdue = (deadline, completed) => !completed && new Date() > deadline;
 
 export const getDaysUntil = (deadline) => {
