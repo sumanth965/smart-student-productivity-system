@@ -1,10 +1,10 @@
 import { CheckCircle, Trash2, AlertCircle, Clock, Flag } from 'lucide-react';
-import { calculatePriority, getDaysUntil, isOverdue } from './dashboardUtils';
+import { getDaysUntil, isOverdue, resolveTaskPriority } from './dashboardUtils';
 
 export default function TaskItem({ task, onToggle, onDelete, isDark }) {
   const daysUntil = getDaysUntil(task.deadline);
   const overdue = isOverdue(task.deadline, task.completed);
-  const actualPriority = calculatePriority(task.deadline);
+  const actualPriority = resolveTaskPriority(task.priority, task.deadline);
 
   const priorityConfig = {
     high: {

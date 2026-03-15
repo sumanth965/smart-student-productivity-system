@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import DashboardNavbar from "../components/dashboard/DashboardNavbar";
 import AddTaskModal from "../components/dashboard/AddTaskModal";
-import { calculatePriority, getDaysUntil, isOverdue } from "../components/dashboard/dashboardUtils";
+import { getDaysUntil, isOverdue, resolveTaskPriority } from "../components/dashboard/dashboardUtils";
 import axios from "../lib/axios";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -90,9 +90,7 @@ export default function StudyFlowTasks() {
         title: task.title,
         subject: task.subject,
         deadline: new Date(task.dueDate),
-        priority:
-          task.priority?.toLowerCase() ||
-          calculatePriority(new Date(task.dueDate)),
+        priority: resolveTaskPriority(task.priority, new Date(task.dueDate)),
         completed: task.status === "Completed",
         description: task.description,
         createdBy: task.createdBy?.name || "Teacher",
@@ -110,7 +108,18 @@ export default function StudyFlowTasks() {
     }
   }, []);
 
-  useEffect(() => { loadTasks(); }, [loadTasks]);
+  useEffect(() => {
+    loadTasks();
+
+    const handleRefresh = () => loadTasks();
+    window.addEventListener("tasks:refresh", handleRefresh);
+    window.addEventListener("focus", handleRefresh);
+
+    return () => {
+      window.removeEventListener("tasks:refresh", handleRefresh);
+      window.removeEventListener("focus", handleRefresh);
+    };
+  }, [loadTasks]);
 
   /* ─── derived data ───────────────────────────── */
   const filteredTasks = useMemo(() => {
@@ -732,7 +741,7 @@ export default function StudyFlowTasks() {
    TASK CARD
 ══════════════════════════════════════════════════════════════ */
 function TaskCard({ task, isDark, viewMode, type, onToggle, onDelete, onClick, textPrimary, textMuted, cardBg, border }) {
-  const priority = (calculatePriority(task.deadline) || task.priority || "medium").toLowerCase();
+  const priority = resolveTaskPriority(task.priority, task.deadline);
   const pc = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
   const sc = SUBJECT_COLORS[task.subject] || SUBJECT_COLORS.Default;
   const daysUntil = getDaysUntil(task.deadline);
@@ -1042,7 +1051,7 @@ function TaskCard({ task, isDark, viewMode, type, onToggle, onDelete, onClick, t
 function TaskDetailModal({ task, isDark, onClose, textPrimary, textMuted, cardBg, border }) {
   const daysUntil = getDaysUntil(task.deadline);
   const overdue = isOverdue(task.deadline, task.completed);
-  const priority = (calculatePriority(task.deadline) || task.priority || "medium").toLowerCase();
+  const priority = resolveTaskPriority(task.priority, task.deadline);
   const pc = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
 
   return (
