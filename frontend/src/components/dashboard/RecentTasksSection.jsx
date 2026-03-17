@@ -1,6 +1,7 @@
+import { useEffect, useRef } from 'react';
 import { CheckCircle, ChevronDown, Filter, Plus, Search, Sparkles } from 'lucide-react';
+import ScrollReveal from './ScrollReveal';
 import TaskItem from './TaskItem';
-import { useState, useRef, useEffect } from 'react';
 
 const FILTER_OPTIONS = [
   { label: 'All Tasks', value: 'all', icon: '📋' },
@@ -12,7 +13,7 @@ const FILTER_OPTIONS = [
 
 function TaskGroup({ title, tasks, isDark, handleToggleTask, handleDeleteTask, emptyMessage, index, allowDelete = true }) {
   return (
-    <div className="space-y-4 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+    <ScrollReveal delay={0.1 + (index * 0.1)} className="space-y-4">
       <div className="flex items-center gap-2">
         <div className={`h-1.5 w-1.5 rounded-full ${index === 0 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-gradient-to-r from-amber-500 to-rose-500'}`}></div>
         <h4 className={`text-xs font-bold tracking-wide uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{title}</h4>
@@ -21,14 +22,14 @@ function TaskGroup({ title, tasks, isDark, handleToggleTask, handleDeleteTask, e
       {tasks.length > 0 ? (
         <div className="space-y-2">
           {tasks.map((task, idx) => (
-            <div key={task.id} style={{ animationDelay: `${(index * 100) + (idx * 50)}ms` }} className="animate-fade-in">
+            <ScrollReveal key={task.id} delay={0.15 + (index * 0.1) + (idx * 0.05)}>
               <TaskItem
                 task={task}
                 onToggle={handleToggleTask}
                 onDelete={allowDelete ? handleDeleteTask : undefined}
                 isDark={isDark}
               />
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       ) : (
@@ -36,7 +37,7 @@ function TaskGroup({ title, tasks, isDark, handleToggleTask, handleDeleteTask, e
           <p className={`text-xs font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{emptyMessage}</p>
         </div>
       )}
-    </div>
+    </ScrollReveal>
   );
 }
 
@@ -54,7 +55,7 @@ function FilterDropdown({ open, setOpen, filter, setFilter, isDark }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open, setOpen]);
 
-  const currentFilter = FILTER_OPTIONS.find(opt => opt.value === filter);
+  const currentFilter = FILTER_OPTIONS.find((opt) => opt.value === filter);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -141,43 +142,12 @@ export default function RecentTasksSection({
   const hasTasks = recentTeacherTasks.length > 0 || recentSelfTasks.length > 0;
 
   return (
-    <div className="mb-8 w-full">
-      <style>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(4px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.4s ease-out forwards;
-          opacity: 0;
-        }
-        @keyframes slideInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-slide-in-down {
-          animation: slideInDown 0.3s ease-out;
-        }
-      `}</style>
-
+    <ScrollReveal className="mb-8 w-full" delay={0.15}>
       <div className={`rounded-2xl backdrop-blur-sm p-8 shadow-lg ring-1 transition-all duration-300 ${isDark
         ? 'bg-slate-800/50 ring-slate-700/30 hover:shadow-xl hover:ring-slate-700/50'
         : 'bg-white/60 ring-slate-200/40 hover:shadow-xl hover:ring-slate-200/60'
         }`}>
 
-        {/* Header Section */}
         <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20 p-3">
@@ -188,7 +158,6 @@ export default function RecentTasksSection({
             </h3>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
               onClick={() => setShowAddModal(true)}
@@ -201,12 +170,10 @@ export default function RecentTasksSection({
           </div>
         </div>
 
-        {/* Search Bar - Mobile and Desktop */}
         <div className="mb-6">
           <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} isDark={isDark} />
         </div>
 
-        {/* Tasks Grid */}
         {hasTasks ? (
           <div className="grid gap-8 md:grid-cols-2">
             <TaskGroup
@@ -227,11 +194,11 @@ export default function RecentTasksSection({
               handleDeleteTask={handleDeleteTask}
               emptyMessage="No self-created tasks"
               index={1}
-              allowDelete={true}
+              allowDelete
             />
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
+          <ScrollReveal className="flex flex-col items-center justify-center py-16" delay={0.25}>
             <div className={`rounded-full p-4 mb-4 ${isDark ? 'bg-slate-700/30' : 'bg-slate-100/50'}`}>
               <CheckCircle className={`h-12 w-12 ${isDark ? 'text-slate-500' : 'text-slate-300'}`} />
             </div>
@@ -243,9 +210,9 @@ export default function RecentTasksSection({
                 Create one to get started
               </p>
             )}
-          </div>
+          </ScrollReveal>
         )}
       </div>
-    </div>
+    </ScrollReveal>
   );
 }

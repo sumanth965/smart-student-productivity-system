@@ -1,8 +1,10 @@
 import { TrendingUp } from 'lucide-react';
+import ScrollReveal from './ScrollReveal';
 
-export default function StatCard({ icon: Icon, label, value, change, bgGradient, isDark }) {
+export default function StatCard({ icon: Icon, label, value, change, bgGradient, isDark, delay = 0 }) {
   return (
-    <div
+    <ScrollReveal
+      delay={delay}
       className={`relative overflow-hidden rounded-2xl backdrop-blur-md p-6 shadow-2xl ring-1 transition-all duration-300 hover:scale-105 hover:shadow-blue-500/20 ${isDark
         ? 'bg-slate-800/80 ring-slate-700/50 hover:bg-slate-800/90'
         : 'bg-white/80 ring-slate-200/50 hover:bg-white/90'
@@ -24,6 +26,6 @@ export default function StatCard({ icon: Icon, label, value, change, bgGradient,
           <Icon className="h-6 w-6 text-red-900" />
         </div>
       </div>
-    </div>
+    </ScrollReveal>
   );
 }
