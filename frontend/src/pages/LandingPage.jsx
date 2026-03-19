@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -141,6 +142,8 @@ const styles = `
     border-radius: 8px; border: none; cursor: pointer;
     font-size: 1.05rem; transition: background 0.2s;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: inherit;
+    text-decoration: none; display: inline-flex;
+    align-items: center; justify-content: center;
   }
   .sp-hero-cta:hover { background: #e0a800; }
   .sp-hero-avail {
@@ -299,6 +302,17 @@ const styles = `
     transition: background 0.2s; flex-shrink: 0; font-family: inherit;
   }
   .sp-email-btn:hover { background: #e0a800; }
+  .sp-highlight-strip { background: linear-gradient(90deg, #19207b, #2634b6); color: #fff; padding: 1rem 1.5rem; }
+  .sp-highlight-inner {
+    max-width: 1280px; margin: 0 auto; display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem;
+  }
+  .sp-highlight-card {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 14px; padding: 1rem 1.1rem;
+  }
+  .sp-highlight-card strong { display: block; font-size: 1rem; margin-bottom: 0.25rem; }
+  .sp-highlight-card span { color: #dbe4ff; font-size: 0.92rem; line-height: 1.5; }
   .sp-footer-bottom {
     padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);
     display: flex; justify-content: space-between; align-items: center;
@@ -315,6 +329,7 @@ const styles = `
   @media (max-width: 1100px) {
     .sp-features-grid { grid-template-columns: repeat(2,1fr); }
     .sp-footer-grid { grid-template-columns: repeat(2,1fr); gap: 2rem; }
+    .sp-highlight-inner { grid-template-columns: 1fr; }
   }
 
   /* Tablet portrait ≤900px */
@@ -462,7 +477,7 @@ export default function StudentPro() {
               <a href="#features">Features</a>
               <a href="#process">How it Works</a>
               <a href="#why-us">Why Us</a>
-              <a href="/login" className="sp-btn-primary">LOGIN <span>→</span></a>
+              <Link to="/login" className="sp-btn-primary">LOGIN <span>→</span></Link>
             </div>
             <button
               className={`sp-hamburger${menuOpen ? " open" : ""}`}
@@ -478,7 +493,7 @@ export default function StudentPro() {
             <a href="#features" onClick={closeMenu}>Features</a>
             <a href="#process" onClick={closeMenu}>How it Works</a>
             <a href="#why-us" onClick={closeMenu}>Why Us</a>
-            <a href="/login" className="sp-mobile-cta" onClick={closeMenu}>LOGIN →</a>
+            <Link to="/login" className="sp-mobile-cta" onClick={closeMenu}>LOGIN →</Link>
           </div>
         </div>
       </nav>
@@ -496,7 +511,7 @@ export default function StudentPro() {
               Follow one connected flow: log in, view teacher-assigned work, add your own tasks, get deadline reminders, and use AI support to stay focused every day.
             </p>
             <div className="sp-hero-actions">
-              <button className="sp-hero-cta">START PRODUCTIVE STUDYING</button>
+              <Link className="sp-hero-cta" to="/login">START PRODUCTIVE STUDYING</Link>
               <div className="sp-hero-avail">
                 <span className="sp-hero-avail-label">Available On</span>
                 <span className="sp-hero-avail-val">STUDENT &amp; TEACHER PORTAL</span>
@@ -514,6 +529,23 @@ export default function StudentPro() {
               <div className="sp-hero-stat-num">24/7</div>
               <div className="sp-hero-stat-label">Task Visibility</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="sp-highlight-strip" aria-label="Platform highlights">
+        <div className="sp-highlight-inner">
+          <div className="sp-highlight-card">
+            <strong>One clear workspace</strong>
+            <span>Keep assignments, personal tasks, reminders, and progress updates in one place.</span>
+          </div>
+          <div className="sp-highlight-card">
+            <strong>Designed for daily use</strong>
+            <span>Students can quickly check what is due today and what needs attention next.</span>
+          </div>
+          <div className="sp-highlight-card">
+            <strong>Built-in guidance</strong>
+            <span>Use the AI module to get help, break down work, and stay consistent.</span>
           </div>
         </div>
       </section>
