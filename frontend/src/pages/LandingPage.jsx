@@ -60,6 +60,15 @@ const styles = `
     text-decoration: none; white-space: nowrap;
   }
   .sp-btn-primary:hover { background: #e0a800; }
+  .sp-btn-secondary {
+    background: transparent; color: #19207b;
+    padding: 0.5rem 1.5rem; border-radius: 9999px;
+    font-weight: 700; border: 1px solid #19207b; cursor: pointer;
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.9rem; transition: all 0.2s;
+    text-decoration: none; white-space: nowrap;
+  }
+  .sp-btn-secondary:hover { background: #19207b; color: #fff; }
 
   /* Hamburger */
   .sp-hamburger {
@@ -108,6 +117,11 @@ const styles = `
     border-bottom: none !important; border-radius: 8px !important;
   }
   .sp-mobile-cta:hover { background: #ffc107 !important; color: #19207b !important; }
+  .sp-mobile-cta.secondary {
+    background: #fff !important; color: #19207b !important;
+    border: 1px solid #19207b;
+  }
+  .sp-mobile-cta.secondary:hover { background: #19207b !important; color: #fff !important; }
 
   /* HERO */
   .sp-hero {
@@ -146,6 +160,11 @@ const styles = `
     align-items: center; justify-content: center;
   }
   .sp-hero-cta:hover { background: #e0a800; }
+  .sp-hero-cta.secondary {
+    background: rgba(255,255,255,0.12); color: #fff;
+    border: 1px solid rgba(255,255,255,0.4);
+  }
+  .sp-hero-cta.secondary:hover { background: rgba(255,255,255,0.22); }
   .sp-hero-avail {
     background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,0.2); padding: 0.875rem 1.25rem;
@@ -477,6 +496,7 @@ export default function StudentPro() {
               <a href="#features">Features</a>
               <a href="#process">How it Works</a>
               <a href="#why-us">Why Us</a>
+              <Link to="/admin" className="sp-btn-secondary">ADMIN LOGIN <span>→</span></Link>
               <Link to="/login" className="sp-btn-primary">LOGIN <span>→</span></Link>
             </div>
             <button
@@ -493,6 +513,7 @@ export default function StudentPro() {
             <a href="#features" onClick={closeMenu}>Features</a>
             <a href="#process" onClick={closeMenu}>How it Works</a>
             <a href="#why-us" onClick={closeMenu}>Why Us</a>
+            <Link to="/admin" className="sp-mobile-cta secondary" onClick={closeMenu}>ADMIN LOGIN →</Link>
             <Link to="/login" className="sp-mobile-cta" onClick={closeMenu}>LOGIN →</Link>
           </div>
         </div>
@@ -512,6 +533,7 @@ export default function StudentPro() {
             </p>
             <div className="sp-hero-actions">
               <Link className="sp-hero-cta" to="/login">START PRODUCTIVE STUDYING</Link>
+              <Link className="sp-hero-cta secondary" to="/admin">ADMIN LOGIN</Link>
               <div className="sp-hero-avail">
                 <span className="sp-hero-avail-label">Available On</span>
                 <span className="sp-hero-avail-val">STUDENT &amp; TEACHER PORTAL</span>
