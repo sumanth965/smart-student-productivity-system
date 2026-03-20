@@ -670,8 +670,8 @@ export default function AdminLogin() {
           {/* Demo hint */}
           <div className="al-hint">
             <strong>Demo credentials:</strong><br />
-            Email: admin@smartstudent.edu<br />
-            Password: Admin@2026
+            Email: admin@nmamit.in<br />
+            Password: 123
           </div>
 
           <div className="al-back">
