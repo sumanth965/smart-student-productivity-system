@@ -19,12 +19,14 @@ const styles = `
     position: sticky;
     top: 0;
     z-index: 100;
-    background: #fff;
-    border-bottom: 1px solid #f3f4f6;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(25,32,123,0.07);
+    box-shadow: 0 2px 24px rgba(25,32,123,0.06);
   }
   .sp-nav-bar {
-    padding: 0.875rem 1.5rem;
+    padding: 0.7rem 1.5rem;
   }
   .sp-nav-inner {
     max-width: 1280px;
@@ -34,41 +36,80 @@ const styles = `
     align-items: center;
     gap: 1rem;
   }
-  .sp-logo { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+
+  /* Logo */
+  .sp-logo {
+    display: flex; align-items: center; gap: 0.625rem;
+    flex-shrink: 0; text-decoration: none;
+  }
   .sp-logo-icon {
-    width: 38px; height: 38px;
-    background: #19207b; border-radius: 8px;
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #19207b 0%, #2d3ec7 100%);
+    border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 700; font-size: 1.2rem;
+    color: #ffc107; font-weight: 900; font-size: 1.1rem;
+    box-shadow: 0 4px 14px rgba(25,32,123,0.28);
+    letter-spacing: -0.02em; flex-shrink: 0;
   }
-  .sp-logo-text { font-size: 1.2rem; font-weight: 800; color: #19207b; letter-spacing: -0.02em; }
+  .sp-logo-text {
+    font-size: 1.1rem; font-weight: 800;
+    color: #19207b; letter-spacing: -0.025em; line-height: 1.1;
+  }
   .sp-logo-text span { color: #ffc107; }
+  .sp-logo-sub {
+    display: block; font-size: 0.58rem;
+    color: #9ca3af; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px;
+  }
 
+  /* Nav links */
   .sp-nav-links {
-    display: flex; align-items: center; gap: 2rem;
-    font-weight: 500; color: #19207b;
+    display: flex; align-items: center; gap: 0.15rem;
   }
-  .sp-nav-links a { text-decoration: none; color: inherit; transition: color 0.2s; white-space: nowrap; }
-  .sp-nav-links a:hover { color: #ffc107; }
+  .sp-nav-link {
+    text-decoration: none; color: #374151;
+    font-weight: 500; font-size: 0.875rem;
+    padding: 0.45rem 0.85rem; border-radius: 8px;
+    transition: color 0.18s, background 0.18s; white-space: nowrap;
+  }
+  .sp-nav-link:hover { color: #19207b; background: rgba(25,32,123,0.06); }
+  .sp-nav-divider {
+    width: 1px; height: 22px; background: #e5e7eb;
+    margin: 0 0.625rem; flex-shrink: 0;
+  }
 
+  /* Nav Buttons */
   .sp-btn-primary {
-    background: #ffc107; color: #19207b;
-    padding: 0.5rem 1.5rem; border-radius: 9999px;
+    background: linear-gradient(135deg, #ffc107 0%, #e6ac00 100%);
+    color: #19207b;
+    padding: 0.525rem 1.25rem; border-radius: 9999px;
     font-weight: 700; border: none; cursor: pointer;
-    display: flex; align-items: center; gap: 0.5rem;
-    font-size: 0.9rem; transition: background 0.2s;
+    display: flex; align-items: center; gap: 0.35rem;
+    font-size: 0.85rem;
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
     text-decoration: none; white-space: nowrap;
+    box-shadow: 0 3px 12px rgba(255,193,7,0.4);
+    letter-spacing: 0.01em;
   }
-  .sp-btn-primary:hover { background: #e0a800; }
+  .sp-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(255,193,7,0.5);
+    filter: brightness(1.05);
+  }
   .sp-btn-secondary {
     background: transparent; color: #19207b;
-    padding: 0.5rem 1.5rem; border-radius: 9999px;
-    font-weight: 700; border: 1px solid #19207b; cursor: pointer;
-    display: flex; align-items: center; gap: 0.5rem;
-    font-size: 0.9rem; transition: all 0.2s;
+    padding: 0.525rem 1.25rem; border-radius: 9999px;
+    font-weight: 700; border: 1.5px solid #19207b; cursor: pointer;
+    display: flex; align-items: center; gap: 0.35rem;
+    font-size: 0.85rem;
+    transition: all 0.2s;
     text-decoration: none; white-space: nowrap;
+    letter-spacing: 0.01em;
   }
-  .sp-btn-secondary:hover { background: #19207b; color: #fff; }
+  .sp-btn-secondary:hover {
+    background: #19207b; color: #fff;
+    box-shadow: 0 4px 14px rgba(25,32,123,0.22);
+  }
 
   /* Hamburger */
   .sp-hamburger {
@@ -450,267 +491,278 @@ const styles = `
 
 /* ─── ICONS ─────────────────────────────────── */
 const I = ({ d, size = 28 }) => (
-  <svg style={{ width: size, height: size, display: "block" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path d={d} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-  </svg>
+    <svg style={{ width: size, height: size, display: "block" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d={d} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+    </svg>
 );
 
 const PATHS = {
-  doc: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-  clip: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
-  cal: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
-  book: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
-  check: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-  chart: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
-  bolt: "M13 10V3L4 14h7v7l9-11h-7z",
-  lock: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
-  users: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
+    doc: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+    clip: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
+    cal: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+    book: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
+    check: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+    chart: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
+    bolt: "M13 10V3L4 14h7v7l9-11h-7z",
+    lock: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
+    users: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
 };
 
 const partnerLogos = [
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuDcSPZGRUquB3f_EiAH5CQov1P1NX2H892szzsEcFAkzfLPVXA78D0JC3hl7KsUdOHI1738W7A0qTQFso_3lwSi-fqODPmLJb9dFlCo_WIVuzkE59sj4eMmbuy6Y0rgUKWJmTyBuhtZ2UcefOzvcGGy3HIfNGPHUrnPv3cVkMKl8aLHiZeZWDfPFkP4lWV_em8TkBkuwisU9z5zokQaa5KTAMk09Mr0l_-4fZlTDvRmc5E1jjvs7w1N0R0tlwtdoS-vEWY97Jgreak",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuD9wNBv1qw9lCwvJUmY_LttJCY6c5XA9N6IkJShxwHumq4bb3PCUUJ75y4QEhJLWSWGd9qZn0MRYG5BLaeJ-dqL_cnsxCMF4MB18U9CRjPymRxOgNikuaCLuCMaUWAamgtalND52tsO0HhiI0r2jhZ8CKHXlP2nSwDC67RRW5vk39zY2ktSJriE-OxcrdEvnaghTnRG_-HnkSXawbE87gS43ry2kihAis5gf6UZ_TPure8v_wYJBauXEGVeZVXY8m1blcCQYE26LwI",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuCvM9ZmPVwCWi8DvwOJdf32QM0trS-2ISAEjg9HBjfrOzqmIpx9blALy1RCBtv272uuBi4ocIJwdf4evEP9qCUrtSoAvc3zEd-jg2aDuX0o4P4P6T_IFxxqSCYyGhaJRHtuqbaWKFtu_Zbgbh022UV8ssdY8hXmGiYSzAhkov0Ahd1I_HzeJ_mzDtPYv-p4MpvaR5wlEH_KngCUHQ05NDrFzdu6FvZIG04F0pcKlNxRkvcoVXnbf33P-m3_0Xl2BZXQbMHV8D2sLIA",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuATJot0DBlZxDjl7XjG284SAIuXEqN63YXRFfIkYoHReRzjAXbmB1oLp-lzOVhOGih79qDc2hGS8VLSvbZqqpQsSdsrrIMmuYWFYZ7jajXXIOoxx3j8gLqE5E2_h6xhQoN4yVwtwMFVIxqDi8QHJJMVXEj02oPEO_6jA_IbxoxoKGGfhUZsN_UgCN9puIFtN0SoG2gBB5-rLuSj8Mca_hDGbKVk1RE7PNpN-3VHr87qJsfvbC9BFllznGIZRf8-EynOgtmBrz4yyS0",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuB6sTCVK3QqGfXobH8Fkk9I6o4yQCHU1THQuXZ9nStZUdYdfVeaCodiaISfBU-qwlQk6opK5DR63neibFaEFs-Y4wBILTqJvh1X2j9HyWbrhNtUxb3QCaCYuRx_oB-zkLfZalPwqU6TGshZMR3kYjMrBZxtWXuX53oOUGdQpPMT8cWErcJBWmAtoJlZXacNOXnra7xQ-zakkQr7NjaLwQrDs9u-gTa6VFdP_R7aj0a4ExWtvMe11F-rJLeFbkoSDXOeH-dJMslEdf0"
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuDcSPZGRUquB3f_EiAH5CQov1P1NX2H892szzsEcFAkzfLPVXA78D0JC3hl7KsUdOHI1738W7A0qTQFso_3lwSi-fqODPmLJb9dFlCo_WIVuzkE59sj4eMmbuy6Y0rgUKWJmTyBuhtZ2UcefOzvcGGy3HIfNGPHUrnPv3cVkMKl8aLHiZeZWDfPFkP4lWV_em8TkBkuwisU9z5zokQaa5KTAMk09Mr0l_-4fZlTDvRmc5E1jjvs7w1N0R0tlwtdoS-vEWY97Jgreak",
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuD9wNBv1qw9lCwvJUmY_LttJCY6c5XA9N6IkJShxwHumq4bb3PCUUJ75y4QEhJLWSWGd9qZn0MRYG5BLaeJ-dqL_cnsxCMF4MB18U9CRjPymRxOgNikuaCLuCMaUWAamgtalND52tsO0HhiI0r2jhZ8CKHXlP2nSwDC67RRW5vk39zY2ktSJriE-OxcrdEvnaghTnRG_-HnkSXawbE87gS43ry2kihAis5gf6UZ_TPure8v_wYJBauXEGVeZVXY8m1blcCQYE26LwI",
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuCvM9ZmPVwCWi8DvwOJdf32QM0trS-2ISAEjg9HBjfrOzqmIpx9blALy1RCBtv272uuBi4ocIJwdf4evEP9qCUrtSoAvc3zEd-jg2aDuX0o4P4P6T_IFxxqSCYyGhaJRHtuqbaWKFtu_Zbgbh022UV8ssdY8hXmGiYSzAhkov0Ahd1I_HzeJ_mzDtPYv-p4MpvaR5wlEH_KngCUHQ05NDrFzdu6FvZIG04F0pcKlNxRkvcoVXnbf33P-m3_0Xl2BZXQbMHV8D2sLIA",
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuATJot0DBlZxDjl7XjG284SAIuXEqN63YXRFfIkYoHReRzjAXbmB1oLp-lzOVhOGih79qDc2hGS8VLSvbZqqpQsSdsrrIMmuYWFYZ7jajXXIOoxx3j8gLqE5E2_h6xhQoN4yVwtwMFVIxqDi8QHJJMVXEj02oPEO_6jA_IbxoxoKGGfhUZsN_UgCN9puIFtN0SoG2gBB5-rLuSj8Mca_hDGbKVk1RE7PNpN-3VHr87qJsfvbC9BFllznGIZRf8-EynOgtmBrz4yyS0",
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuB6sTCVK3QqGfXobH8Fkk9I6o4yQCHU1THQuXZ9nStZUdYdfVeaCodiaISfBU-qwlQk6opK5DR63neibFaEFs-Y4wBILTqJvh1X2j9HyWbrhNtUxb3QCaCYuRx_oB-zkLfZalPwqU6TGshZMR3kYjMrBZxtWXuX53oOUGdQpPMT8cWErcJBWmAtoJlZXacNOXnra7xQ-zakkQr7NjaLwQrDs9u-gTa6VFdP_R7aj0a4ExWtvMe11F-rJLeFbkoSDXOeH-dJMslEdf0"
 ];
 
 export default function StudentPro() {
-  const [email, setEmail] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const closeMenu = () => setMenuOpen(false);
+    const [email, setEmail] = useState("");
+    const [menuOpen, setMenuOpen] = useState(false);
+    const closeMenu = () => setMenuOpen(false);
 
-  return (
-    <div className="sp-body">
-      <style>{styles}</style>
+    return (
+        <div className="sp-body">
+            <style>{styles}</style>
 
-      {/* NAV */}
-      <nav className="sp-nav">
-        <div className="sp-nav-bar">
-          <div className="sp-nav-inner">
-            <div className="sp-logo">
-              <div className="sp-logo-icon">S</div>
-              <span className="sp-logo-text">SMART<span>STUDENT</span></span>
-            </div>
-            <div className="sp-nav-links">
-              <a href="#features">Features</a>
-              <a href="#process">How it Works</a>
-              <a href="#why-us">Why Us</a>
-              <Link to="/admin" className="sp-btn-secondary">ADMIN LOGIN <span>→</span></Link>
-              <Link to="/login" className="sp-btn-primary">LOGIN <span>→</span></Link>
-            </div>
-            <button
-              className={`sp-hamburger${menuOpen ? " open" : ""}`}
-              onClick={() => setMenuOpen(o => !o)}
-              aria-label="Toggle navigation"
-            >
-              <span /><span /><span />
-            </button>
-          </div>
-        </div>
-        <div className={`sp-mobile-menu${menuOpen ? " open" : ""}`}>
-          <div className="sp-mobile-menu-inner">
-            <a href="#features" onClick={closeMenu}>Features</a>
-            <a href="#process" onClick={closeMenu}>How it Works</a>
-            <a href="#why-us" onClick={closeMenu}>Why Us</a>
-            <Link to="/admin" className="sp-mobile-cta secondary" onClick={closeMenu}>ADMIN LOGIN →</Link>
-            <Link to="/login" className="sp-mobile-cta" onClick={closeMenu}>LOGIN →</Link>
-          </div>
-        </div>
-      </nav>
+            {/* NAV */}
+            <nav className="sp-nav">
+                <div className="sp-nav-bar">
+                    <div className="sp-nav-inner">
+                        {/* Logo — clickable, goes home */}
+                        <Link to="/" className="sp-logo">
+                            <div className="sp-logo-icon">S</div>
+                            <span className="sp-logo-text">
+                                SMART<span>STUDENT</span>
+                                <span className="sp-logo-sub">Productivity System</span>
+                            </span>
+                        </Link>
 
-      {/* HERO */}
-      <section className="sp-hero">
-        <div className="sp-hero-inner">
-          <div className="sp-hero-left">
-            <div className="sp-hero-badge">SMART STUDENT PRODUCTIVITY SYSTEM</div>
-            <h1 className="sp-hero-title">
-              Plan, Track, and Finish <br />
-              <span>Every Academic Task</span>
-            </h1>
-            <p className="sp-hero-desc">
-              Follow one connected flow: log in, view teacher-assigned work, add your own tasks, get deadline reminders, and use AI support to stay focused every day.
-            </p>
-            <div className="sp-hero-actions">
-              <Link className="sp-hero-cta" to="/login">START PRODUCTIVE STUDYING</Link>
-              <Link className="sp-hero-cta secondary" to="/admin">ADMIN LOGIN</Link>
-              <div className="sp-hero-avail">
-                <span className="sp-hero-avail-label">Available On</span>
-                <span className="sp-hero-avail-val">STUDENT &amp; TEACHER PORTAL</span>
-              </div>
-            </div>
-            <p className="sp-hero-features">✓ Dashboard Tracking | ✓ Deadline Reminders | ✓ AI Chat Assistance</p>
-          </div>
-          <div className="sp-hero-right">
-            <img
-              className="sp-hero-img"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDN0dUTLN_4dsN5R0Y4zKq_2vCCqY2vy1UPkgzSikXud9KEF9mNwqofytaSUUIdjgH9f2PHjUdxr-4CciQO61TV-xXlyzEdJhwub7OoN90jDJ1TR82ukWJfw1mWOc3fIKQgDcNNWZ1K3MA9kxP8JBr8qEw5O_meMlIcAh7GaIB9wTXw_GD0OZ7e7uZ5B4cHwuH4Rh0wWm0rBAP1RDFyYCx8Rb5cSJrDm_mKq9C5j4EtNTct-Efr4EmsUVbm4MxrUhf_GzKiCwCLL4A"
-              alt="Student using tablet"
-            />
-            <div className="sp-hero-stat">
-              <div className="sp-hero-stat-num">24/7</div>
-              <div className="sp-hero-stat-label">Task Visibility</div>
-            </div>
-          </div>
-        </div>
-      </section>
+                        {/* Desktop nav */}
+                        <div className="sp-nav-links">
+                            <a href="#features" className="sp-nav-link">Features</a>
+                            <a href="#process" className="sp-nav-link">How it Works</a>
+                            <a href="#why-us" className="sp-nav-link">Why Us</a>
+                            <div className="sp-nav-divider" />
+                            <Link to="/admin-login" className="sp-btn-secondary">Admin Login</Link>
+                            <Link to="/login" className="sp-btn-primary">Student Login →</Link>
+                        </div>
 
-      <section className="sp-highlight-strip" aria-label="Platform highlights">
-        <div className="sp-highlight-inner">
-          <div className="sp-highlight-card">
-            <strong>One clear workspace</strong>
-            <span>Keep assignments, personal tasks, reminders, and progress updates in one place.</span>
-          </div>
-          <div className="sp-highlight-card">
-            <strong>Designed for daily use</strong>
-            <span>Students can quickly check what is due today and what needs attention next.</span>
-          </div>
-          <div className="sp-highlight-card">
-            <strong>Built-in guidance</strong>
-            <span>Use the AI module to get help, break down work, and stay consistent.</span>
-          </div>
-        </div>
-      </section>
+                        {/* Hamburger */}
+                        <button
+                            className={`sp-hamburger${menuOpen ? " open" : ""}`}
+                            onClick={() => setMenuOpen(o => !o)}
+                            aria-label="Toggle navigation"
+                        >
+                            <span /><span /><span />
+                        </button>
+                    </div>
+                </div>
 
-      {/* PROCESS */}
-      <section className="sp-process" id="process">
-        <div className="sp-section-title-wrap">
-          <h2 className="sp-section-title">How the System Flow Works</h2>
-          <div className="sp-underline-gold" />
-        </div>
-        <div className="sp-process-grid">
-          {[
-            { path: PATHS.doc, label: "1. Login Securely", desc: "Students and teachers access role-based dashboards.", gold: false },
-            { path: PATHS.clip, label: "2. Manage Tasks", desc: "Teachers assign tasks and students add personal study goals.", gold: false },
-            { path: PATHS.cal, label: "3. Track Deadlines", desc: "Monitor due dates with upcoming and overdue indicators.", gold: false },
-            { path: PATHS.book, label: "4. Use AI Support", desc: "Get instant learning help from the integrated AI module.", gold: false },
-            { path: PATHS.check, label: "5. Complete & Improve", desc: "Mark done tasks and boost productivity over time.", gold: true },
-          ].map((s, i) => (
-            <div className="sp-step" key={i}>
-              <div className={`sp-step-icon${s.gold ? " gold" : ""}`}><I d={s.path} /></div>
-              <div>
-                <h3>{s.label}</h3>
-                <p>{s.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+                {/* Mobile dropdown */}
+                <div className={`sp-mobile-menu${menuOpen ? " open" : ""}`}>
+                    <div className="sp-mobile-menu-inner">
+                        <a href="#features" onClick={closeMenu}>Features</a>
+                        <a href="#process" onClick={closeMenu}>How it Works</a>
+                        <a href="#why-us" onClick={closeMenu}>Why Us</a>
+                        <Link to="/admin-login" className="sp-mobile-cta secondary" onClick={closeMenu}>Admin Login →</Link>
+                        <Link to="/login" className="sp-mobile-cta" onClick={closeMenu}>Student Login →</Link>
+                    </div>
+                </div>
+            </nav>
 
-      {/* FEATURES */}
-      <section className="sp-features" id="features">
-        <div className="sp-section-title-wrap">
-          <h2 className="sp-section-title">Core Features</h2>
-          <div className="sp-underline-navy" />
-        </div>
-        <div className="sp-features-grid">
-          {[
-            { path: PATHS.clip, title: "Student Task Board", desc: "See teacher-assigned and self-created tasks in one place with priority and status updates." },
-            { path: PATHS.cal, title: "Deadline Reminder View", desc: "Spot critical and upcoming deadlines quickly so nothing slips through." },
-            { path: PATHS.book, title: "AI Learning Module", desc: "Ask academic questions and receive guided answers directly inside the system." },
-            { path: PATHS.chart, title: "Progress Dashboard", desc: "Track completed, pending, and overdue work to measure your productivity." },
-          ].map((f, i) => (
-            <div className="sp-feature-card" key={i}>
-              <div className="sp-feature-icon"><I d={f.path} size={22} /></div>
-              <div>
-                <h4>{f.title}</h4>
-                <p>{f.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            {/* HERO */}
+            <section className="sp-hero">
+                <div className="sp-hero-inner">
+                    <div className="sp-hero-left">
+                        <div className="sp-hero-badge">SMART STUDENT PRODUCTIVITY SYSTEM</div>
+                        <h1 className="sp-hero-title">
+                            Plan, Track, and Finish <br />
+                            <span>Every Academic Task</span>
+                        </h1>
+                        <p className="sp-hero-desc">
+                            Follow one connected flow: log in, view teacher-assigned work, add your own tasks, get deadline reminders, and use AI support to stay focused every day.
+                        </p>
+                        <div className="sp-hero-actions">
+                            <Link className="sp-hero-cta" to="/login">START PRODUCTIVE STUDYING</Link>
+                            <Link className="sp-hero-cta secondary" to="/admin-login">ADMIN LOGIN</Link>
+                            <div className="sp-hero-avail">
+                                <span className="sp-hero-avail-label">Available On</span>
+                                <span className="sp-hero-avail-val">STUDENT &amp; TEACHER PORTAL</span>
+                            </div>
+                        </div>
+                        <p className="sp-hero-features">✓ Dashboard Tracking | ✓ Deadline Reminders | ✓ AI Chat Assistance</p>
+                    </div>
+                    <div className="sp-hero-right">
+                        <img
+                            className="sp-hero-img"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDN0dUTLN_4dsN5R0Y4zKq_2vCCqY2vy1UPkgzSikXud9KEF9mNwqofytaSUUIdjgH9f2PHjUdxr-4CciQO61TV-xXlyzEdJhwub7OoN90jDJ1TR82ukWJfw1mWOc3fIKQgDcNNWZ1K3MA9kxP8JBr8qEw5O_meMlIcAh7GaIB9wTXw_GD0OZ7e7uZ5B4cHwuH4Rh0wWm0rBAP1RDFyYCx8Rb5cSJrDm_mKq9C5j4EtNTct-Efr4EmsUVbm4MxrUhf_GzKiCwCLL4A"
+                            alt="Student using tablet"
+                        />
+                        <div className="sp-hero-stat">
+                            <div className="sp-hero-stat-num">24/7</div>
+                            <div className="sp-hero-stat-label">Task Visibility</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-      {/* METRICS */}
-      <section className="sp-metrics">
-        <div className="sp-metrics-inner">
-          <div className="sp-metrics-stats">
-            <div className="sp-metrics-stat-box">
-              <div className="sp-metrics-stat-num">5+ </div>
-              <div className="sp-metrics-stat-label">Core Workflows</div>
-            </div>
-            <div className="sp-metrics-uni">
-              <div className="sp-metrics-uni-num">3</div>
-              <div className="sp-metrics-uni-label">User Roles & Views</div>
-            </div>
-          </div>
-          <div className="sp-metrics-right">
-            <h3>Built Around the Real Student Productivity Lifecycle</h3>
-            <div className="sp-logos">
-              {partnerLogos.map((src, i) => <img key={i} src={src} alt="Partner Logo" />)}
-            </div>
-          </div>
-        </div>
-      </section>
+            <section className="sp-highlight-strip" aria-label="Platform highlights">
+                <div className="sp-highlight-inner">
+                    <div className="sp-highlight-card">
+                        <strong>One clear workspace</strong>
+                        <span>Keep assignments, personal tasks, reminders, and progress updates in one place.</span>
+                    </div>
+                    <div className="sp-highlight-card">
+                        <strong>Designed for daily use</strong>
+                        <span>Students can quickly check what is due today and what needs attention next.</span>
+                    </div>
+                    <div className="sp-highlight-card">
+                        <strong>Built-in guidance</strong>
+                        <span>Use the AI module to get help, break down work, and stay consistent.</span>
+                    </div>
+                </div>
+            </section>
 
-      {/* WHY US */}
-      <section className="sp-why" id="why-us">
-        <div className="sp-why-inner">
-          <div className="sp-section-title-wrap">
-            <h2 className="sp-section-title">Why Choose Smart Student Productivity System?</h2>
-            <div className="sp-underline-gold" />
-          </div>
-          {[
-            { v: "navy", iv: "navy", path: PATHS.bolt, title: "Flow-Based Experience", desc: "From login to completion, each screen supports the next step in student productivity instead of isolated tools." },
-            { v: "gold", iv: "gold", path: PATHS.lock, title: "Secure Academic Workspace", desc: "Authenticated access keeps student and teacher data protected while enabling smooth collaboration." },
-            { v: "navy", iv: "navy", path: PATHS.users, title: "Teacher + Student Alignment", desc: "Assignment visibility, reminders, and progress updates keep both teachers and learners on the same page." },
-          ].map((b, i) => (
-            <div className={`sp-benefit ${b.v}`} key={i}>
-              <div className={`sp-benefit-icon-wrap ${b.iv}`}><I d={b.path} /></div>
-              <div className="sp-benefit-text">
-                <h4>{b.title}</h4>
-                <p>{b.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            {/* PROCESS */}
+            <section className="sp-process" id="process">
+                <div className="sp-section-title-wrap">
+                    <h2 className="sp-section-title">How the System Flow Works</h2>
+                    <div className="sp-underline-gold" />
+                </div>
+                <div className="sp-process-grid">
+                    {[
+                        { path: PATHS.doc, label: "1. Login Securely", desc: "Students and teachers access role-based dashboards.", gold: false },
+                        { path: PATHS.clip, label: "2. Manage Tasks", desc: "Teachers assign tasks and students add personal study goals.", gold: false },
+                        { path: PATHS.cal, label: "3. Track Deadlines", desc: "Monitor due dates with upcoming and overdue indicators.", gold: false },
+                        { path: PATHS.book, label: "4. Use AI Support", desc: "Get instant learning help from the integrated AI module.", gold: false },
+                        { path: PATHS.check, label: "5. Complete & Improve", desc: "Mark done tasks and boost productivity over time.", gold: true },
+                    ].map((s, i) => (
+                        <div className="sp-step" key={i}>
+                            <div className={`sp-step-icon${s.gold ? " gold" : ""}`}><I d={s.path} /></div>
+                            <div>
+                                <h3>{s.label}</h3>
+                                <p>{s.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
 
-      {/* FOOTER */}
-      <footer className="sp-footer">
-        <div className="sp-footer-inner">
-          <div className="sp-footer-grid">
-            <div>
-              <div className="sp-footer-logo">
-                <div className="sp-footer-logo-icon">S</div>
-                <span className="sp-footer-logo-text">SMART<span>STUDENT</span></span>
-              </div>
-              <p className="sp-footer-desc">A connected productivity platform that helps students plan, execute, and complete academic work with confidence.</p>
-            </div>
-            <div className="sp-footer-col">
-              <h5>Product</h5>
-              <ul>
-                {["Dashboard", "Task Management", "Deadline Reminder", "AI Module"].map(l => <li key={l}><a href="#">{l}</a></li>)}
-              </ul>
-            </div>
-            <div className="sp-footer-col">
-              <h5>Support</h5>
-              <ul>
-                {["Student Login", "Teacher Admin", "Usage Guide", "Contact Team"].map(l => <li key={l}><a href="#">{l}</a></li>)}
-              </ul>
-            </div>
-            <div className="sp-footer-col">
-              <h5>Stay Updated</h5>
-              <p>Receive product updates and productivity tips.</p>
-              <div className="sp-email-row">
-                <input
-                  className="sp-email-input" type="email" placeholder="Your email"
-                  value={email} onChange={e => setEmail(e.target.value)}
-                />
-                <button className="sp-email-btn">GO</button>
-              </div>
-            </div>
-          </div>
-          <div className="sp-footer-bottom">
-            <p>© 2025 Smart Student Productivity System. All rights reserved.</p>
-            <div className="sp-footer-bottom-links">
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Service</a>
-              <a href="#">Cookie Settings</a>
-            </div>
-          </div>
+            {/* FEATURES */}
+            <section className="sp-features" id="features">
+                <div className="sp-section-title-wrap">
+                    <h2 className="sp-section-title">Core Features</h2>
+                    <div className="sp-underline-navy" />
+                </div>
+                <div className="sp-features-grid">
+                    {[
+                        { path: PATHS.clip, title: "Student Task Board", desc: "See teacher-assigned and self-created tasks in one place with priority and status updates." },
+                        { path: PATHS.cal, title: "Deadline Reminder View", desc: "Spot critical and upcoming deadlines quickly so nothing slips through." },
+                        { path: PATHS.book, title: "AI Learning Module", desc: "Ask academic questions and receive guided answers directly inside the system." },
+                        { path: PATHS.chart, title: "Progress Dashboard", desc: "Track completed, pending, and overdue work to measure your productivity." },
+                    ].map((f, i) => (
+                        <div className="sp-feature-card" key={i}>
+                            <div className="sp-feature-icon"><I d={f.path} size={22} /></div>
+                            <div>
+                                <h4>{f.title}</h4>
+                                <p>{f.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* METRICS */}
+            <section className="sp-metrics">
+                <div className="sp-metrics-inner">
+                    <div className="sp-metrics-stats">
+                        <div className="sp-metrics-stat-box">
+                            <div className="sp-metrics-stat-num">5+ </div>
+                            <div className="sp-metrics-stat-label">Core Workflows</div>
+                        </div>
+                        <div className="sp-metrics-uni">
+                            <div className="sp-metrics-uni-num">3</div>
+                            <div className="sp-metrics-uni-label">User Roles & Views</div>
+                        </div>
+                    </div>
+                    <div className="sp-metrics-right">
+                        <h3>Built Around the Real Student Productivity Lifecycle</h3>
+                        <div className="sp-logos">
+                            {partnerLogos.map((src, i) => <img key={i} src={src} alt="Partner Logo" />)}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* WHY US */}
+            <section className="sp-why" id="why-us">
+                <div className="sp-why-inner">
+                    <div className="sp-section-title-wrap">
+                        <h2 className="sp-section-title">Why Choose Smart Student Productivity System?</h2>
+                        <div className="sp-underline-gold" />
+                    </div>
+                    {[
+                        { v: "navy", iv: "navy", path: PATHS.bolt, title: "Flow-Based Experience", desc: "From login to completion, each screen supports the next step in student productivity instead of isolated tools." },
+                        { v: "gold", iv: "gold", path: PATHS.lock, title: "Secure Academic Workspace", desc: "Authenticated access keeps student and teacher data protected while enabling smooth collaboration." },
+                        { v: "navy", iv: "navy", path: PATHS.users, title: "Teacher + Student Alignment", desc: "Assignment visibility, reminders, and progress updates keep both teachers and learners on the same page." },
+                    ].map((b, i) => (
+                        <div className={`sp-benefit ${b.v}`} key={i}>
+                            <div className={`sp-benefit-icon-wrap ${b.iv}`}><I d={b.path} /></div>
+                            <div className="sp-benefit-text">
+                                <h4>{b.title}</h4>
+                                <p>{b.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* FOOTER */}
+            <footer className="sp-footer">
+                <div className="sp-footer-inner">
+                    <div className="sp-footer-grid">
+                        <div>
+                            <div className="sp-footer-logo">
+                                <div className="sp-footer-logo-icon">S</div>
+                                <span className="sp-footer-logo-text">SMART<span>STUDENT</span></span>
+                            </div>
+                            <p className="sp-footer-desc">A connected productivity platform that helps students plan, execute, and complete academic work with confidence.</p>
+                        </div>
+                        <div className="sp-footer-col">
+                            <h5>Product</h5>
+                            <ul>
+                                {["Dashboard", "Task Management", "Deadline Reminder", "AI Module"].map(l => <li key={l}><a href="#">{l}</a></li>)}
+                            </ul>
+                        </div>
+                        <div className="sp-footer-col">
+                            <h5>Support</h5>
+                            <ul>
+                                {["Student Login", "Teacher Admin", "Usage Guide", "Contact Team"].map(l => <li key={l}><a href="#">{l}</a></li>)}
+                            </ul>
+                        </div>
+                        <div className="sp-footer-col">
+                            <h5>Stay Updated</h5>
+                            <p>Receive product updates and productivity tips.</p>
+                            <div className="sp-email-row">
+                                <input
+                                    className="sp-email-input" type="email" placeholder="Your email"
+                                    value={email} onChange={e => setEmail(e.target.value)}
+                                />
+                                <button className="sp-email-btn">GO</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="sp-footer-bottom">
+                        <p>© 2025 Smart Student Productivity System. All rights reserved.</p>
+                        <div className="sp-footer-bottom-links">
+                            <a href="#">Privacy Policy</a>
+                            <a href="#">Terms of Service</a>
+                            <a href="#">Cookie Settings</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
-      </footer>
-    </div>
-  );
+    );
 }

@@ -229,7 +229,7 @@ export default function DashboardNavbar({
               );
             })}
             {/* Admin Button */}
-            <button
+            {/* <button
               onClick={handleAdminClick}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200
                 ${location.pathname === '/admin'
@@ -241,7 +241,7 @@ export default function DashboardNavbar({
             >
               <ShieldCheck className="h-4 w-4" />
               Admin
-            </button>
+            </button> */}
           </div>
 
           {/* Right section */}
@@ -458,7 +458,7 @@ export default function DashboardNavbar({
               </Link>
             ))}
             {/* Mobile Admin Button */}
-            <button
+            {/* <button
               onClick={() => {
                 setShowMobileMenu(false);
                 handleAdminClick();
@@ -471,7 +471,7 @@ export default function DashboardNavbar({
             >
               <ShieldCheck className="h-4 w-4" />
               Admin
-            </button>
+            </button> */}
             <button
               onClick={handleLogout}
               className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg w-full text-left transition-all mt-1"
