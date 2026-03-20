@@ -11,6 +11,7 @@ import AddTaskModal from "../components/dashboard/AddTaskModal";
 import { getDaysUntil, isOverdue, resolveTaskPriority } from "../components/dashboard/dashboardUtils";
 import axios from "../lib/axios";
 import { useTheme } from "../contexts/ThemeContext";
+import AnimatedSection from "../components/AnimatedSection";
 
 /* ─── Color maps ─────────────────────────────────────────────── */
 const SUBJECT_COLORS = {
@@ -617,25 +618,30 @@ export default function StudyFlowTasks() {
                 : { display: "flex", flexDirection: "column", gap: 10 }
             }
           >
-            {currentTasks.map((task) => (
-              <TaskCard
+            {currentTasks.map((task, index) => (
+              <TaskCardReveal
                 key={task.id}
-                task={task}
-                isDark={isDark}
-                viewMode={viewMode}
-                type={activeTab}
-                onToggle={() => handleToggleTask(task.id, activeTab)}
-                onDelete={
-                  activeTab === "personal"
-                    ? () => handleDeleteTask(task.id, "personal")
-                    : null
-                }
-                onClick={() => setSelectedTask(task)}
-                textPrimary={textPrimary}
-                textMuted={textMuted}
-                cardBg={cardBg}
-                border={border}
-              />
+                index={index}
+                className={viewMode === "grid" ? "task-card-reveal" : undefined}
+              >
+                <TaskCard
+                  task={task}
+                  isDark={isDark}
+                  viewMode={viewMode}
+                  type={activeTab}
+                  onToggle={() => handleToggleTask(task.id, activeTab)}
+                  onDelete={
+                    activeTab === "personal"
+                      ? () => handleDeleteTask(task.id, "personal")
+                      : null
+                  }
+                  onClick={() => setSelectedTask(task)}
+                  textPrimary={textPrimary}
+                  textMuted={textMuted}
+                  cardBg={cardBg}
+                  border={border}
+                />
+              </TaskCardReveal>
             ))}
           </div>
         )}
@@ -724,6 +730,7 @@ export default function StudyFlowTasks() {
           .stat-grid > div { padding: 16px !important; }
           .stat-grid > div > div:last-child { font-size: 30px !important; }
           .task-grid  { grid-template-columns: 1fr !important; }
+          .task-card-reveal { min-width: 0; }
           .mobile-filter-btn { display: flex !important; }
           .filter-chips-row  { display: none !important; width: 100%; }
           .filter-chips-row.open  { display: flex !important; }
@@ -734,6 +741,18 @@ export default function StudyFlowTasks() {
         }
       `}</style>
     </div>
+  );
+}
+
+function TaskCardReveal({ children, className, index }) {
+  return (
+    <AnimatedSection
+      className={className}
+      delay={Math.min(index * 0.08, 0.48)}
+      duration={0.45}
+    >
+      {children}
+    </AnimatedSection>
   );
 }
 
