@@ -16,6 +16,7 @@ const responseCache = new Map();
 const MAX_CACHE_SIZE = 100; // Limit cache size to prevent memory issues
 
 const GEMINI_MODELS = [
+  'gemini-3.1-flash-lite-preview',
   'gemini-pro',
   'gemini-1.5-flash-latest',
   'gemini-1.5-flash',
